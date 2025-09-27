@@ -4,12 +4,6 @@
 [![MySQL Version](https://img.shields.io/badge/MySQL-5.7%2B-orange.svg)](https://mysql.com)
 [![Bootstrap Version](https://img.shields.io/badge/Bootstrap-5.1.3-purple.svg)](https://getbootstrap.com)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
-[![GitHub stars](https://img.shields.io/github/stars/quangcaptain26-3/SUPER_STU_WEB.svg?style=social&label=Star)](https://github.com/quangcaptain26-3/SUPER_STU_WEB)
-[![GitHub forks](https://img.shields.io/github/forks/quangcaptain26-3/SUPER_STU_WEB.svg?style=social&label=Fork)](https://github.com/quangcaptain26-3/SUPER_STU_WEB)
-[![GitHub issues](https://img.shields.io/github/issues/quangcaptain26-3/SUPER_STU_WEB.svg)](https://github.com/quangcaptain26-3/SUPER_STU_WEB/issues)
-[![GitHub pull requests](https://img.shields.io/github/issues-pr/quangcaptain26-3/SUPER_STU_WEB.svg)](https://github.com/quangcaptain26-3/SUPER_STU_WEB/pulls)
-[![GitHub last commit](https://img.shields.io/github/last-commit/quangcaptain26-3/SUPER_STU_WEB.svg)](https://github.com/quangcaptain26-3/SUPER_STU_WEB)
-[![GitHub repo size](https://img.shields.io/github/repo-size/quangcaptain26-3/SUPER_STU_WEB.svg)](https://github.com/quangcaptain26-3/SUPER_STU_WEB)
 
 > **Hệ thống quản lý sinh viên toàn diện** được xây dựng bằng PHP, MySQL, Bootstrap và Chart.js với đầy đủ các chức năng CRUD, phân quyền người dùng, xuất báo cáo và thống kê trực quan.
 
@@ -580,16 +574,6 @@ Các thư viện và framework mã nguồn mở đã hỗ trợ:
 
 **⭐ Nếu project hữu ích, hãy cho một star nhé! ⭐**
 
-## 📈 Thống kê GitHub
-
-![GitHub Stats](https://github-readme-stats.vercel.app/api?username=quangcaptain26-3&show_icons=true&theme=radical&hide_border=true&count_private=true)
-
-![Top Languages](https://github-readme-stats.vercel.app/api/top-langs/?username=quangcaptain26-3&layout=compact&theme=radical&hide_border=true)
-
-![GitHub Streak](https://github-readme-streak-stats.herokuapp.com/?user=quangcaptain26-3&theme=radical&hide_border=true)
-
----
-
-**Phát triển bởi**: Minh Quang - TTM63ĐH  
+**Phát triển bởi**: Minh Quang - TTM63ĐH
 
 </div>
