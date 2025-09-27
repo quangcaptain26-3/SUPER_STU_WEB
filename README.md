@@ -574,8 +574,8 @@ Các thư viện và framework mã nguồn mở đã hỗ trợ:
 
 **⭐ Nếu project hữu ích, hãy cho một star nhé! ⭐**
 
-[![GitHub stars](https://img.shields.io/github/stars/username/repo.svg?style=social&label=Star)](https://github.com/username/repo)
-[![GitHub forks](https://img.shields.io/github/forks/username/repo.svg?style=social&label=Fork)](https://github.com/username/repo)
+[![GitHub stars](https://img.shields.io/github/stars/username/repo.svg?style=social&label=Star)](https://github.com/quangcaptain26-3/SUPER_STU_WEB)
+[![GitHub forks](https://img.shields.io/github/forks/username/repo.svg?style=social&label=Fork)](https://github.com/quangcaptain26-3/SUPER_STU_WEB)
 
 **Phát triển bởi**: Student Management Team  
 **Cập nhật lần cuối**: <?php echo date('d/m/Y H:i'); ?>  
