@@ -1,0 +1,61 @@
+# Dependencies
+node_modules/
+vendor/
+
+# Library submodules (these are large and should be managed separately)
+assets/libs/phpword/.git/
+assets/libs/tcpdf/.git/
+
+# Upload directories (user-generated content)
+uploads/avatars/*
+!uploads/avatars/.gitkeep
+
+# Export files (generated content)
+exports/*.pdf
+exports/*.docx
+!exports/.gitkeep
+
+# Environment files
+.env
+.env.local
+.env.production
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Log files
+*.log
+logs/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Cache files
+cache/
+*.cache
+
+# Backup files
+*.bak
+*.backup
+
+# Database dumps (if any)
+*.sql.backup
+*.dump
+
+# PHP specific
+composer.phar
+composer.lock
+
+# XAMPP specific
+xampp/
