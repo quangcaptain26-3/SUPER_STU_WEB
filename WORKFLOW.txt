@@ -1,0 +1,516 @@
+================================================================================
+                    HỆ THỐNG QUẢN LÝ SINH VIÊN - WORKFLOW CHI TIẾT
+================================================================================
+
+📋 TỔNG QUAN HỆ THỐNG
+================================================================================
+
+Hệ thống quản lý sinh viên được xây dựng với kiến trúc MVC (Model-View-Controller)
+sử dụng PHP, MySQL, Bootstrap và các thư viện hỗ trợ. Hệ thống có 4 cấp độ phân
+quyền: Super Admin, Admin, Teacher, Student.
+
+================================================================================
+🔐 HỆ THỐNG PHÂN QUYỀN (RBAC)
+================================================================================
+
+1. SUPER ADMIN
+   - Quyền hạn: Tất cả quyền trong hệ thống
+   - Chức năng:
+     + Quản lý người dùng (CRUD)
+     + Quản lý sinh viên (CRUD)
+     + Quản lý điểm số (CRUD)
+     + Xem thống kê và báo cáo
+     + Xuất báo cáo PDF/DOCX
+     + Cấu hình hệ thống
+
+2. ADMIN
+   - Quyền hạn: Quản lý dữ liệu chính
+   - Chức năng:
+     + Quản lý sinh viên (CRUD)
+     + Quản lý điểm số (CRUD)
+     + Xem thống kê và báo cáo
+     + Xuất báo cáo PDF/DOCX
+     - Không quản lý người dùng
+
+3. TEACHER
+   - Quyền hạn: Quản lý sinh viên và điểm số
+   - Chức năng:
+     + Xem danh sách sinh viên
+     + Thêm sinh viên
+     + Sửa thông tin sinh viên
+     + Quản lý điểm số (CRUD)
+     + Xem thống kê
+     + Xuất báo cáo PDF/DOCX
+     - Không xóa sinh viên
+     - Không quản lý người dùng
+
+4. STUDENT
+   - Quyền hạn: Chỉ xem thông tin cá nhân
+   - Chức năng:
+     + Xem thông tin cá nhân
+     + Xem điểm số của mình
+     - Không quản lý dữ liệu
+
+================================================================================
+🚀 WORKFLOW CÁC CHỨC NĂNG CHÍNH
+================================================================================
+
+📝 1. QUẢN LÝ SINH VIÊN
+================================================================================
+
+1.1. THÊM SINH VIÊN
+   Workflow:
+   1. User click "Thêm sinh viên" → students/add.php
+   2. Hiển thị form nhập thông tin
+   3. User nhập: Họ tên, MSV, Email, SĐT, Ngày sinh, Giới tính, Địa chỉ, Avatar
+   4. Validation phía client (JavaScript)
+   5. Submit form → POST đến students/add.php
+   6. Validation phía server (PHP)
+   7. Upload avatar (nếu có)
+   8. Insert vào database
+   9. Redirect về danh sách với thông báo thành công
+
+   Files liên quan:
+   - students/add.php (View + Controller)
+   - studentController.php (Model logic)
+   - assets/js/validation.js (Client validation)
+
+1.2. SỬA SINH VIÊN
+   Workflow:
+   1. User click "Sửa" → students/edit.php?id=X
+   2. Load thông tin sinh viên từ database
+   3. Hiển thị form với dữ liệu có sẵn
+   4. User chỉnh sửa thông tin
+   5. Validation và submit
+   6. Update database
+   7. Redirect về danh sách
+
+   Files liên quan:
+   - students/edit.php
+   - studentController.php
+
+1.3. XÓA SINH VIÊN
+   Workflow:
+   1. User click "Xóa" → JavaScript function deleteStudent(id)
+   2. Hiển thị modal xác nhận (SweetAlert2)
+   3. User xác nhận → Gửi AJAX request
+   4. students/delete.php xử lý
+   5. Kiểm tra quyền hạn
+   6. Delete từ database
+   7. Trả về JSON response
+   8. Hiển thị thông báo kết quả
+   9. Reload trang
+
+   Files liên quan:
+   - students/list.php (JavaScript)
+   - students/delete.php
+   - studentController.php
+
+1.4. XEM CHI TIẾT SINH VIÊN
+   Workflow:
+   1. User click "Xem" → students/view.php?id=X
+   2. Load thông tin sinh viên
+   3. Load danh sách điểm của sinh viên
+   4. Tính điểm trung bình
+   5. Hiển thị thông tin đầy đủ
+   6. Có thể xóa điểm từ trang này
+
+   Files liên quan:
+   - students/view.php
+   - studentController.php
+   - scoreController.php
+
+================================================================================
+📊 2. QUẢN LÝ ĐIỂM SỐ
+================================================================================
+
+2.1. THÊM ĐIỂM
+   Workflow:
+   1. User click "Thêm điểm" → scores/add.php
+   2. Hiển thị form: Chọn sinh viên, Môn học, Điểm, Học kỳ
+   3. Validation: Điểm từ 0-10, không trùng môn trong cùng học kỳ
+   4. Submit → scores/add.php
+   5. Insert vào database
+   6. Redirect về danh sách
+
+   Files liên quan:
+   - scores/add.php
+   - scoreController.php
+
+2.2. SỬA ĐIỂM
+   Workflow:
+   1. User click "Sửa" → scores/edit.php?id=X
+   2. Load thông tin điểm
+   3. Hiển thị form với dữ liệu
+   4. User chỉnh sửa
+   5. Update database
+   6. Redirect về danh sách
+
+   Files liên quan:
+   - scores/edit.php
+   - scoreController.php
+
+2.3. XÓA ĐIỂM
+   Workflow:
+   1. User click "Xóa" → JavaScript function deleteScore(id)
+   2. Modal xác nhận (SweetAlert2)
+   3. AJAX request → scores/delete.php
+   4. Delete từ database
+   5. JSON response
+   6. Thông báo kết quả
+   7. Reload trang
+
+   Files liên quan:
+   - scores/list.php (JavaScript)
+   - scores/delete.php
+   - scoreController.php
+
+2.4. LỌC ĐIỂM
+   Workflow:
+   1. User chọn bộ lọc: Sinh viên, Học kỳ
+   2. Submit form GET
+   3. scores/list.php xử lý filter
+   4. Query database với điều kiện
+   5. Hiển thị kết quả đã lọc
+
+   Files liên quan:
+   - scores/list.php
+
+================================================================================
+👥 3. QUẢN LÝ NGƯỜI DÙNG (SUPER ADMIN ONLY)
+================================================================================
+
+3.1. THÊM NGƯỜI DÙNG
+   Workflow:
+   1. User click "Thêm người dùng" → Modal popup
+   2. Form: Username, Email, Password, Role
+   3. Validation: Username unique, Email valid, Password min 6 chars
+   4. Submit → users.php (POST)
+   5. Hash password
+   6. Insert vào database
+   7. Refresh trang với thông báo
+
+   Files liên quan:
+   - public/users.php
+   - authController.php
+
+3.2. XÓA NGƯỜI DÙNG
+   Workflow:
+   1. User click "Xóa" → JavaScript function deleteUser(id, username)
+   2. Modal xác nhận với tên người dùng
+   3. Tạo form ẩn và submit
+   4. users.php xử lý POST
+   5. Kiểm tra không xóa chính mình
+   6. Delete từ database
+   7. Refresh trang
+
+   Files liên quan:
+   - public/users.php
+   - authController.php
+
+================================================================================
+📈 4. THỐNG KÊ VÀ BÁO CÁO
+================================================================================
+
+4.1. DASHBOARD THỐNG KÊ
+   Workflow:
+   1. User truy cập charts/statistics.php
+   2. Load dữ liệu từ database
+   3. Tính toán: Tổng sinh viên, Điểm TB, Phân bố xếp loại
+   4. Hiển thị biểu đồ (Chart.js)
+   5. Real-time updates mỗi 30 giây
+
+   Files liên quan:
+   - charts/statistics.php
+   - charts/api/statistics.php
+   - assets/js/charts.js
+
+4.2. XUẤT BÁO CÁO PDF
+   Workflow:
+   1. User click "Xuất PDF" → exports/export_pdf.php
+   2. Load dữ liệu từ database
+   3. Tạo PDF bằng TCPDF
+   4. Format: Header, Logo, Bảng dữ liệu, Footer
+   5. Download file PDF
+
+   Files liên quan:
+   - exports/export_pdf.php
+   - exportController.php
+   - assets/libs/tcpdf/
+
+4.3. XUẤT BÁO CÁO DOCX
+   Workflow:
+   1. User click "Xuất DOCX" → exports/export_docx.php
+   2. Load dữ liệu từ database
+   3. Tạo DOCX bằng PHPWord
+   4. Format: Header, Bảng dữ liệu, Styling
+   5. Download file DOCX
+
+   Files liên quan:
+   - exports/export_docx.php
+   - exportController.php
+   - assets/libs/phpword/
+
+================================================================================
+🔐 5. XÁC THỰC VÀ BẢO MẬT
+================================================================================
+
+5.1. ĐĂNG NHẬP
+   Workflow:
+   1. User truy cập public/login.php
+   2. Nhập username/password
+   3. Submit → authController.php
+   4. Validate credentials
+   5. Hash password và so sánh
+   6. Tạo session
+   7. Redirect về trang chủ
+
+   Files liên quan:
+   - public/login.php
+   - authController.php
+   - middleware.php
+
+5.2. KIỂM TRA QUYỀN HẠN
+   Workflow:
+   1. Mỗi trang được bảo vệ bởi middleware
+   2. Kiểm tra session
+   3. Kiểm tra quyền hạn theo role
+   4. Redirect nếu không có quyền
+
+   Files liên quan:
+   - middleware.php
+   - utils.php (getRolePermissions)
+
+5.3. ĐĂNG XUẤT
+   Workflow:
+   1. User click "Đăng xuất" → public/logout.php
+   2. Destroy session
+   3. Clear cookies
+   4. Redirect về trang đăng nhập
+
+   Files liên quan:
+   - public/logout.php
+
+================================================================================
+🗑️ 6. MODAL XÁC NHẬN XÓA
+================================================================================
+
+6.1. CÁCH HOẠT ĐỘNG
+   Workflow:
+   1. User click nút "Xóa" (trash icon)
+   2. JavaScript function được gọi với ID
+   3. SweetAlert2 hiển thị modal xác nhận
+   4. Modal có: Title, Message, 2 buttons (Xóa/Hủy)
+   5. Nếu user click "Xóa":
+     - Hiển thị loading modal
+     - Gửi AJAX request đến delete endpoint
+     - Xử lý response
+     - Hiển thị modal kết quả (thành công/lỗi)
+     - Reload trang nếu thành công
+   6. Nếu user click "Hủy": Đóng modal
+
+6.2. CÁC CHỨC NĂNG CÓ MODAL XÁC NHẬN
+   - Xóa sinh viên (students/list.php)
+   - Xóa điểm (scores/list.php)
+   - Xóa điểm trong chi tiết sinh viên (students/view.php)
+   - Xóa người dùng (public/users.php)
+
+6.3. TÍNH NĂNG MODAL
+   - Giao diện đẹp với SweetAlert2
+   - Animation mượt mà
+   - Loading state khi xử lý
+   - Thông báo kết quả rõ ràng
+   - Responsive design
+   - Custom styling với CSS
+
+   Files liên quan:
+   - assets/js/notifications.js (NotificationSystem class)
+   - assets/css/notifications.css (Custom styles)
+   - SweetAlert2 CDN
+
+================================================================================
+📱 7. RESPONSIVE DESIGN
+================================================================================
+
+7.1. BREAKPOINTS
+   - Mobile: < 768px
+   - Tablet: 768px - 1024px
+   - Desktop: > 1024px
+
+7.2. ADAPTIVE FEATURES
+   - Sidebar collapse trên mobile
+   - Table responsive với horizontal scroll
+   - Modal fullscreen trên mobile
+   - Touch-friendly buttons
+
+================================================================================
+⚡ 8. PERFORMANCE OPTIMIZATION
+================================================================================
+
+8.1. DATABASE OPTIMIZATION
+   - Index trên các trường thường query
+   - Pagination cho danh sách lớn
+   - Lazy loading cho images
+
+8.2. FRONTEND OPTIMIZATION
+   - CDN cho thư viện
+   - Minified CSS/JS
+   - Image optimization
+   - Caching headers
+
+================================================================================
+🔧 9. CẤU HÌNH VÀ TÙY CHỈNH
+================================================================================
+
+9.1. DATABASE CONFIG
+   File: config/db.php
+   - Host, Database name
+   - Username, Password
+   - Charset (utf8mb4)
+
+9.2. PERMISSIONS CONFIG
+   File: utils.php
+   - Định nghĩa constants
+   - getRolePermissions() function
+   - requirePermission() function
+
+9.3. UPLOAD CONFIG
+   - Max file size
+   - Allowed file types
+   - Upload directory
+
+================================================================================
+🐛 10. ERROR HANDLING
+================================================================================
+
+10.1. CLIENT-SIDE ERRORS
+   - JavaScript validation
+   - AJAX error handling
+   - User-friendly error messages
+
+10.2. SERVER-SIDE ERRORS
+   - PHP error handling
+   - Database error handling
+   - Logging system
+
+10.3. COMMON ERRORS
+   - Database connection failed
+   - File upload failed
+   - Permission denied
+   - Invalid data format
+
+================================================================================
+📋 11. FILE STRUCTURE DETAILED
+================================================================================
+
+super-stu/
+├── config/
+│   └── db.php                 # Database configuration
+├── public/                    # Public pages
+│   ├── index.php             # Dashboard
+│   ├── login.php             # Login page
+│   ├── register.php          # Registration
+│   ├── logout.php            # Logout handler
+│   ├── forgot_password.php   # Password reset request
+│   ├── reset_password.php    # Password reset form
+│   ├── users.php             # User management (Super Admin)
+│   ├── profile.php           # User profile
+│   └── permissions.php       # Permission matrix
+├── students/                 # Student module
+│   ├── list.php              # Student list with pagination
+│   ├── add.php               # Add student form
+│   ├── edit.php              # Edit student form
+│   ├── delete.php            # Delete student handler
+│   └── view.php              # Student detail view
+├── scores/                   # Score module
+│   ├── list.php              # Score list with filters
+│   ├── add.php               # Add score form
+│   ├── edit.php              # Edit score form
+│   └── delete.php            # Delete score handler
+├── charts/                   # Statistics module
+│   ├── statistics.php        # Statistics dashboard
+│   └── api/
+│       └── statistics.php    # Statistics API endpoint
+├── exports/                  # Export module
+│   ├── export_pdf.php        # PDF export handler
+│   └── export_docx.php       # DOCX export handler
+├── uploads/                  # Upload directory
+│   └── avatars/              # Student avatars
+├── assets/                   # Static assets
+│   ├── css/
+│   │   └── notifications.css # Custom notification styles
+│   ├── js/
+│   │   ├── notifications.js  # Notification system
+│   │   ├── realtime.js       # Real-time features
+│   │   └── clock-widget.js   # Clock widget
+│   └── libs/                 # Third-party libraries
+│       ├── phpword/          # PHPWord library
+│       └── tcpdf/            # TCPDF library
+├── authController.php        # Authentication controller
+├── studentController.php     # Student controller
+├── scoreController.php       # Score controller
+├── exportController.php      # Export controller
+├── utils.php                 # Utility functions
+├── middleware.php            # Security middleware
+├── database.sql              # Database schema
+├── README.md                 # Documentation
+└── WORKFLOW.txt              # This file
+
+================================================================================
+🎯 12. DEVELOPMENT WORKFLOW
+================================================================================
+
+12.1. SETUP DEVELOPMENT ENVIRONMENT
+   1. Install XAMPP
+   2. Clone project to htdocs
+   3. Import database.sql
+   4. Configure config/db.php
+   5. Set permissions for uploads/
+   6. Access http://localhost/super-stu/public/
+
+12.2. ADDING NEW FEATURES
+   1. Create controller file
+   2. Create view files in appropriate directory
+   3. Update navigation in public/index.php
+   4. Add permissions in utils.php
+   5. Test with different user roles
+
+12.3. DEBUGGING
+   1. Check browser console for JavaScript errors
+   2. Check PHP error logs
+   3. Use var_dump() for debugging
+   4. Check database queries
+   5. Verify file permissions
+
+================================================================================
+📞 13. SUPPORT AND MAINTENANCE
+================================================================================
+
+13.1. REGULAR MAINTENANCE
+   - Backup database weekly
+   - Update dependencies
+   - Monitor error logs
+   - Check file permissions
+   - Optimize database
+
+13.2. TROUBLESHOOTING
+   - Database connection issues
+   - File upload problems
+   - Permission errors
+   - Performance issues
+   - Browser compatibility
+
+13.3. SECURITY CONSIDERATIONS
+   - Regular password updates
+   - SQL injection prevention
+   - XSS protection
+   - File upload security
+   - Session management
+
+================================================================================
+
+Tài liệu này mô tả chi tiết workflow của hệ thống quản lý sinh viên.
+Để hiểu rõ hơn về từng phần, vui lòng tham khảo source code và README.md.
+
+Phát triển bởi: Minh Quang - TTM63ĐH
+Cập nhật lần cuối: 2024

@@ -368,30 +368,70 @@ $averageScore = $scoreController->getStudentAverageScore($studentId);
     <script src="../assets/js/notifications.js"></script>
     <script>
         function deleteScore(id) {
-            confirmDelete(
-                'Xác nhận xóa điểm',
-                'Bạn có chắc chắn muốn xóa điểm này? Hành động này không thể hoàn tác.',
-                function() {
-                fetch('../scores/delete.php', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                    body: 'id=' + id
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        notification.success('Xóa điểm thành công');
-                        setTimeout(() => location.reload(), 1000);
-                    } else {
-                        notification.error('Lỗi: ' + data.message);
-                    }
-                })
-                .catch(error => {
-                    notification.error('Lỗi: ' + error);
-                });
+            Swal.fire({
+                title: 'Xác nhận xóa điểm',
+                text: 'Bạn có chắc chắn muốn xóa điểm này? Hành động này không thể hoàn tác.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Xóa',
+                cancelButtonText: 'Hủy'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Hiển thị loading
+                    Swal.fire({
+                        title: 'Đang xử lý...',
+                        text: 'Vui lòng chờ trong giây lát',
+                        icon: 'info',
+                        allowOutsideClick: false,
+                        allowEscapeKey: false,
+                        showConfirmButton: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+                    
+                    // Gửi request xóa
+                    fetch('../scores/delete.php', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                        body: 'id=' + id
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        Swal.close();
+                        if (data.success) {
+                            Swal.fire({
+                                title: 'Thành công!',
+                                text: 'Điểm đã được xóa thành công',
+                                icon: 'success',
+                                confirmButtonText: 'OK'
+                            }).then(() => {
+                                location.reload();
+                            });
+                        } else {
+                            Swal.fire({
+                                title: 'Lỗi!',
+                                text: data.message,
+                                icon: 'error',
+                                confirmButtonText: 'OK'
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        Swal.close();
+                        Swal.fire({
+                            title: 'Lỗi!',
+                            text: 'Có lỗi xảy ra: ' + error,
+                            icon: 'error',
+                            confirmButtonText: 'OK'
+                        });
+                    });
                 }
+            });
         }
     </script>
 </body>

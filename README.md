@@ -68,6 +68,14 @@
 - ✅ **Profile**: Quản lý thông tin cá nhân
 - ✅ **Đổi mật khẩu**: Bảo mật tài khoản
 
+### 🗑️ **Modal xác nhận xóa**
+
+- ✅ **SweetAlert2**: Modal xác nhận đẹp mắt và chuyên nghiệp
+- ✅ **Loading state**: Hiển thị trạng thái xử lý
+- ✅ **Thông báo kết quả**: Phản hồi rõ ràng cho người dùng
+- ✅ **Animation mượt**: Hiệu ứng chuyển động tự nhiên
+- ✅ **Responsive**: Tối ưu cho mọi thiết bị
+
 ---
 
 ## 🛠️ Công nghệ sử dụng
@@ -86,6 +94,7 @@
 - **Bootstrap 5.1.3**: Framework UI responsive
 - **Chart.js**: Thư viện biểu đồ tương tác
 - **Font Awesome 6.0.0**: Icon library
+- **SweetAlert2**: Modal xác nhận và thông báo
 
 ### **Libraries & Tools**
 

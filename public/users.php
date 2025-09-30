@@ -323,19 +323,27 @@ $users = $authController->getAllUsers();
     <script src="../assets/js/notifications.js"></script>
     <script>
         function deleteUser(id, username) {
-            confirmDelete(
-                'Xác nhận xóa người dùng',
-                'Bạn có chắc chắn muốn xóa người dùng "' + username + '"? Hành động này không thể hoàn tác.',
-                function() {
-                const form = document.createElement('form');
-                form.method = 'POST';
-                form.innerHTML = `
-                    <input type="hidden" name="action" value="delete_user">
-                    <input type="hidden" name="user_id" value="${id}">
-                `;
-                document.body.appendChild(form);
-                form.submit();
+            Swal.fire({
+                title: 'Xác nhận xóa người dùng',
+                text: 'Bạn có chắc chắn muốn xóa người dùng "' + username + '"? Hành động này không thể hoàn tác.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Xóa',
+                cancelButtonText: 'Hủy'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.innerHTML = `
+                        <input type="hidden" name="action" value="delete_user">
+                        <input type="hidden" name="user_id" value="${id}">
+                    `;
+                    document.body.appendChild(form);
+                    form.submit();
                 }
+            });
         }
     </script>
 </body>

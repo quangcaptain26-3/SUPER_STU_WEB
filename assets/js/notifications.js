@@ -93,13 +93,25 @@ class NotificationSystem {
       text: text,
       icon: "warning",
       showCancelButton: true,
-      confirmButtonColor: "#d33",
-      cancelButtonColor: "#3085d6",
-      confirmButtonText: confirmButtonText,
-      cancelButtonText: cancelButtonText,
+      confirmButtonColor: "#dc3545",
+      cancelButtonColor: "#6c757d",
+      confirmButtonText: `<i class="fas fa-trash me-2"></i>${confirmButtonText}`,
+      cancelButtonText: `<i class="fas fa-times me-2"></i>${cancelButtonText}`,
       reverseButtons: true,
+      focusCancel: true,
       customClass: {
         popup: "swal2-popup-custom",
+        title: "swal2-title-custom",
+        content: "swal2-content-custom",
+        confirmButton: "swal2-confirm-custom",
+        cancelButton: "swal2-cancel-custom",
+      },
+      buttonsStyling: false,
+      showClass: {
+        popup: "animate__animated animate__fadeInDown animate__faster",
+      },
+      hideClass: {
+        popup: "animate__animated animate__fadeOutUp animate__faster",
       },
     });
   }
@@ -152,6 +164,18 @@ const notification = new NotificationSystem();
 function confirmDelete(title, text, callback) {
   notification.confirmDelete(title, text).then((result) => {
     if (result.isConfirmed) {
+      // Hiển thị loading khi đang xử lý
+      Swal.fire({
+        title: "Đang xử lý...",
+        text: "Vui lòng chờ trong giây lát",
+        icon: "info",
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        showConfirmButton: false,
+        didOpen: () => {
+          Swal.showLoading();
+        },
+      });
       callback();
     }
   });

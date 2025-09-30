@@ -288,33 +288,73 @@ $totalPages = ceil($totalStudents / $limit);
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="../assets/js/notifications.js"></script>
-    <script src="../assets/js/realtime.js"></script>
+    <!-- <script src="../assets/js/realtime.js"></script> -->
     <script>
         function deleteStudent(id) {
-            confirmDelete(
-                'Xác nhận xóa sinh viên',
-                'Bạn có chắc chắn muốn xóa sinh viên này? Hành động này không thể hoàn tác.',
-                function() {
-                fetch('delete.php', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                    body: 'id=' + id
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        notification.success('Xóa sinh viên thành công');
-                        setTimeout(() => location.reload(), 1000);
-                    } else {
-                        notification.error('Lỗi: ' + data.message);
-                    }
-                })
-                .catch(error => {
-                    notification.error('Lỗi: ' + error);
-                });
+            Swal.fire({
+                title: 'Xác nhận xóa sinh viên',
+                text: 'Bạn có chắc chắn muốn xóa sinh viên này? Hành động này không thể hoàn tác.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Xóa',
+                cancelButtonText: 'Hủy'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Hiển thị loading
+                    Swal.fire({
+                        title: 'Đang xử lý...',
+                        text: 'Vui lòng chờ trong giây lát',
+                        icon: 'info',
+                        allowOutsideClick: false,
+                        allowEscapeKey: false,
+                        showConfirmButton: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+                    
+                    // Gửi request xóa
+                    fetch('delete.php', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                        body: 'id=' + id
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        Swal.close();
+                        if (data.success) {
+                            Swal.fire({
+                                title: 'Thành công!',
+                                text: 'Sinh viên đã được xóa thành công',
+                                icon: 'success',
+                                confirmButtonText: 'OK'
+                            }).then(() => {
+                                location.reload();
+                            });
+                        } else {
+                            Swal.fire({
+                                title: 'Lỗi!',
+                                text: data.message,
+                                icon: 'error',
+                                confirmButtonText: 'OK'
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        Swal.close();
+                        Swal.fire({
+                            title: 'Lỗi!',
+                            text: 'Có lỗi xảy ra: ' + error,
+                            icon: 'error',
+                            confirmButtonText: 'OK'
+                        });
+                    });
                 }
+            });
         }
     </script>
 </body>
