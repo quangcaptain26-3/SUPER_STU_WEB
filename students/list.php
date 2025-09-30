@@ -286,10 +286,15 @@ $totalPages = ceil($totalStudents / $limit);
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="../assets/js/notifications.js"></script>
     <script src="../assets/js/realtime.js"></script>
     <script>
         function deleteStudent(id) {
-            if (confirm('Bạn có chắc chắn muốn xóa sinh viên này?')) {
+            confirmDelete(
+                'Xác nhận xóa sinh viên',
+                'Bạn có chắc chắn muốn xóa sinh viên này? Hành động này không thể hoàn tác.',
+                function() {
                 fetch('delete.php', {
                     method: 'POST',
                     headers: {
@@ -300,16 +305,16 @@ $totalPages = ceil($totalStudents / $limit);
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        alert('Xóa sinh viên thành công');
-                        location.reload();
+                        notification.success('Xóa sinh viên thành công');
+                        setTimeout(() => location.reload(), 1000);
                     } else {
-                        alert('Lỗi: ' + data.message);
+                        notification.error('Lỗi: ' + data.message);
                     }
                 })
                 .catch(error => {
-                    alert('Lỗi: ' + error);
+                    notification.error('Lỗi: ' + error);
                 });
-            }
+                }
         }
     </script>
 </body>

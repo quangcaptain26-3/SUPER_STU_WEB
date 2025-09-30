@@ -319,9 +319,14 @@ $users = $authController->getAllUsers();
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="../assets/js/notifications.js"></script>
     <script>
         function deleteUser(id, username) {
-            if (confirm('Bạn có chắc chắn muốn xóa người dùng "' + username + '"?')) {
+            confirmDelete(
+                'Xác nhận xóa người dùng',
+                'Bạn có chắc chắn muốn xóa người dùng "' + username + '"? Hành động này không thể hoàn tác.',
+                function() {
                 const form = document.createElement('form');
                 form.method = 'POST';
                 form.innerHTML = `
@@ -330,7 +335,7 @@ $users = $authController->getAllUsers();
                 `;
                 document.body.appendChild(form);
                 form.submit();
-            }
+                }
         }
     </script>
 </body>

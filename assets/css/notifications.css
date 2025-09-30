@@ -1,0 +1,118 @@
+/* Custom styles for notification system */
+
+/* Toast container positioning */
+.toast-container {
+  z-index: 9999;
+}
+
+/* Custom toast styles */
+.toast {
+  min-width: 300px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border: none;
+  border-radius: 8px;
+}
+
+.toast-header {
+  border-radius: 8px 8px 0 0;
+  font-weight: 600;
+}
+
+.toast-body {
+  padding: 12px 16px;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+/* Success toast */
+.toast-header.bg-success {
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important;
+}
+
+/* Error toast */
+.toast-header.bg-danger {
+  background: linear-gradient(135deg, #dc3545 0%, #e74c3c 100%) !important;
+}
+
+/* Warning toast */
+.toast-header.bg-warning {
+  background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%) !important;
+  color: #000 !important;
+}
+
+/* Info toast */
+.toast-header.bg-info {
+  background: linear-gradient(135deg, #17a2b8 0%, #6f42c1 100%) !important;
+}
+
+/* SweetAlert2 custom styles */
+.swal2-popup-custom {
+  border-radius: 12px;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.swal2-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.swal2-content {
+  font-size: 1rem;
+  color: #6c757d;
+  line-height: 1.5;
+}
+
+.swal2-confirm {
+  border-radius: 6px;
+  font-weight: 500;
+  padding: 10px 20px;
+}
+
+.swal2-cancel {
+  border-radius: 6px;
+  font-weight: 500;
+  padding: 10px 20px;
+}
+
+/* Animation for toast */
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.toast.show {
+  animation: slideInRight 0.3s ease-out;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .toast-container {
+    top: 10px !important;
+    right: 10px !important;
+    left: 10px !important;
+  }
+
+  .toast {
+    min-width: auto;
+    width: 100%;
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .toast {
+    background-color: #2d3748;
+    color: #e2e8f0;
+  }
+
+  .toast-body {
+    color: #e2e8f0;
+  }
+}

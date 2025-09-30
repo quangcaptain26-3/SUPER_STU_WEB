@@ -330,6 +330,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="../assets/js/notifications.js"></script>
     <script>
         function previewImage(input) {
             if (input.files && input.files[0]) {
@@ -342,7 +344,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
         
         function removeAvatar() {
-            if (confirm('Bạn có chắc chắn muốn xóa ảnh đại diện?')) {
+            confirmDelete(
+                'Xác nhận xóa ảnh đại diện',
+                'Bạn có chắc chắn muốn xóa ảnh đại diện?',
+                function() {
                 // Create a hidden input to indicate avatar removal
                 const hiddenInput = document.createElement('input');
                 hiddenInput.type = 'hidden';
@@ -353,7 +358,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 // Update preview
                 document.getElementById('avatarPreview').src = 'https://via.placeholder.com/150x150?text=No+Image';
                 document.getElementById('avatar').value = '';
-            }
+                notification.success('Đã xóa ảnh đại diện');
+                }
         }
         
         // Form validation

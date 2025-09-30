@@ -265,10 +265,15 @@ $students = $studentController->getAllStudents('', 1000, 0); // Get all students
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="../assets/js/notifications.js"></script>
     <script src="../assets/js/realtime.js"></script>
     <script>
         function deleteScore(id) {
-            if (confirm('Bạn có chắc chắn muốn xóa điểm này?')) {
+            confirmDelete(
+                'Xác nhận xóa điểm',
+                'Bạn có chắc chắn muốn xóa điểm này? Hành động này không thể hoàn tác.',
+                function() {
                 fetch('delete.php', {
                     method: 'POST',
                     headers: {
@@ -279,16 +284,16 @@ $students = $studentController->getAllStudents('', 1000, 0); // Get all students
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        alert('Xóa điểm thành công');
-                        location.reload();
+                        notification.success('Xóa điểm thành công');
+                        setTimeout(() => location.reload(), 1000);
                     } else {
-                        alert('Lỗi: ' + data.message);
+                        notification.error('Lỗi: ' + data.message);
                     }
                 })
                 .catch(error => {
-                    alert('Lỗi: ' + error);
+                    notification.error('Lỗi: ' + error);
                 });
-            }
+                }
         }
     </script>
 </body>
