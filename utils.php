@@ -51,10 +51,13 @@ function getRolePermissions($role) {
         ],
         'teacher' => [
             PERMISSION_VIEW_STUDENTS,
+            PERMISSION_ADD_STUDENTS,
+            PERMISSION_EDIT_STUDENTS,
             PERMISSION_VIEW_SCORES,
             PERMISSION_ADD_SCORES,
             PERMISSION_EDIT_SCORES,
-            PERMISSION_VIEW_STATISTICS
+            PERMISSION_VIEW_STATISTICS,
+            PERMISSION_EXPORT_DATA
         ],
         'admin' => [
             PERMISSION_VIEW_STUDENTS,

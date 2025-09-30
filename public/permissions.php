@@ -254,9 +254,13 @@ $allPermissions = [
                                 <div class="card-body">
                                     <ul class="list-unstyled mb-0">
                                         <li><i class="fas fa-check text-success me-2"></i>Xem danh sách sinh viên</li>
+                                        <li><i class="fas fa-check text-success me-2"></i>Thêm sinh viên</li>
+                                        <li><i class="fas fa-check text-success me-2"></i>Sửa thông tin sinh viên</li>
                                         <li><i class="fas fa-check text-success me-2"></i>Quản lý điểm số</li>
                                         <li><i class="fas fa-check text-success me-2"></i>Xem thống kê</li>
-                                        <li><i class="fas fa-times text-danger me-2"></i>Không thể quản lý sinh viên</li>
+                                        <li><i class="fas fa-check text-success me-2"></i>Xuất báo cáo</li>
+                                        <li><i class="fas fa-times text-danger me-2"></i>Không thể xóa sinh viên</li>
+                                        <li><i class="fas fa-times text-danger me-2"></i>Không thể quản lý người dùng</li>
                                     </ul>
                                 </div>
                             </div>

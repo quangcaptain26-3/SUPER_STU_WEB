@@ -255,10 +255,13 @@ http://localhost/super-stu/public/
 ### **🟡 Teacher**
 
 - ✅ Xem danh sách sinh viên
+- ✅ Thêm sinh viên
+- ✅ Sửa thông tin sinh viên
 - ✅ Quản lý điểm số (CRUD)
 - ✅ Xem thống kê
-- ❌ Quản lý sinh viên
-- ❌ Xuất báo cáo
+- ✅ Xuất báo cáo PDF/DOCX
+- ❌ Xóa sinh viên
+- ❌ Quản lý người dùng
 
 ### **🟢 Student**
 
