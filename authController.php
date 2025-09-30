@@ -53,8 +53,9 @@ class AuthController {
         // Insert new user
         $query = "INSERT INTO users (username, password, email, role) VALUES (:username, :password, :email, :role)";
         $stmt = $this->conn->prepare($query);
+        $hashedPassword = hashPassword($password);
         $stmt->bindParam(':username', $username);
-        $stmt->bindParam(':password', hashPassword($password));
+        $stmt->bindParam(':password', $hashedPassword);
         $stmt->bindParam(':email', $email);
         $stmt->bindParam(':role', $role);
         
@@ -115,7 +116,8 @@ class AuthController {
             // Update password
             $query = "UPDATE users SET password = :password WHERE id = :user_id";
             $stmt = $this->conn->prepare($query);
-            $stmt->bindParam(':password', hashPassword($newPassword));
+            $hashedPassword = hashPassword($newPassword);
+            $stmt->bindParam(':password', $hashedPassword);
             $stmt->bindParam(':user_id', $tokenData['user_id']);
             
             if ($stmt->execute()) {
@@ -188,7 +190,8 @@ class AuthController {
     public function changePassword($id, $newPassword) {
         $query = "UPDATE users SET password = :password WHERE id = :id";
         $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':password', hashPassword($newPassword));
+        $hashedPassword = hashPassword($newPassword);
+        $stmt->bindParam(':password', $hashedPassword);
         $stmt->bindParam(':id', $id);
         
         if ($stmt->execute()) {
