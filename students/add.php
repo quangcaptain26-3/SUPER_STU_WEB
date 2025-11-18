@@ -9,10 +9,14 @@ $error = '';
 $success = '';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $data = [
-        'msv' => sanitize($_POST['msv']),
-        'fullname' => sanitize($_POST['fullname']),
-        'dob' => $_POST['dob'],
+    // Kiểm tra CSRF token
+    if (!isset($_POST['csrf_token']) || !verifyCSRFToken($_POST['csrf_token'])) {
+        $error = 'Lỗi xác thực. Vui lòng thử lại.';
+    } else {
+        $data = [
+            'msv' => sanitize($_POST['msv']),
+            'fullname' => sanitize($_POST['fullname']),
+            'dob' => $_POST['dob'],
         'gender' => $_POST['gender'],
         'address' => sanitize($_POST['address']),
         'phone' => sanitize($_POST['phone']),
@@ -44,6 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
 }
 ?>
+
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -187,6 +192,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                                     <?php endif; ?>
                                     
                                     <form method="POST" enctype="multipart/form-data" id="studentForm">
+                                        <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
                                         <div class="row">
                                             <div class="col-md-6 mb-3">
                                                 <label for="msv" class="form-label">
@@ -341,3 +347,4 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     </script>
 </body>
 </html>
+

@@ -22,32 +22,38 @@ $error = '';
 $success = '';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $data = [
-        'student_id' => $_POST['student_id'],
-        'subject' => sanitize($_POST['subject']),
-        'score' => floatval($_POST['score']),
-        'semester' => sanitize($_POST['semester'])
-    ];
-    
-    if (empty($data['student_id']) || empty($data['subject']) || empty($data['semester'])) {
-        $error = 'Vui lòng điền đầy đủ thông tin';
-    } elseif ($data['score'] < 0 || $data['score'] > 10) {
-        $error = 'Điểm phải từ 0 đến 10';
+    // Kiểm tra CSRF token
+    if (!isset($_POST['csrf_token']) || !verifyCSRFToken($_POST['csrf_token'])) {
+        $error = 'Lỗi xác thực. Vui lòng thử lại.';
     } else {
-        $result = $scoreController->updateScore($scoreId, $data);
-        
-        if ($result['success']) {
-            $success = $result['message'];
-            // Update score data for display
-            $score = array_merge($score, $data);
+        $data = [
+            'student_id' => $_POST['student_id'],
+            'subject' => sanitize($_POST['subject']),
+            'score' => floatval($_POST['score']),
+            'semester' => sanitize($_POST['semester'])
+        ];
+
+        if (empty($data['student_id']) || empty($data['subject']) || empty($data['semester'])) {
+            $error = 'Vui lòng điền đầy đủ thông tin';
+        } elseif ($data['score'] < 0 || $data['score'] > 10) {
+            $error = 'Điểm phải từ 0 đến 10';
         } else {
-            $error = $result['message'];
+            $result = $scoreController->updateScore($scoreId, $data);
+
+            if ($result['success']) {
+                $success = $result['message'];
+                // Update score data for display
+                $score = array_merge($score, $data);
+            } else {
+                $error = $result['message'];
+            }
         }
     }
 }
 ?>
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -59,37 +65,45 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             min-height: 100vh;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         }
+
         .sidebar .nav-link {
-            color: rgba(255,255,255,0.8);
+            color: rgba(255, 255, 255, 0.8);
             padding: 12px 20px;
             border-radius: 8px;
             margin: 2px 0;
             transition: all 0.3s;
         }
-        .sidebar .nav-link:hover, .sidebar .nav-link.active {
+
+        .sidebar .nav-link:hover,
+        .sidebar .nav-link.active {
             color: white;
-            background: rgba(255,255,255,0.2);
+            background: rgba(255, 255, 255, 0.2);
             transform: translateX(5px);
         }
+
         .main-content {
             background-color: #f8f9fa;
             min-height: 100vh;
         }
+
         .card {
             border: none;
             border-radius: 15px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
+
         .form-control {
             border-radius: 10px;
             border: 2px solid #e9ecef;
             padding: 12px 15px;
             transition: all 0.3s;
         }
+
         .form-control:focus {
             border-color: #667eea;
             box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
         }
+
         .btn-primary {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             border: none;
@@ -98,9 +112,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             font-weight: 600;
             transition: transform 0.3s;
         }
+
         .btn-primary:hover {
             transform: translateY(-2px);
         }
+
         .score-preview {
             font-size: 2rem;
             font-weight: bold;
@@ -109,11 +125,24 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             border-radius: 10px;
             margin-top: 1rem;
         }
-        .score-excellent { background: #d4edda; color: #155724; }
-        .score-good { background: #fff3cd; color: #856404; }
-        .score-poor { background: #f8d7da; color: #721c24; }
+
+        .score-excellent {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .score-good {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .score-poor {
+            background: #f8d7da;
+            color: #721c24;
+        }
     </style>
 </head>
+
 <body>
     <div class="container-fluid">
         <div class="row">
@@ -130,7 +159,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         <span class="badge bg-light text-dark ms-2"><?php echo ucfirst($_SESSION['role']); ?></span>
                     </div>
                 </div>
-                
+
                 <nav class="nav flex-column px-3">
                     <a class="nav-link" href="../public/index.php">
                         <i class="fas fa-home me-2"></i>Trang chủ
@@ -149,7 +178,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     </a>
                 </nav>
             </div>
-            
+
             <!-- Main Content -->
             <div class="col-md-9 col-lg-10 main-content">
                 <div class="p-4">
@@ -159,7 +188,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                             <i class="fas fa-arrow-left me-2"></i>Quay lại
                         </a>
                     </div>
-                    
+
                     <div class="row">
                         <div class="col-lg-8">
                             <div class="card">
@@ -171,20 +200,21 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                                 </div>
                                 <div class="card-body">
                                     <?php if ($error): ?>
-                                    <div class="alert alert-danger" role="alert">
-                                        <i class="fas fa-exclamation-triangle me-2"></i>
-                                        <?php echo htmlspecialchars($error); ?>
-                                    </div>
+                                        <div class="alert alert-danger" role="alert">
+                                            <i class="fas fa-exclamation-triangle me-2"></i>
+                                            <?php echo htmlspecialchars($error); ?>
+                                        </div>
                                     <?php endif; ?>
-                                    
+
                                     <?php if ($success): ?>
-                                    <div class="alert alert-success" role="alert">
-                                        <i class="fas fa-check-circle me-2"></i>
-                                        <?php echo htmlspecialchars($success); ?>
-                                    </div>
+                                        <div class="alert alert-success" role="alert">
+                                            <i class="fas fa-check-circle me-2"></i>
+                                            <?php echo htmlspecialchars($success); ?>
+                                        </div>
                                     <?php endif; ?>
-                                    
+
                                     <form method="POST" id="scoreForm">
+                                        <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
                                         <div class="mb-3">
                                             <label for="student_id" class="form-label">
                                                 <i class="fas fa-user me-2"></i>Sinh viên *
@@ -192,33 +222,33 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                                             <select class="form-control" id="student_id" name="student_id" required>
                                                 <option value="">Chọn sinh viên</option>
                                                 <?php foreach ($students as $student): ?>
-                                                <option value="<?php echo $student['id']; ?>" 
+                                                    <option value="<?php echo $student['id']; ?>"
                                                         <?php echo ($score['student_id'] == $student['id']) ? 'selected' : ''; ?>>
-                                                    <?php echo htmlspecialchars($student['msv'] . ' - ' . $student['fullname']); ?>
-                                                </option>
+                                                        <?php echo htmlspecialchars($student['msv'] . ' - ' . $student['fullname']); ?>
+                                                    </option>
                                                 <?php endforeach; ?>
                                             </select>
                                         </div>
-                                        
+
                                         <div class="row">
                                             <div class="col-md-6 mb-3">
                                                 <label for="subject" class="form-label">
                                                     <i class="fas fa-book me-2"></i>Môn học *
                                                 </label>
-                                                <input type="text" class="form-control" id="subject" name="subject" 
-                                                       value="<?php echo htmlspecialchars($score['subject']); ?>" required>
+                                                <input type="text" class="form-control" id="subject" name="subject"
+                                                    value="<?php echo htmlspecialchars($score['subject']); ?>" required>
                                             </div>
-                                            
+
                                             <div class="col-md-6 mb-3">
                                                 <label for="score" class="form-label">
                                                     <i class="fas fa-star me-2"></i>Điểm số *
                                                 </label>
-                                                <input type="number" class="form-control" id="score" name="score" 
-                                                       value="<?php echo $score['score']; ?>" 
-                                                       min="0" max="10" step="0.1" required>
+                                                <input type="number" class="form-control" id="score" name="score"
+                                                    value="<?php echo $score['score']; ?>"
+                                                    min="0" max="10" step="0.1" required>
                                             </div>
                                         </div>
-                                        
+
                                         <div class="mb-3">
                                             <label for="semester" class="form-label">
                                                 <i class="fas fa-calendar me-2"></i>Học kỳ *
@@ -231,7 +261,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                                                 <option value="HK2-2023" <?php echo ($score['semester'] == 'HK2-2023') ? 'selected' : ''; ?>>HK2-2023</option>
                                             </select>
                                         </div>
-                                        
+
                                         <div class="d-flex justify-content-end gap-2">
                                             <a href="list.php" class="btn btn-outline-secondary">
                                                 <i class="fas fa-times me-2"></i>Hủy
@@ -244,7 +274,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div class="col-lg-4">
                             <div class="card">
                                 <div class="card-header">
@@ -256,17 +286,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                                     </div>
                                     <div id="gradePreview" class="mt-2">
                                         <?php
-                                        $grade = $score['score'] >= 9 ? 'A+' : 
-                                                ($score['score'] >= 8 ? 'A' : 
-                                                ($score['score'] >= 7 ? 'B+' : 
-                                                ($score['score'] >= 6 ? 'B' : 
-                                                ($score['score'] >= 5 ? 'C' : 'D'))));
+                                        $grade = $score['score'] >= 9 ? 'A+' : ($score['score'] >= 8 ? 'A' : ($score['score'] >= 7 ? 'B+' : ($score['score'] >= 6 ? 'B' : ($score['score'] >= 5 ? 'C' : 'D'))));
                                         ?>
                                         <strong>Xếp loại: <?php echo $grade; ?></strong>
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <div class="card mt-3">
                                 <div class="card-header">
                                     <h6 class="mb-0"><i class="fas fa-info-circle me-2"></i>Thông tin bổ sung</h6>
@@ -299,9 +325,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             const score = parseFloat(document.getElementById('score').value) || 0;
             const preview = document.getElementById('scorePreview');
             const gradePreview = document.getElementById('gradePreview');
-            
+
             preview.textContent = score.toFixed(1);
-            
+
             let grade, className;
             if (score >= 9) {
                 grade = 'A+';
@@ -322,36 +348,37 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 grade = 'D';
                 className = 'score-poor';
             }
-            
+
             preview.className = 'score-preview ' + className;
             gradePreview.innerHTML = '<strong>Xếp loại: ' + grade + '</strong>';
         }
-        
+
         // Update preview when score changes
         document.getElementById('score').addEventListener('input', updateScorePreview);
-        
+
         // Form validation
         document.getElementById('scoreForm').addEventListener('submit', function(e) {
             const studentId = document.getElementById('student_id').value;
             const subject = document.getElementById('subject').value.trim();
             const score = parseFloat(document.getElementById('score').value);
             const semester = document.getElementById('semester').value;
-            
+
             if (!studentId || !subject || !semester) {
                 e.preventDefault();
                 alert('Vui lòng điền đầy đủ thông tin');
                 return false;
             }
-            
+
             if (isNaN(score) || score < 0 || score > 10) {
                 e.preventDefault();
                 alert('Điểm phải từ 0 đến 10');
                 return false;
             }
         });
-        
+
         // Initial preview update
         updateScorePreview();
     </script>
 </body>
+
 </html>

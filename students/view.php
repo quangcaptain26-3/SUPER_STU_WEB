@@ -16,11 +16,19 @@ if (!$student) {
     exit();
 }
 
+// Kiểm tra quyền xem
+if (!canViewStudent($studentId)) {
+    $_SESSION['error'] = 'Bạn không có quyền xem dữ liệu này';
+    header('Location: list.php?error=access_denied');
+    exit();
+}
+
 $scores = $scoreController->getStudentScores($studentId);
 $averageScore = $scoreController->getStudentAverageScore($studentId);
 ?>
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -32,27 +40,33 @@ $averageScore = $scoreController->getStudentAverageScore($studentId);
             min-height: 100vh;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         }
+
         .sidebar .nav-link {
-            color: rgba(255,255,255,0.8);
+            color: rgba(255, 255, 255, 0.8);
             padding: 12px 20px;
             border-radius: 8px;
             margin: 2px 0;
             transition: all 0.3s;
         }
-        .sidebar .nav-link:hover, .sidebar .nav-link.active {
+
+        .sidebar .nav-link:hover,
+        .sidebar .nav-link.active {
             color: white;
-            background: rgba(255,255,255,0.2);
+            background: rgba(255, 255, 255, 0.2);
             transform: translateX(5px);
         }
+
         .main-content {
             background-color: #f8f9fa;
             min-height: 100vh;
         }
+
         .card {
             border: none;
             border-radius: 15px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
+
         .profile-header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
@@ -60,6 +74,7 @@ $averageScore = $scoreController->getStudentAverageScore($studentId);
             padding: 2rem;
             margin-bottom: 2rem;
         }
+
         .avatar-large {
             width: 120px;
             height: 120px;
@@ -67,23 +82,28 @@ $averageScore = $scoreController->getStudentAverageScore($studentId);
             object-fit: cover;
             border: 4px solid white;
         }
+
         .info-item {
             display: flex;
             align-items: center;
             margin-bottom: 1rem;
         }
+
         .info-item i {
             width: 20px;
             margin-right: 10px;
         }
+
         .score-badge {
             font-size: 0.9rem;
             padding: 0.5rem 1rem;
         }
+
         .table {
             border-radius: 10px;
             overflow: hidden;
         }
+
         .table thead th {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
@@ -92,6 +112,7 @@ $averageScore = $scoreController->getStudentAverageScore($studentId);
         }
     </style>
 </head>
+
 <body>
     <div class="container-fluid">
         <div class="row">
@@ -108,7 +129,7 @@ $averageScore = $scoreController->getStudentAverageScore($studentId);
                         <span class="badge bg-light text-dark ms-2"><?php echo ucfirst($_SESSION['role']); ?></span>
                     </div>
                 </div>
-                
+
                 <nav class="nav flex-column px-3">
                     <a class="nav-link" href="../public/index.php">
                         <i class="fas fa-home me-2"></i>Trang chủ
@@ -127,7 +148,7 @@ $averageScore = $scoreController->getStudentAverageScore($studentId);
                     </a>
                 </nav>
             </div>
-            
+
             <!-- Main Content -->
             <div class="col-md-9 col-lg-10 main-content">
                 <div class="p-4">
@@ -142,18 +163,18 @@ $averageScore = $scoreController->getStudentAverageScore($studentId);
                             </a>
                         </div>
                     </div>
-                    
+
                     <!-- Profile Header -->
                     <div class="profile-header">
                         <div class="row align-items-center">
                             <div class="col-md-3 text-center">
                                 <?php if ($student['avatar']): ?>
-                                <img src="../uploads/avatars/<?php echo htmlspecialchars($student['avatar']); ?>" 
-                                     class="avatar-large" alt="Avatar">
+                                    <img src="../uploads/avatars/<?php echo htmlspecialchars($student['avatar']); ?>"
+                                        class="avatar-large" alt="Avatar">
                                 <?php else: ?>
-                                <div class="avatar-large bg-white d-flex align-items-center justify-content-center mx-auto">
-                                    <i class="fas fa-user fa-3x text-primary"></i>
-                                </div>
+                                    <div class="avatar-large bg-white d-flex align-items-center justify-content-center mx-auto">
+                                        <i class="fas fa-user fa-3x text-primary"></i>
+                                    </div>
                                 <?php endif; ?>
                             </div>
                             <div class="col-md-9">
@@ -168,7 +189,7 @@ $averageScore = $scoreController->getStudentAverageScore($studentId);
                                 </p>
                                 <p class="mb-0">
                                     <i class="fas fa-chart-line me-2"></i>
-                                    Điểm trung bình: 
+                                    Điểm trung bình:
                                     <span class="badge bg-light text-dark score-badge">
                                         <?php echo $averageScore ?: 'Chưa có điểm'; ?>
                                     </span>
@@ -176,7 +197,7 @@ $averageScore = $scoreController->getStudentAverageScore($studentId);
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="row">
                         <!-- Personal Information -->
                         <div class="col-md-6 mb-4">
@@ -192,7 +213,7 @@ $averageScore = $scoreController->getStudentAverageScore($studentId);
                                             <?php echo formatDate($student['dob']); ?>
                                         </div>
                                     </div>
-                                    
+
                                     <div class="info-item">
                                         <i class="fas fa-venus-mars text-primary"></i>
                                         <div>
@@ -207,7 +228,7 @@ $averageScore = $scoreController->getStudentAverageScore($studentId);
                                             ?>
                                         </div>
                                     </div>
-                                    
+
                                     <div class="info-item">
                                         <i class="fas fa-phone text-primary"></i>
                                         <div>
@@ -215,7 +236,7 @@ $averageScore = $scoreController->getStudentAverageScore($studentId);
                                             <?php echo htmlspecialchars($student['phone'] ?: 'Chưa cập nhật'); ?>
                                         </div>
                                     </div>
-                                    
+
                                     <div class="info-item">
                                         <i class="fas fa-map-marker-alt text-primary"></i>
                                         <div>
@@ -223,7 +244,7 @@ $averageScore = $scoreController->getStudentAverageScore($studentId);
                                             <?php echo htmlspecialchars($student['address'] ?: 'Chưa cập nhật'); ?>
                                         </div>
                                     </div>
-                                    
+
                                     <div class="info-item">
                                         <i class="fas fa-clock text-primary"></i>
                                         <div>
@@ -234,7 +255,7 @@ $averageScore = $scoreController->getStudentAverageScore($studentId);
                                 </div>
                             </div>
                         </div>
-                        
+
                         <!-- Academic Information -->
                         <div class="col-md-6 mb-4">
                             <div class="card">
@@ -254,38 +275,38 @@ $averageScore = $scoreController->getStudentAverageScore($studentId);
                                             <small class="text-muted">Điểm TB</small>
                                         </div>
                                     </div>
-                                    
+
                                     <?php if (!empty($scores)): ?>
-                                    <h6 class="mb-3">Điểm theo học kỳ:</h6>
-                                    <?php
-                                    $scoresBySemester = [];
-                                    foreach ($scores as $score) {
-                                        $scoresBySemester[$score['semester']][] = $score;
-                                    }
-                                    ?>
-                                    <?php foreach ($scoresBySemester as $semester => $semesterScores): ?>
-                                    <div class="mb-3">
-                                        <h6 class="text-muted"><?php echo htmlspecialchars($semester); ?></h6>
-                                        <div class="d-flex flex-wrap gap-1">
-                                            <?php foreach ($semesterScores as $score): ?>
-                                            <span class="badge bg-primary">
-                                                <?php echo htmlspecialchars($score['subject']); ?>: <?php echo $score['score']; ?>
-                                            </span>
-                                            <?php endforeach; ?>
-                                        </div>
-                                    </div>
-                                    <?php endforeach; ?>
+                                        <h6 class="mb-3">Điểm theo học kỳ:</h6>
+                                        <?php
+                                        $scoresBySemester = [];
+                                        foreach ($scores as $score) {
+                                            $scoresBySemester[$score['semester']][] = $score;
+                                        }
+                                        ?>
+                                        <?php foreach ($scoresBySemester as $semester => $semesterScores): ?>
+                                            <div class="mb-3">
+                                                <h6 class="text-muted"><?php echo htmlspecialchars($semester); ?></h6>
+                                                <div class="d-flex flex-wrap gap-1">
+                                                    <?php foreach ($semesterScores as $score): ?>
+                                                        <span class="badge bg-primary">
+                                                            <?php echo htmlspecialchars($score['subject']); ?>: <?php echo $score['score']; ?>
+                                                        </span>
+                                                    <?php endforeach; ?>
+                                                </div>
+                                            </div>
+                                        <?php endforeach; ?>
                                     <?php else: ?>
-                                    <div class="text-center text-muted">
-                                        <i class="fas fa-chart-line fa-3x mb-3"></i>
-                                        <p>Chưa có điểm số</p>
-                                    </div>
+                                        <div class="text-center text-muted">
+                                            <i class="fas fa-chart-line fa-3x mb-3"></i>
+                                            <p>Chưa có điểm số</p>
+                                        </div>
                                     <?php endif; ?>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Scores Table -->
                     <div class="card">
                         <div class="card-header d-flex justify-content-between align-items-center">
@@ -296,65 +317,60 @@ $averageScore = $scoreController->getStudentAverageScore($studentId);
                         </div>
                         <div class="card-body p-0">
                             <?php if (empty($scores)): ?>
-                            <div class="text-center py-5">
-                                <i class="fas fa-chart-line fa-3x text-muted mb-3"></i>
-                                <p class="text-muted">Chưa có điểm số nào</p>
-                                <a href="../scores/add.php?student_id=<?php echo $student['id']; ?>" class="btn btn-primary">
-                                    <i class="fas fa-plus me-2"></i>Thêm điểm đầu tiên
-                                </a>
-                            </div>
+                                <div class="text-center py-5">
+                                    <i class="fas fa-chart-line fa-3x text-muted mb-3"></i>
+                                    <p class="text-muted">Chưa có điểm số nào</p>
+                                    <a href="../scores/add.php?student_id=<?php echo $student['id']; ?>" class="btn btn-primary">
+                                        <i class="fas fa-plus me-2"></i>Thêm điểm đầu tiên
+                                    </a>
+                                </div>
                             <?php else: ?>
-                            <div class="table-responsive">
-                                <table class="table table-hover mb-0">
-                                    <thead>
-                                        <tr>
-                                            <th>STT</th>
-                                            <th>Môn học</th>
-                                            <th>Điểm</th>
-                                            <th>Học kỳ</th>
-                                            <th>Xếp loại</th>
-                                            <th>Thao tác</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <?php foreach ($scores as $index => $score): ?>
-                                        <tr>
-                                            <td><?php echo $index + 1; ?></td>
-                                            <td><?php echo htmlspecialchars($score['subject']); ?></td>
-                                            <td>
-                                                <span class="badge <?php 
-                                                    echo $score['score'] >= 8 ? 'bg-success' : 
-                                                        ($score['score'] >= 6 ? 'bg-warning' : 'bg-danger'); 
-                                                ?>">
-                                                    <?php echo $score['score']; ?>
-                                                </span>
-                                            </td>
-                                            <td><?php echo htmlspecialchars($score['semester']); ?></td>
-                                            <td>
-                                                <?php
-                                                $grade = $score['score'] >= 9 ? 'A+' : 
-                                                        ($score['score'] >= 8 ? 'A' : 
-                                                        ($score['score'] >= 7 ? 'B+' : 
-                                                        ($score['score'] >= 6 ? 'B' : 
-                                                        ($score['score'] >= 5 ? 'C' : 'D'))));
-                                                echo $grade;
-                                                ?>
-                                            </td>
-                                            <td>
-                                                <a href="../scores/edit.php?id=<?php echo $score['id']; ?>" 
-                                                   class="btn btn-sm btn-outline-primary" title="Sửa">
-                                                    <i class="fas fa-edit"></i>
-                                                </a>
-                                                <button onclick="deleteScore(<?php echo $score['id']; ?>)" 
-                                                        class="btn btn-sm btn-outline-danger" title="Xóa">
-                                                    <i class="fas fa-trash"></i>
-                                                </button>
-                                            </td>
-                                        </tr>
-                                        <?php endforeach; ?>
-                                    </tbody>
-                                </table>
-                            </div>
+                                <div class="table-responsive">
+                                    <table class="table table-hover mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th>STT</th>
+                                                <th>Môn học</th>
+                                                <th>Điểm</th>
+                                                <th>Học kỳ</th>
+                                                <th>Xếp loại</th>
+                                                <th>Thao tác</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <?php foreach ($scores as $index => $score): ?>
+                                                <tr>
+                                                    <td><?php echo $index + 1; ?></td>
+                                                    <td><?php echo htmlspecialchars($score['subject']); ?></td>
+                                                    <td>
+                                                        <span class="badge <?php
+                                                                            echo $score['score'] >= 8 ? 'bg-success' : ($score['score'] >= 6 ? 'bg-warning' : 'bg-danger');
+                                                                            ?>">
+                                                            <?php echo $score['score']; ?>
+                                                        </span>
+                                                    </td>
+                                                    <td><?php echo htmlspecialchars($score['semester']); ?></td>
+                                                    <td>
+                                                        <?php
+                                                        $grade = $score['score'] >= 9 ? 'A+' : ($score['score'] >= 8 ? 'A' : ($score['score'] >= 7 ? 'B+' : ($score['score'] >= 6 ? 'B' : ($score['score'] >= 5 ? 'C' : 'D'))));
+                                                        echo $grade;
+                                                        ?>
+                                                    </td>
+                                                    <td>
+                                                        <a href="../scores/edit.php?id=<?php echo $score['id']; ?>"
+                                                            class="btn btn-sm btn-outline-primary" title="Sửa">
+                                                            <i class="fas fa-edit"></i>
+                                                        </a>
+                                                        <button onclick="deleteScore(<?php echo $score['id']; ?>)"
+                                                            class="btn btn-sm btn-outline-danger" title="Xóa">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            <?php endforeach; ?>
+                                        </tbody>
+                                    </table>
+                                </div>
                             <?php endif; ?>
                         </div>
                     </div>
@@ -391,48 +407,49 @@ $averageScore = $scoreController->getStudentAverageScore($studentId);
                             Swal.showLoading();
                         }
                     });
-                    
+
                     // Gửi request xóa
                     fetch('../scores/delete.php', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded',
-                        },
-                        body: 'id=' + id
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        Swal.close();
-                        if (data.success) {
-                            Swal.fire({
-                                title: 'Thành công!',
-                                text: 'Điểm đã được xóa thành công',
-                                icon: 'success',
-                                confirmButtonText: 'OK'
-                            }).then(() => {
-                                location.reload();
-                            });
-                        } else {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/x-www-form-urlencoded',
+                            },
+                            body: 'id=' + id
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            Swal.close();
+                            if (data.success) {
+                                Swal.fire({
+                                    title: 'Thành công!',
+                                    text: 'Điểm đã được xóa thành công',
+                                    icon: 'success',
+                                    confirmButtonText: 'OK'
+                                }).then(() => {
+                                    location.reload();
+                                });
+                            } else {
+                                Swal.fire({
+                                    title: 'Lỗi!',
+                                    text: data.message,
+                                    icon: 'error',
+                                    confirmButtonText: 'OK'
+                                });
+                            }
+                        })
+                        .catch(error => {
+                            Swal.close();
                             Swal.fire({
                                 title: 'Lỗi!',
-                                text: data.message,
+                                text: 'Có lỗi xảy ra: ' + error,
                                 icon: 'error',
                                 confirmButtonText: 'OK'
                             });
-                        }
-                    })
-                    .catch(error => {
-                        Swal.close();
-                        Swal.fire({
-                            title: 'Lỗi!',
-                            text: 'Có lỗi xảy ra: ' + error,
-                            icon: 'error',
-                            confirmButtonText: 'OK'
                         });
-                    });
                 }
             });
         }
     </script>
 </body>
+
 </html>
