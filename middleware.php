@@ -1,15 +1,21 @@
 <?php
 /**
- * Middleware cho hệ thống phân quyền
- * Sử dụng để kiểm tra quyền truy cập trước khi thực hiện các hành động
+ * Middleware for the permission system.
+ * Used to check access rights before performing actions.
  */
 
 require_once 'utils.php';
 
+/**
+ * Class PermissionMiddleware
+ * Provides static methods to handle permission checks throughout the application.
+ */
 class PermissionMiddleware {
     
     /**
-     * Kiểm tra quyền truy cập trang
+     * Checks if the current user has permission to access a specific page.
+     * If not, it redirects to the main page with an error message.
+     * @param string $permission The required permission.
      */
     public static function checkPageAccess($permission) {
         if (!hasPermission($permission)) {
@@ -20,7 +26,9 @@ class PermissionMiddleware {
     }
     
     /**
-     * Kiểm tra quyền thực hiện hành động
+     * Checks if the current user has permission to perform a specific action.
+     * @param string $permission The required permission.
+     * @return array An array indicating success or failure.
      */
     public static function checkActionPermission($permission) {
         if (!hasPermission($permission)) {
@@ -33,7 +41,9 @@ class PermissionMiddleware {
     }
     
     /**
-     * Kiểm tra quyền dựa trên vai trò
+     * Checks if the current user has a specific role.
+     * If not, it redirects to the main page with an error message.
+     * @param string $requiredRole The required role.
      */
     public static function checkRoleAccess($requiredRole) {
         if (!hasRole($requiredRole)) {
@@ -44,23 +54,27 @@ class PermissionMiddleware {
     }
     
     /**
-     * Kiểm tra quyền sở hữu tài nguyên
+     * Checks if the current user owns a specific resource.
+     * Admins and superadmins have access to all resources.
+     * @param int $resourceUserId The user ID associated with the resource.
+     * @return bool True if the user has ownership or is an admin, false otherwise.
      */
     public static function checkResourceOwnership($resourceUserId) {
         $currentUserId = $_SESSION['user_id'] ?? 0;
         $userRole = $_SESSION['role'] ?? 'student';
         
-        // Super admin và admin có thể truy cập tất cả
+        // Superadmin and admin can access all resources
         if (in_array($userRole, ['superadmin', 'admin'])) {
             return true;
         }
         
-        // Kiểm tra quyền sở hữu
+        // Check for ownership
         return $currentUserId == $resourceUserId;
     }
     
     /**
-     * Lấy danh sách quyền của người dùng hiện tại
+     * Gets the list of permissions for the current user.
+     * @return array An array of permissions.
      */
     public static function getCurrentUserPermissions() {
         if (!isLoggedIn()) {
@@ -72,7 +86,9 @@ class PermissionMiddleware {
     }
     
     /**
-     * Kiểm tra xem người dùng có thể thực hiện hành động không
+     * Checks if the current user can perform a specific action.
+     * @param string $action The action to check.
+     * @return bool True if the user can perform the action, false otherwise.
      */
     public static function canPerformAction($action) {
         $permissions = self::getCurrentUserPermissions();
@@ -80,7 +96,8 @@ class PermissionMiddleware {
     }
     
     /**
-     * Lấy thông tin vai trò hiện tại
+     * Gets information about the current user's role.
+     * @return array|null An array with role information or null if not logged in.
      */
     public static function getCurrentUserRole() {
         if (!isLoggedIn()) {
@@ -96,28 +113,33 @@ class PermissionMiddleware {
     }
     
     /**
-     * Kiểm tra quyền xuất dữ liệu
+     * Checks if the user has permission to export data.
+     * @return array An array indicating success or failure.
      */
     public static function checkExportPermission() {
         return self::checkActionPermission(PERMISSION_EXPORT_DATA);
     }
     
     /**
-     * Kiểm tra quyền quản lý người dùng
+     * Checks if the user has permission to manage users.
+     * @return array An array indicating success or failure.
      */
     public static function checkUserManagementPermission() {
         return self::checkActionPermission(PERMISSION_MANAGE_USERS);
     }
     
     /**
-     * Kiểm tra quyền xem thống kê
+     * Checks if the user has permission to view statistics.
+     * @return array An array indicating success or failure.
      */
     public static function checkStatisticsPermission() {
         return self::checkActionPermission(PERMISSION_VIEW_STATISTICS);
     }
     
     /**
-     * Kiểm tra quyền CRUD sinh viên
+     * Checks permissions for CRUD actions on students.
+     * @param string $action The action to check ('view', 'add', 'edit', 'delete').
+     * @return array An array indicating success or failure.
      */
     public static function checkStudentPermissions($action) {
         $permissions = [
@@ -135,7 +157,9 @@ class PermissionMiddleware {
     }
     
     /**
-     * Kiểm tra quyền CRUD điểm số
+     * Checks permissions for CRUD actions on scores.
+     * @param string $action The action to check ('view', 'add', 'edit', 'delete').
+     * @return array An array indicating success or failure.
      */
     public static function checkScorePermissions($action) {
         $permissions = [
@@ -153,7 +177,10 @@ class PermissionMiddleware {
     }
     
     /**
-     * Tạo response JSON cho API
+     * Creates a JSON response for API calls.
+     * @param bool $success Indicates if the operation was successful.
+     * @param string $message The response message.
+     * @param array $data Optional data to include in the response.
      */
     public static function jsonResponse($success, $message, $data = []) {
         header('Content-Type: application/json');
@@ -166,7 +193,8 @@ class PermissionMiddleware {
     }
     
     /**
-     * Kiểm tra và trả về response lỗi nếu không có quyền
+     * Checks for a required permission and returns a JSON error response if it's not met.
+     * @param string $permission The required permission.
      */
     public static function requirePermissionOrFail($permission) {
         $result = self::checkActionPermission($permission);

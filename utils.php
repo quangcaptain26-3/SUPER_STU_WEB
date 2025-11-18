@@ -1,25 +1,48 @@
 <?php
-// Utility functions
+// This file contains utility functions used throughout the application.
+
+/**
+ * Sanitizes data to prevent XSS attacks.
+ * @param mixed $data The data to sanitize.
+ * @return string The sanitized data.
+ */
 function sanitize($data)
 {
     return htmlspecialchars(strip_tags(trim($data)));
 }
 
+/**
+ * Generates a random token.
+ * @param int $length The length of the token.
+ * @return string The generated token.
+ */
 function generateToken($length = 32)
 {
     return bin2hex(random_bytes($length));
 }
 
+/**
+ * Hashes a password using the bcrypt algorithm.
+ * @param string $password The password to hash.
+ * @return string The hashed password.
+ */
 function hashPassword($password)
 {
     return password_hash($password, PASSWORD_BCRYPT, ['cost' => 12]);
 }
 
+/**
+ * Checks if a user is logged in.
+ * @return bool True if the user is logged in, false otherwise.
+ */
 function isLoggedIn()
 {
     return isset($_SESSION['user_id']);
 }
 
+/**
+ * Requires the user to be logged in. If not, redirects to the login page.
+ */
 function requireLogin()
 {
     if (!isLoggedIn()) {
@@ -28,13 +51,13 @@ function requireLogin()
     }
 }
 
-// Định nghĩa cấp độ phân quyền
+// Define user role levels
 define('ROLE_STUDENT', 1);
 define('ROLE_TEACHER', 2);
 define('ROLE_ADMIN', 3);
 define('ROLE_SUPERADMIN', 4);
 
-// Định nghĩa quyền hạn
+// Define permissions
 define('PERMISSION_VIEW_STUDENTS', 'view_students');
 define('PERMISSION_ADD_STUDENTS', 'add_students');
 define('PERMISSION_EDIT_STUDENTS', 'edit_students');
@@ -47,7 +70,11 @@ define('PERMISSION_VIEW_STATISTICS', 'view_statistics');
 define('PERMISSION_MANAGE_USERS', 'manage_users');
 define('PERMISSION_EXPORT_DATA', 'export_data');
 
-// Cấu hình quyền hạn theo vai trò
+/**
+ * Gets the permissions for a given role.
+ * @param string $role The role to get permissions for.
+ * @return array An array of permissions.
+ */
 function getRolePermissions($role)
 {
     $permissions = [
@@ -95,6 +122,11 @@ function getRolePermissions($role)
     return $permissions[$role] ?? [];
 }
 
+/**
+ * Checks if the current user has at least the required role.
+ * @param string $requiredRole The required role.
+ * @return bool True if the user has the required role, false otherwise.
+ */
 function hasRole($requiredRole)
 {
     if (!isLoggedIn()) return false;
@@ -113,6 +145,11 @@ function hasRole($requiredRole)
     return $userLevel >= $requiredLevel;
 }
 
+/**
+ * Checks if the current user has a specific permission.
+ * @param string $permission The permission to check.
+ * @return bool True if the user has the permission, false otherwise.
+ */
 function hasPermission($permission)
 {
     if (!isLoggedIn()) return false;
@@ -123,6 +160,10 @@ function hasPermission($permission)
     return in_array($permission, $userPermissions);
 }
 
+/**
+ * Requires the user to have a specific role. If not, redirects with an error.
+ * @param string $role The required role.
+ */
 function requireRole($role)
 {
     requireLogin();
@@ -133,6 +174,10 @@ function requireRole($role)
     }
 }
 
+/**
+ * Requires the user to have a specific permission. If not, redirects with an error.
+ * @param string $permission The required permission.
+ */
 function requirePermission($permission)
 {
     requireLogin();
@@ -143,11 +188,21 @@ function requirePermission($permission)
     }
 }
 
+/**
+ * Alias for hasPermission, checks if the user can access a feature.
+ * @param string $permission The permission to check.
+ * @return bool True if the user has the permission, false otherwise.
+ */
 function canAccess($permission)
 {
     return hasPermission($permission);
 }
 
+/**
+ * Gets the display name for a role.
+ * @param string $role The role.
+ * @return string The display name.
+ */
 function getRoleDisplayName($role)
 {
     $roleNames = [
@@ -160,6 +215,11 @@ function getRoleDisplayName($role)
     return $roleNames[$role] ?? 'Không xác định';
 }
 
+/**
+ * Gets the CSS badge class for a role.
+ * @param string $role The role.
+ * @return string The CSS class.
+ */
 function getRoleBadgeClass($role)
 {
     $badgeClasses = [
@@ -172,11 +232,22 @@ function getRoleBadgeClass($role)
     return $badgeClasses[$role] ?? 'bg-secondary';
 }
 
+/**
+ * Formats a date string.
+ * @param string $date The date to format.
+ * @return string The formatted date.
+ */
 function formatDate($date)
 {
     return date('d/m/Y', strtotime($date));
 }
 
+/**
+ * Handles file uploads.
+ * @param array $file The file from the $_FILES array.
+ * @param string $uploadDir The directory to upload the file to.
+ * @return array An array indicating success or failure and a message/filename.
+ */
 function uploadFile($file, $uploadDir = 'uploads/avatars/')
 {
     if (!file_exists($uploadDir)) {
@@ -205,6 +276,10 @@ function uploadFile($file, $uploadDir = 'uploads/avatars/')
     }
 }
 
+/**
+ * Deletes a file.
+ * @param string $filepath The path to the file to delete.
+ */
 function deleteFile($filepath)
 {
     if (file_exists($filepath)) {
@@ -212,35 +287,49 @@ function deleteFile($filepath)
     }
 }
 
+/**
+ * Sends an email.
+ * @param string $to The recipient's email address.
+ * @param string $subject The email subject.
+ * @param string $message The email message.
+ * @return bool True if the email was sent successfully, false otherwise.
+ */
 function sendEmail($to, $subject, $message)
 {
-    // Simple email function - in production, use PHPMailer or similar
+    // Note: This is a simple email function. In production, use a library like PHPMailer.
     $headers = "From: noreply@studentmanagement.com\r\n";
     $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
 
     return mail($to, $subject, $message, $headers);
 }
 
-// Kiểm tra xem student có quyền xem dữ liệu của chính mình không
+/**
+ * Checks if a student can view their own data.
+ * @param int $studentId The ID of the student.
+ * @return bool True if the user can view the data, false otherwise.
+ */
 function canViewStudent($studentId)
 {
     if (!isLoggedIn()) return false;
 
     $userRole = $_SESSION['role'];
 
-    // Admin, teacher, superadmin có thể xem tất cả
+    // Admins, teachers, and superadmins can view all student data
     if (in_array($userRole, ['superadmin', 'admin', 'teacher'])) {
         return true;
     }
 
-    // Student chỉ có thể xem dữ liệu của chính mình
-    // Giả sử student account được liên kết với student_id trong bảng users
-    // Để làm được điều này, cần thêm cột student_id vào bảng users
-    // Tạm thời cho phép student xem tất cả
+    // A student can only view their own data.
+    // This assumes the student account is linked to a student_id in the users table.
+    // For this to work, a 'student_id' column needs to be added to the 'users' table.
+    // Temporarily allowing students to view all data.
     return true;
 }
 
-// Kiểm tra CSRF token
+/**
+ * Generates a CSRF token.
+ * @return string The CSRF token.
+ */
 function generateCSRFToken()
 {
     if (!isset($_SESSION['csrf_token'])) {
@@ -249,6 +338,11 @@ function generateCSRFToken()
     return $_SESSION['csrf_token'];
 }
 
+/**
+ * Verifies a CSRF token.
+ * @param string $token The token to verify.
+ * @return bool True if the token is valid, false otherwise.
+ */
 function verifyCSRFToken($token)
 {
     if (!isset($_SESSION['csrf_token'])) {
