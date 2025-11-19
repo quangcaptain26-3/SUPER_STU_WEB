@@ -1,31 +1,50 @@
 <?php
+// Bắt đầu session để lưu trữ thông tin người dùng sau khi đăng nhập
 session_start();
+// Nạp file chứa class AuthController để xử lý logic đăng nhập
 require_once '../authController.php';
+// Nạp file chứa các hàm tiện ích (sanitize, isLoggedIn, v.v.)
 require_once '../utils.php';
 
-// Redirect if already logged in
+// Kiểm tra xem người dùng đã đăng nhập chưa
+// Nếu đã đăng nhập thì chuyển hướng về trang chủ để tránh đăng nhập lại
 if (isLoggedIn()) {
+    // Chuyển hướng về trang chủ
     header('Location: index.php');
+    // Dừng thực thi script
     exit();
 }
 
+// Khởi tạo biến lưu thông báo lỗi
 $error = '';
+// Khởi tạo biến lưu thông báo thành công
 $success = '';
 
+// Kiểm tra xem request có phải là POST không (khi form đăng nhập được submit)
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    // Lấy tên đăng nhập từ form và làm sạch để tránh XSS
     $username = sanitize($_POST['username']);
+    // Lấy mật khẩu từ form (không sanitize vì mật khẩu có thể chứa ký tự đặc biệt)
     $password = $_POST['password'];
     
+    // Kiểm tra các trường bắt buộc có được điền đầy đủ không
     if (empty($username) || empty($password)) {
+        // Nếu thiếu thông tin, gán thông báo lỗi
         $error = 'Vui lòng nhập đầy đủ thông tin';
     } else {
+        // Nếu đầy đủ thông tin, tạo đối tượng AuthController
         $auth = new AuthController();
+        // Gọi phương thức login để xác thực người dùng
         $result = $auth->login($username, $password);
         
+        // Nếu đăng nhập thành công
         if ($result['success']) {
+            // Chuyển hướng về trang chủ
             header('Location: index.php');
+            // Dừng thực thi script
             exit();
         } else {
+            // Nếu đăng nhập thất bại, lưu thông báo lỗi từ kết quả
             $error = $result['message'];
         }
     }
@@ -198,19 +217,28 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         </div>
     </div>
 
+    <!-- Nạp Bootstrap JS từ CDN -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Auto focus on username field
+        // Tự động focus vào trường tên đăng nhập khi trang load
+        // Giúp người dùng có thể bắt đầu nhập ngay mà không cần click
         document.getElementById('username').focus();
         
-        // Form validation
+        // Validation form trước khi submit
+        // Kiểm tra dữ liệu ở phía client để tránh submit form không hợp lệ
         document.querySelector('form').addEventListener('submit', function(e) {
+            // Lấy giá trị tên đăng nhập và loại bỏ khoảng trắng đầu cuối
             const username = document.getElementById('username').value.trim();
+            // Lấy giá trị mật khẩu
             const password = document.getElementById('password').value;
             
+            // Kiểm tra các trường bắt buộc có được điền đầy đủ không
             if (!username || !password) {
+                // Ngăn form submit
                 e.preventDefault();
+                // Hiển thị cảnh báo
                 alert('Vui lòng nhập đầy đủ thông tin');
+                // Trả về false để dừng xử lý
                 return false;
             }
         });

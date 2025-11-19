@@ -1,12 +1,21 @@
 <?php
+// Bắt đầu session để lưu trữ thông tin người dùng
 session_start();
+// Nạp file chứa các hàm tiện ích
 require_once '../utils.php';
+// Nạp file chứa middleware xử lý phân quyền
 require_once '../middleware.php';
 
+// Yêu cầu người dùng phải đăng nhập để truy cập trang này
 requireLogin();
 
+// Lấy thông tin vai trò và quyền hạn của người dùng hiện tại
+// Bao gồm: vai trò, tên hiển thị, class badge, và danh sách quyền hạn
 $currentUser = PermissionMiddleware::getCurrentUserRole();
+// Danh sách tất cả các vai trò trong hệ thống
 $allRoles = ['student', 'teacher', 'admin', 'superadmin'];
+// Mảng chuyển đổi tên quyền từ constant sang tiếng Việt
+// Dùng để hiển thị tên quyền dễ hiểu cho người dùng
 $allPermissions = [
     PERMISSION_VIEW_STUDENTS => 'Xem danh sách sinh viên',
     PERMISSION_ADD_STUDENTS => 'Thêm sinh viên',
@@ -203,16 +212,25 @@ $allPermissions = [
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <?php foreach ($allPermissions as $permission => $name): ?>
+                                        <?php 
+                                        // Duyệt qua từng quyền hạn để hiển thị trong bảng
+                                        foreach ($allPermissions as $permission => $name): ?>
                                         <tr>
+                                            <!-- Cột hiển thị tên quyền -->
                                             <td><strong><?php echo $name; ?></strong></td>
-                                            <?php foreach ($allRoles as $role): ?>
+                                            <?php 
+                                            // Duyệt qua từng vai trò để kiểm tra quyền hạn
+                                            foreach ($allRoles as $role): ?>
                                             <td class="text-center">
                                                 <?php 
+                                                // Lấy danh sách quyền hạn của vai trò hiện tại
                                                 $rolePermissions = getRolePermissions($role);
+                                                // Kiểm tra xem vai trò này có quyền hạn đang xét không
                                                 if (in_array($permission, $rolePermissions)): ?>
+                                                    <!-- Nếu có quyền: hiển thị icon check màu xanh -->
                                                     <i class="fas fa-check permission-check"></i>
                                                 <?php else: ?>
+                                                    <!-- Nếu không có quyền: hiển thị icon X màu đỏ -->
                                                     <i class="fas fa-times permission-cross"></i>
                                                 <?php endif; ?>
                                             </td>

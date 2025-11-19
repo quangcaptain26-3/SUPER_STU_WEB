@@ -1,31 +1,49 @@
 <?php
+// Bắt đầu session để có thể lưu trữ thông tin tạm thời
 session_start();
+// Nạp file chứa class AuthController để xử lý logic quên mật khẩu
 require_once '../authController.php';
+// Nạp file chứa các hàm tiện ích
 require_once '../utils.php';
 
-// Redirect if already logged in
+// Kiểm tra xem người dùng đã đăng nhập chưa
+// Nếu đã đăng nhập thì chuyển hướng về trang chủ (không cần quên mật khẩu)
 if (isLoggedIn()) {
+    // Chuyển hướng về trang chủ
     header('Location: index.php');
+    // Dừng thực thi script
     exit();
 }
 
+// Khởi tạo biến lưu thông báo lỗi
 $error = '';
+// Khởi tạo biến lưu thông báo thành công
 $success = '';
 
+// Kiểm tra xem request có phải là POST không (khi form quên mật khẩu được submit)
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    // Lấy email từ form và làm sạch để tránh XSS
     $email = sanitize($_POST['email']);
     
+    // Kiểm tra email có được nhập không
     if (empty($email)) {
+        // Nếu chưa nhập email, gán thông báo lỗi
         $error = 'Vui lòng nhập email';
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        // Kiểm tra định dạng email có hợp lệ không
         $error = 'Email không hợp lệ';
     } else {
+        // Nếu email hợp lệ, tạo đối tượng AuthController
         $auth = new AuthController();
+        // Gọi phương thức forgotPassword để gửi email reset mật khẩu
         $result = $auth->forgotPassword($email);
         
+        // Nếu gửi email thành công
         if ($result['success']) {
+            // Lưu thông báo thành công
             $success = $result['message'];
         } else {
+            // Nếu gửi email thất bại, lưu thông báo lỗi
             $error = $result['message'];
         }
     }
@@ -159,24 +177,35 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         </div>
     </div>
 
+    <!-- Nạp Bootstrap JS từ CDN -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Auto focus on email field
+        // Tự động focus vào trường email khi trang load (nếu có)
+        // Giúp người dùng có thể bắt đầu nhập ngay
         document.getElementById('email')?.focus();
         
-        // Form validation
+        // Validation form trước khi submit
+        // Kiểm tra dữ liệu ở phía client để tránh submit form không hợp lệ
         document.querySelector('form')?.addEventListener('submit', function(e) {
+            // Lấy giá trị email và loại bỏ khoảng trắng đầu cuối
             const email = document.getElementById('email').value.trim();
             
+            // Kiểm tra email có được nhập không
             if (!email) {
+                // Ngăn form submit
                 e.preventDefault();
+                // Hiển thị cảnh báo
                 alert('Vui lòng nhập email');
                 return false;
             }
             
+            // Regex để kiểm tra định dạng email
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            // Kiểm tra email có đúng định dạng không
             if (!emailRegex.test(email)) {
+                // Ngăn form submit
                 e.preventDefault();
+                // Hiển thị cảnh báo
                 alert('Email không hợp lệ');
                 return false;
             }

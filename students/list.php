@@ -1,18 +1,30 @@
 <?php
+// Bắt đầu session để lưu trữ thông tin người dùng
 session_start();
+// Nạp file chứa các hàm tiện ích
 require_once '../utils.php';
+// Nạp file chứa class StudentController
 require_once '../studentController.php';
 
+// Yêu cầu người dùng phải có quyền xem sinh viên
 requirePermission(PERMISSION_VIEW_STUDENTS);
 
+// Tạo đối tượng StudentController
 $studentController = new StudentController();
+// Lấy từ khóa tìm kiếm từ tham số GET, mặc định là chuỗi rỗng
 $search = $_GET['search'] ?? '';
+// Lấy số trang từ tham số GET, đảm bảo >= 1
 $page = max(1, intval($_GET['page'] ?? 1));
+// Số lượng sinh viên hiển thị trên mỗi trang
 $limit = 10;
+// Tính offset để phân trang (số bản ghi bỏ qua)
 $offset = ($page - 1) * $limit;
 
+// Lấy danh sách sinh viên với tìm kiếm và phân trang
 $students = $studentController->getAllStudents($search, $limit, $offset);
+// Lấy tổng số sinh viên (có tìm kiếm)
 $totalStudents = $studentController->getTotalStudents($search);
+// Tính tổng số trang
 $totalPages = ceil($totalStudents / $limit);
 ?>
 <!DOCTYPE html>
@@ -231,14 +243,16 @@ $totalPages = ceil($totalStudents / $limit);
                                                     <td><?php echo htmlspecialchars($student['fullname']); ?></td>
                                                     <td><?php echo formatDate($student['dob']); ?></td>
                                                     <td>
-                                                        <?php
-                                                        $genderText = [
-                                                            'male' => 'Nam',
-                                                            'female' => 'Nữ',
-                                                            'other' => 'Khác'
-                                                        ];
-                                                        echo $genderText[$student['gender']] ?? 'N/A';
-                                                        ?>
+                                        <?php
+                                        // Mảng chuyển đổi giới tính từ tiếng Anh sang tiếng Việt
+                                        $genderText = [
+                                            'male' => 'Nam',
+                                            'female' => 'Nữ',
+                                            'other' => 'Khác'
+                                        ];
+                                        // Hiển thị giới tính, nếu không tìm thấy thì hiển thị 'N/A'
+                                        echo $genderText[$student['gender']] ?? 'N/A';
+                                        ?>
                                                     </td>
                                                     <td><?php echo htmlspecialchars($student['email']); ?></td>
                                                     <td><?php echo htmlspecialchars($student['phone']); ?></td>
@@ -281,7 +295,11 @@ $totalPages = ceil($totalStudents / $limit);
                                             </li>
                                         <?php endif; ?>
 
-                                        <?php for ($i = max(1, $page - 2); $i <= min($totalPages, $page + 2); $i++): ?>
+                                        <?php 
+                                        // Hiển thị các nút phân trang (trang hiện tại ± 2 trang)
+                                        // Bắt đầu từ max(1, page-2) để không hiển thị số âm
+                                        // Kết thúc ở min(totalPages, page+2) để không vượt quá tổng số trang
+                                        for ($i = max(1, $page - 2); $i <= min($totalPages, $page + 2); $i++): ?>
                                             <li class="page-item <?php echo $i == $page ? 'active' : ''; ?>">
                                                 <a class="page-link" href="?page=<?php echo $i; ?>&search=<?php echo urlencode($search); ?>">
                                                     <?php echo $i; ?>
@@ -311,42 +329,46 @@ $totalPages = ceil($totalStudents / $limit);
     <script src="../assets/js/notifications.js"></script>
     <!-- <script src="../assets/js/realtime.js"></script> -->
     <script>
+        // Hàm xóa sinh viên
         function deleteStudent(id) {
+            // Hiển thị hộp thoại xác nhận xóa
             Swal.fire({
                 title: 'Xác nhận xóa sinh viên',
                 text: 'Bạn có chắc chắn muốn xóa sinh viên này? Hành động này không thể hoàn tác.',
                 icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#dc3545',
-                cancelButtonColor: '#6c757d',
+                showCancelButton: true, // Hiển thị nút hủy
+                confirmButtonColor: '#dc3545', // Màu đỏ cho nút xác nhận
+                cancelButtonColor: '#6c757d', // Màu xám cho nút hủy
                 confirmButtonText: 'Xóa',
                 cancelButtonText: 'Hủy'
             }).then((result) => {
+                // Nếu người dùng xác nhận xóa
                 if (result.isConfirmed) {
                     // Hiển thị loading
                     Swal.fire({
                         title: 'Đang xử lý...',
                         text: 'Vui lòng chờ trong giây lát',
                         icon: 'info',
-                        allowOutsideClick: false,
-                        allowEscapeKey: false,
-                        showConfirmButton: false,
+                        allowOutsideClick: false, // Không cho click bên ngoài
+                        allowEscapeKey: false, // Không cho phím ESC
+                        showConfirmButton: false, // Không hiển thị nút xác nhận
                         didOpen: () => {
-                            Swal.showLoading();
+                            Swal.showLoading(); // Hiển thị spinner loading
                         }
                     });
 
-                    // Gửi request xóa
+                    // Gửi request xóa đến server
                     fetch('delete.php', {
-                            method: 'POST',
+                            method: 'POST', // Phương thức POST
                             headers: {
-                                'Content-Type': 'application/x-www-form-urlencoded',
+                                'Content-Type': 'application/x-www-form-urlencoded', // Header
                             },
-                            body: 'id=' + id
+                            body: 'id=' + id // Body chứa ID sinh viên cần xóa
                         })
-                        .then(response => response.json())
+                        .then(response => response.json()) // Chuyển response sang JSON
                         .then(data => {
-                            Swal.close();
+                            Swal.close(); // Đóng loading
+                            // Nếu xóa thành công
                             if (data.success) {
                                 Swal.fire({
                                     title: 'Thành công!',
@@ -354,9 +376,10 @@ $totalPages = ceil($totalStudents / $limit);
                                     icon: 'success',
                                     confirmButtonText: 'OK'
                                 }).then(() => {
-                                    location.reload();
+                                    location.reload(); // Tải lại trang
                                 });
                             } else {
+                                // Nếu xóa thất bại, hiển thị lỗi
                                 Swal.fire({
                                     title: 'Lỗi!',
                                     text: data.message,
@@ -366,7 +389,8 @@ $totalPages = ceil($totalStudents / $limit);
                             }
                         })
                         .catch(error => {
-                            Swal.close();
+                            Swal.close(); // Đóng loading
+                            // Nếu có lỗi xảy ra
                             Swal.fire({
                                 title: 'Lỗi!',
                                 text: 'Có lỗi xảy ra: ' + error,

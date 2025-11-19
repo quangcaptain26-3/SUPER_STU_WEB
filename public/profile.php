@@ -1,67 +1,100 @@
 <?php
+// Bắt đầu session để lưu trữ thông tin người dùng
 session_start();
+// Nạp file chứa các hàm tiện ích
 require_once '../utils.php';
+// Nạp file chứa class AuthController
 require_once '../authController.php';
 
+// Yêu cầu người dùng phải đăng nhập để truy cập trang này
 requireLogin();
 
+// Tạo đối tượng AuthController
 $authController = new AuthController();
+// Lấy thông tin người dùng hiện tại từ database
 $user = $authController->getUserById($_SESSION['user_id']);
 
+// Khởi tạo biến lưu thông báo lỗi
 $error = '';
+// Khởi tạo biến lưu thông báo thành công
 $success = '';
 
-// Xử lý cập nhật thông tin
+// Xử lý cập nhật thông tin cá nhân
+// Kiểm tra xem request có phải là POST và action là 'update_profile' không
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['action'] == 'update_profile') {
-    $username = sanitize($_POST['username']);
-    $email = sanitize($_POST['email']);
+    // Lấy và làm sạch dữ liệu từ form
+    $username = sanitize($_POST['username']);  // Tên đăng nhập đã được làm sạch
+    $email = sanitize($_POST['email']);        // Email đã được làm sạch
     
+    // Kiểm tra các trường bắt buộc có được điền đầy đủ không
     if (empty($username) || empty($email)) {
+        // Nếu thiếu thông tin, gán thông báo lỗi
         $error = 'Vui lòng điền đầy đủ thông tin';
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        // Kiểm tra định dạng email có hợp lệ không
         $error = 'Email không hợp lệ';
     } else {
+        // Nếu tất cả validation đều pass, tạo mảng dữ liệu để cập nhật
         $data = [
             'username' => $username,
             'email' => $email,
-            'role' => $user['role'] // Giữ nguyên role
+            'role' => $user['role'] // Giữ nguyên role (không cho phép tự thay đổi role)
         ];
         
+        // Gọi phương thức updateUser để cập nhật thông tin người dùng
         $result = $authController->updateUser($_SESSION['user_id'], $data);
+        // Nếu cập nhật thành công
         if ($result['success']) {
+            // Lưu thông báo thành công
             $success = $result['message'];
+            // Cập nhật thông tin trong session để đồng bộ
             $_SESSION['username'] = $username;
             $_SESSION['email'] = $email;
-            $user = $authController->getUserById($_SESSION['user_id']); // Cập nhật lại thông tin
+            // Lấy lại thông tin người dùng từ database để hiển thị
+            $user = $authController->getUserById($_SESSION['user_id']);
         } else {
+            // Nếu cập nhật thất bại, lưu thông báo lỗi
             $error = $result['message'];
         }
     }
 }
 
 // Xử lý đổi mật khẩu
+// Kiểm tra xem request có phải là POST và action là 'change_password' không
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['action'] == 'change_password') {
-    $currentPassword = $_POST['current_password'];
-    $newPassword = $_POST['new_password'];
-    $confirmPassword = $_POST['confirm_password'];
+    // Lấy mật khẩu từ form
+    $currentPassword = $_POST['current_password'];  // Mật khẩu hiện tại
+    $newPassword = $_POST['new_password'];          // Mật khẩu mới
+    $confirmPassword = $_POST['confirm_password'];  // Mật khẩu xác nhận
     
+    // Kiểm tra các trường bắt buộc có được điền đầy đủ không
     if (empty($currentPassword) || empty($newPassword) || empty($confirmPassword)) {
+        // Nếu thiếu thông tin, gán thông báo lỗi
         $error = 'Vui lòng điền đầy đủ thông tin';
     } elseif ($newPassword !== $confirmPassword) {
+        // Kiểm tra mật khẩu xác nhận có khớp với mật khẩu mới không
         $error = 'Mật khẩu mới và xác nhận không khớp';
     } elseif (strlen($newPassword) < 6) {
+        // Kiểm tra độ dài mật khẩu mới (tối thiểu 6 ký tự)
         $error = 'Mật khẩu mới phải có ít nhất 6 ký tự';
     } else {
-        // Kiểm tra mật khẩu hiện tại
+        // Kiểm tra mật khẩu hiện tại có đúng không
+        // Sử dụng phương thức login để xác thực mật khẩu hiện tại
         $loginResult = $authController->login($user['username'], $currentPassword);
+        // Nếu mật khẩu hiện tại đúng
         if ($loginResult['success']) {
+            // Gọi phương thức changePassword để đổi mật khẩu
             $result = $authController->changePassword($_SESSION['user_id'], $newPassword);
+            // Nếu đổi mật khẩu thành công
             if ($result['success']) {
+                // Lưu thông báo thành công
                 $success = $result['message'];
             } else {
+                // Nếu đổi mật khẩu thất bại, lưu thông báo lỗi
                 $error = $result['message'];
             }
         } else {
+            // Nếu mật khẩu hiện tại không đúng, gán thông báo lỗi
             $error = 'Mật khẩu hiện tại không đúng';
         }
     }
@@ -347,7 +380,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                         <div class="card-body">
                             <div class="row">
                                 <?php 
+                                // Lấy danh sách quyền hạn của vai trò hiện tại
                                 $permissions = getRolePermissions($user['role']);
+                                // Mảng chuyển đổi tên quyền từ constant sang tiếng Việt
                                 $permissionNames = [
                                     PERMISSION_VIEW_STUDENTS => 'Xem danh sách sinh viên',
                                     PERMISSION_ADD_STUDENTS => 'Thêm sinh viên',
@@ -362,6 +397,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                                     PERMISSION_EXPORT_DATA => 'Xuất dữ liệu'
                                 ];
                                 
+                                // Duyệt qua từng quyền và hiển thị
                                 foreach ($permissions as $permission): ?>
                                 <div class="col-md-6 mb-2">
                                     <div class="d-flex align-items-center">
@@ -378,21 +414,30 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
         </div>
     </div>
 
+    <!-- Nạp Bootstrap JS từ CDN -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Form validation
+        // Validation form đổi mật khẩu trước khi submit
+        // Kiểm tra dữ liệu ở phía client để tránh submit form không hợp lệ
         document.getElementById('changePasswordForm').addEventListener('submit', function(e) {
+            // Lấy giá trị các trường mật khẩu
             const newPassword = document.getElementById('new_password').value;
             const confirmPassword = document.getElementById('confirm_password').value;
             
+            // Kiểm tra mật khẩu xác nhận có khớp với mật khẩu mới không
             if (newPassword !== confirmPassword) {
+                // Ngăn form submit
                 e.preventDefault();
+                // Hiển thị cảnh báo
                 alert('Mật khẩu mới và xác nhận không khớp');
                 return false;
             }
             
+            // Kiểm tra độ dài mật khẩu mới
             if (newPassword.length < 6) {
+                // Ngăn form submit
                 e.preventDefault();
+                // Hiển thị cảnh báo
                 alert('Mật khẩu mới phải có ít nhất 6 ký tự');
                 return false;
             }

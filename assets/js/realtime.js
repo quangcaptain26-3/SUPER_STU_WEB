@@ -1,60 +1,61 @@
-// Real-time Clock và Live Updates
+// Hệ thống cập nhật thời gian thực và các thành phần live
 class RealTimeSystem {
+  // Hàm khởi tạo
   constructor() {
-    this.initClock();
-    this.initLiveUpdates();
-    this.initNotifications();
+    this.initClock(); // Khởi tạo đồng hồ
+    this.initLiveUpdates(); // Khởi tạo cập nhật live
+    this.initNotifications(); // Khởi tạo hệ thống thông báo
   }
 
   // Khởi tạo đồng hồ thời gian thực
   initClock() {
-    this.updateClock();
-    setInterval(() => this.updateClock(), 1000);
+    this.updateClock(); // Cập nhật lần đầu
+    setInterval(() => this.updateClock(), 1000); // Cập nhật mỗi giây
   }
 
-  // Cập nhật đồng hồ
+  // Cập nhật hiển thị đồng hồ
   updateClock() {
-    const now = new Date();
-    const timeString = this.formatTime(now);
-    const dateString = this.formatDate(now);
+    const now = new Date(); // Lấy thời gian hiện tại
+    const timeString = this.formatTime(now); // Định dạng chuỗi thời gian
+    const dateString = this.formatDate(now); // Định dạng chuỗi ngày tháng
 
-    // Cập nhật tất cả các element có class realtime-clock
+    // Cập nhật tất cả các element có class 'realtime-clock'
     document.querySelectorAll(".realtime-clock").forEach((element) => {
       element.textContent = timeString;
     });
 
-    // Cập nhật tất cả các element có class realtime-date
+    // Cập nhật tất cả các element có class 'realtime-date'
     document.querySelectorAll(".realtime-date").forEach((element) => {
       element.textContent = dateString;
     });
 
-    // Cập nhật datetime đầy đủ
+    // Cập nhật tất cả các element có class 'realtime-datetime'
     document.querySelectorAll(".realtime-datetime").forEach((element) => {
       element.textContent = `${dateString} ${timeString}`;
     });
   }
 
-  // Format thời gian
+  // Định dạng thời gian sang chuỗi (HH:mm:ss)
   formatTime(date) {
     return date.toLocaleTimeString("vi-VN", {
       hour: "2-digit",
       minute: "2-digit",
       second: "2-digit",
-      hour12: false,
+      hour12: false, // Định dạng 24h
     });
   }
 
-  // Format ngày tháng
+  // Định dạng ngày tháng sang chuỗi (Thứ, dd/mm/yyyy)
   formatDate(date) {
     return date.toLocaleDateString("vi-VN", {
-      weekday: "long",
+      weekday: "long", // Tên thứ đầy đủ
       year: "numeric",
       month: "2-digit",
       day: "2-digit",
     });
   }
 
-  // Khởi tạo live updates
+  // Khởi tạo các tác vụ cập nhật live
   initLiveUpdates() {
     // Cập nhật thống kê mỗi 30 giây
     setInterval(() => this.updateStatistics(), 30000);
@@ -66,13 +67,14 @@ class RealTimeSystem {
     setInterval(() => this.updateScoreList(), 60000);
   }
 
-  // Cập nhật thống kê
+  // Cập nhật dữ liệu thống kê từ server
   async updateStatistics() {
     try {
+      // Gọi API để lấy dữ liệu thống kê mới
       const response = await fetch("../charts/api/statistics.php");
       const data = await response.json();
 
-      // Cập nhật các số liệu thống kê
+      // Cập nhật các element trên giao diện nếu có dữ liệu mới
       if (data.total_students !== undefined) {
         this.updateElement("#totalStudents", data.total_students);
       }
@@ -86,9 +88,10 @@ class RealTimeSystem {
         this.updateElement("#avgScore", data.avg_score);
       }
 
-      // Hiển thị thông báo cập nhật
+      // Hiển thị thông báo cập nhật thành công
       this.showUpdateNotification("Thống kê đã được cập nhật");
     } catch (error) {
+      // Ghi lỗi ra console nếu có vấn đề
       console.log("Không thể cập nhật thống kê:", error);
     }
   }
@@ -98,11 +101,12 @@ class RealTimeSystem {
     // Chỉ cập nhật nếu đang ở trang danh sách sinh viên
     if (window.location.pathname.includes("students/list.php")) {
       try {
+        // Gọi API để lấy danh sách sinh viên mới
         const response = await fetch("../students/api/get_students.php");
         const data = await response.json();
 
         if (data.success) {
-          this.updateStudentTable(data.students);
+          this.updateStudentTable(data.students); // Cập nhật bảng
           this.showUpdateNotification("Danh sách sinh viên đã được cập nhật");
         }
       } catch (error) {
@@ -116,11 +120,12 @@ class RealTimeSystem {
     // Chỉ cập nhật nếu đang ở trang danh sách điểm
     if (window.location.pathname.includes("scores/list.php")) {
       try {
+        // Gọi API để lấy danh sách điểm mới
         const response = await fetch("../scores/api/get_scores.php");
         const data = await response.json();
 
         if (data.success) {
-          this.updateScoreTable(data.scores);
+          this.updateScoreTable(data.scores); // Cập nhật bảng
           this.showUpdateNotification("Danh sách điểm đã được cập nhật");
         }
       } catch (error) {
@@ -129,14 +134,15 @@ class RealTimeSystem {
     }
   }
 
-  // Cập nhật element
+  // Cập nhật nội dung của một element với hiệu ứng
   updateElement(selector, value) {
     const element = document.querySelector(selector);
     if (element) {
-      // Thêm hiệu ứng fade
+      // Thêm hiệu ứng fade out
       element.style.transition = "all 0.3s ease";
       element.style.opacity = "0.7";
 
+      // Sau một khoảng thời gian ngắn, cập nhật nội dung và fade in
       setTimeout(() => {
         element.textContent = value;
         element.style.opacity = "1";
@@ -144,13 +150,14 @@ class RealTimeSystem {
     }
   }
 
-  // Cập nhật bảng sinh viên
+  // Cập nhật lại toàn bộ bảng sinh viên
   updateStudentTable(students) {
     const tbody = document.querySelector("table tbody");
-    if (!tbody) return;
+    if (!tbody) return; // Thoát nếu không tìm thấy tbody
 
-    tbody.innerHTML = "";
+    tbody.innerHTML = ""; // Xóa nội dung cũ của bảng
 
+    // Lặp qua danh sách sinh viên và tạo lại các hàng
     students.forEach((student, index) => {
       const row = document.createElement("tr");
       row.innerHTML = `
@@ -192,22 +199,24 @@ class RealTimeSystem {
     });
   }
 
-  // Cập nhật bảng điểm
+  // Cập nhật lại toàn bộ bảng điểm
   updateScoreTable(scores) {
     const tbody = document.querySelector("table tbody");
-    if (!tbody) return;
+    if (!tbody) return; // Thoát nếu không tìm thấy tbody
 
-    tbody.innerHTML = "";
+    tbody.innerHTML = ""; // Xóa nội dung cũ
 
+    // Lặp qua danh sách điểm và tạo lại các hàng
     scores.forEach((score, index) => {
       const row = document.createElement("tr");
+      // Xác định màu sắc của badge dựa trên điểm
       const badgeClass =
         score.score >= 8
           ? "bg-success"
           : score.score >= 6
           ? "bg-warning"
           : "bg-danger";
-      const grade = this.getGrade(score.score);
+      const grade = this.getGrade(score.score); // Lấy xếp loại
 
       row.innerHTML = `
                 <td>${index + 1}</td>
@@ -236,7 +245,7 @@ class RealTimeSystem {
     });
   }
 
-  // Lấy text giới tính
+  // Chuyển đổi mã giới tính sang dạng text
   getGenderText(gender) {
     const genderMap = {
       male: "Nam",
@@ -246,7 +255,7 @@ class RealTimeSystem {
     return genderMap[gender] || "N/A";
   }
 
-  // Lấy xếp loại điểm
+  // Lấy xếp loại học lực từ điểm số
   getGrade(score) {
     if (score >= 9) return "A+";
     if (score >= 8) return "A";
@@ -256,9 +265,9 @@ class RealTimeSystem {
     return "D";
   }
 
-  // Khởi tạo thông báo
+  // Khởi tạo container cho các thông báo
   initNotifications() {
-    // Tạo container cho thông báo
+    // Chỉ tạo nếu chưa tồn tại
     if (!document.querySelector(".notification-container")) {
       const container = document.createElement("div");
       container.className = "notification-container";
@@ -273,7 +282,7 @@ class RealTimeSystem {
     }
   }
 
-  // Hiển thị thông báo
+  // Hiển thị thông báo cập nhật live
   showUpdateNotification(message) {
     const container = document.querySelector(".notification-container");
     if (!container) return;
@@ -293,7 +302,7 @@ class RealTimeSystem {
 
     container.appendChild(notification);
 
-    // Tự động xóa sau 3 giây
+    // Tự động xóa thông báo sau 3 giây
     setTimeout(() => {
       if (notification.parentNode) {
         notification.remove();
@@ -311,7 +320,7 @@ class RealTimeSystem {
     this.showNotification(message, "danger");
   }
 
-  // Hiển thị thông báo
+  // Hàm chung để hiển thị thông báo
   showNotification(message, type = "info") {
     const container = document.querySelector(".notification-container");
     if (!container) return;
@@ -322,7 +331,8 @@ class RealTimeSystem {
             margin-bottom: 10px;
             animation: slideInRight 0.3s ease;
         `;
-
+    
+    // Chọn icon dựa trên loại thông báo
     const icon =
       type === "success"
         ? "check-circle"
@@ -338,6 +348,7 @@ class RealTimeSystem {
 
     container.appendChild(notification);
 
+    // Tự động xóa sau 5 giây
     setTimeout(() => {
       if (notification.parentNode) {
         notification.remove();
@@ -346,7 +357,7 @@ class RealTimeSystem {
   }
 }
 
-// CSS cho animation
+// Thêm CSS cho các animation và style cần thiết
 const style = document.createElement("style");
 style.textContent = `
     @keyframes slideInRight {

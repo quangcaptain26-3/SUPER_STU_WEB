@@ -1,14 +1,19 @@
 <?php
+// Bắt đầu phiên làm việc
 session_start();
-require_once '../utils.php';
-require_once '../studentController.php';
-require_once '../scoreController.php';
+// Nạp các tệp cần thiết
+require_once '../utils.php'; // Chứa các hàm tiện ích, hằng số và kiểm tra quyền
+require_once '../studentController.php'; // Lớp xử lý logic cho sinh viên
+require_once '../scoreController.php'; // Lớp xử lý logic cho điểm
 
+// Yêu cầu quyền xem thống kê, nếu không có sẽ dừng
 requirePermission(PERMISSION_VIEW_STATISTICS);
 
+// Khởi tạo các đối tượng controller
 $studentController = new StudentController();
 $scoreController = new ScoreController();
 
+// Lấy dữ liệu thống kê từ controller
 $studentStats = $studentController->getStatistics();
 $scoreStats = $scoreController->getScoreStatistics();
 ?>
@@ -18,68 +23,71 @@ $scoreStats = $scoreController->getScoreStatistics();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Thống kê - Hệ thống quản lý sinh viên</title>
+    <!-- Nạp CSS từ CDN -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- CSS nội bộ để tùy chỉnh giao diện -->
     <style>
         .sidebar {
-            min-height: 100vh;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh; /* Chiều cao tối thiểu bằng chiều cao màn hình */
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); /* Nền gradient */
         }
         .sidebar .nav-link {
-            color: rgba(255,255,255,0.8);
+            color: rgba(255,255,255,0.8); /* Màu chữ cho link */
             padding: 12px 20px;
-            border-radius: 8px;
+            border-radius: 8px; /* Bo góc */
             margin: 2px 0;
-            transition: all 0.3s;
+            transition: all 0.3s; /* Hiệu ứng chuyển động */
         }
         .sidebar .nav-link:hover, .sidebar .nav-link.active {
-            color: white;
-            background: rgba(255,255,255,0.2);
-            transform: translateX(5px);
+            color: white; /* Màu chữ khi hover hoặc active */
+            background: rgba(255,255,255,0.2); /* Nền khi hover hoặc active */
+            transform: translateX(5px); /* Dịch chuyển sang phải một chút */
         }
         .main-content {
-            background-color: #f8f9fa;
+            background-color: #f8f9fa; /* Màu nền cho nội dung chính */
             min-height: 100vh;
         }
         .card {
-            border: none;
-            border-radius: 15px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            transition: transform 0.3s;
+            border: none; /* Bỏ viền card */
+            border-radius: 15px; /* Bo góc card */
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1); /* Đổ bóng */
+            transition: transform 0.3s; /* Hiệu ứng chuyển động */
         }
         .card:hover {
-            transform: translateY(-5px);
+            transform: translateY(-5px); /* Nâng card lên khi hover */
         }
         .stat-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); /* Nền gradient cho card thống kê */
+            color: white; /* Chữ màu trắng */
         }
         .stat-card .card-body {
-            padding: 2rem;
+            padding: 2rem; /* Tăng đệm cho card thống kê */
         }
         .stat-number {
-            font-size: 2.5rem;
+            font-size: 2.5rem; /* Cỡ chữ lớn cho số liệu */
             font-weight: bold;
         }
         .chart-container {
             position: relative;
-            height: 400px;
+            height: 400px; /* Chiều cao cho container chứa biểu đồ */
         }
         .chart-small {
-            height: 300px;
+            height: 300px; /* Chiều cao nhỏ hơn cho các biểu đồ phụ */
         }
     </style>
 </head>
 <body>
     <div class="container-fluid">
         <div class="row">
-            <!-- Sidebar -->
+            <!-- Sidebar (Thanh điều hướng bên trái) -->
             <div class="col-md-3 col-lg-2 sidebar p-0">
                 <div class="p-3">
                     <h4 class="text-white mb-4">
                         <i class="fas fa-graduation-cap me-2"></i>
                         Student Management
                     </h4>
+                    <!-- Hiển thị thông tin người dùng đang đăng nhập -->
                     <div class="text-white-50 mb-3">
                         <i class="fas fa-user me-2"></i>
                         <?php echo htmlspecialchars($_SESSION['username']); ?>
@@ -87,6 +95,7 @@ $scoreStats = $scoreController->getScoreStatistics();
                     </div>
                 </div>
                 
+                <!-- Menu điều hướng -->
                 <nav class="nav flex-column px-3">
                     <a class="nav-link" href="../public/index.php">
                         <i class="fas fa-home me-2"></i>Trang chủ
@@ -106,18 +115,18 @@ $scoreStats = $scoreController->getScoreStatistics();
                 </nav>
             </div>
             
-            <!-- Main Content -->
+            <!-- Main Content (Nội dung chính) -->
             <div class="col-md-9 col-lg-10 main-content">
                 <div class="p-4">
                     <div class="d-flex justify-content-between align-items-center mb-4">
                         <h2><i class="fas fa-chart-bar me-2"></i>Thống kê tổng quan</h2>
                         <div class="text-muted">
                             <i class="fas fa-calendar me-1"></i>
-                            <?php echo date('d/m/Y H:i'); ?>
+                            <?php echo date('d/m/Y H:i'); // Hiển thị ngày giờ hiện tại ?>
                         </div>
                     </div>
                     
-                    <!-- Statistics Cards -->
+                    <!-- Các card thống kê nhanh -->
                     <div class="row mb-4">
                         <div class="col-md-3 mb-3">
                             <div class="card stat-card">
@@ -135,6 +144,7 @@ $scoreStats = $scoreController->getScoreStatistics();
                                     <div class="stat-number">
                                         <?php 
                                         $maleCount = 0;
+                                        // Lấy số lượng sinh viên nam từ mảng thống kê
                                         foreach ($studentStats['by_gender'] as $gender) {
                                             if ($gender['gender'] == 'male') {
                                                 $maleCount = $gender['count'];
@@ -155,6 +165,7 @@ $scoreStats = $scoreController->getScoreStatistics();
                                     <div class="stat-number">
                                         <?php 
                                         $femaleCount = 0;
+                                        // Lấy số lượng sinh viên nữ
                                         foreach ($studentStats['by_gender'] as $gender) {
                                             if ($gender['gender'] == 'female') {
                                                 $femaleCount = $gender['count'];
@@ -174,12 +185,14 @@ $scoreStats = $scoreController->getScoreStatistics();
                                     <i class="fas fa-chart-line fa-2x mb-3"></i>
                                     <div class="stat-number">
                                         <?php 
+                                        // Tính điểm trung bình chung
                                         $totalScore = 0;
                                         $scoreCount = 0;
                                         foreach ($scoreStats['by_subject'] as $subject) {
                                             $totalScore += $subject['avg_score'] * $subject['count'];
                                             $scoreCount += $subject['count'];
                                         }
+                                        // Hiển thị điểm TB, nếu không có điểm nào thì hiển thị 0.0
                                         echo $scoreCount > 0 ? number_format($totalScore / $scoreCount, 1) : '0.0';
                                         ?>
                                     </div>
@@ -189,7 +202,7 @@ $scoreStats = $scoreController->getScoreStatistics();
                         </div>
                     </div>
                     
-                    <!-- Charts Row 1 -->
+                    <!-- Hàng chứa các biểu đồ -->
                     <div class="row mb-4">
                         <div class="col-md-6 mb-4">
                             <div class="card">
@@ -217,7 +230,7 @@ $scoreStats = $scoreController->getScoreStatistics();
                         </div>
                     </div>
                     
-                    <!-- Charts Row 2 -->
+                    <!-- Hàng chứa các biểu đồ (tiếp) -->
                     <div class="row mb-4">
                         <div class="col-md-6 mb-4">
                             <div class="card">
@@ -245,7 +258,7 @@ $scoreStats = $scoreController->getScoreStatistics();
                         </div>
                     </div>
                     
-                    <!-- Data Tables -->
+                    <!-- Hàng chứa các bảng dữ liệu -->
                     <div class="row">
                         <div class="col-md-6 mb-4">
                             <div class="card">
@@ -263,7 +276,7 @@ $scoreStats = $scoreController->getScoreStatistics();
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                <?php foreach (array_slice($scoreStats['by_subject'], 0, 5) as $subject): ?>
+                                                <?php foreach (array_slice($scoreStats['by_subject'], 0, 5) as $subject): // Lấy 5 môn đầu tiên ?>
                                                 <tr>
                                                     <td><?php echo htmlspecialchars($subject['subject']); ?></td>
                                                     <td>
@@ -320,15 +333,18 @@ $scoreStats = $scoreController->getScoreStatistics();
         </div>
     </div>
 
+    <!-- Nạp các thư viện JavaScript -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        // Gender Chart
+        // --- Vẽ các biểu đồ bằng Chart.js ---
+
+        // Biểu đồ Phân bố giới tính (Doughnut Chart)
         const genderCtx = document.getElementById('genderChart').getContext('2d');
-        const genderData = <?php echo json_encode($studentStats['by_gender']); ?>;
+        const genderData = <?php echo json_encode($studentStats['by_gender']); ?>; // Lấy dữ liệu từ PHP
         const genderLabels = [];
         const genderValues = [];
-        const genderColors = ['#36A2EB', '#FF6384', '#FFCE56'];
+        const genderColors = ['#36A2EB', '#FF6384', '#FFCE56']; // Màu cho Nam, Nữ, Khác
         
         genderData.forEach((item, index) => {
             genderLabels.push(item.gender === 'male' ? 'Nam' : (item.gender === 'female' ? 'Nữ' : 'Khác'));
@@ -336,49 +352,49 @@ $scoreStats = $scoreController->getScoreStatistics();
         });
         
         new Chart(genderCtx, {
-            type: 'doughnut',
+            type: 'doughnut', // Loại biểu đồ
             data: {
-                labels: genderLabels,
+                labels: genderLabels, // Nhãn (Nam, Nữ, Khác)
                 datasets: [{
-                    data: genderValues,
+                    data: genderValues, // Dữ liệu số lượng
                     backgroundColor: genderColors.slice(0, genderLabels.length),
                     borderWidth: 2,
                     borderColor: '#fff'
                 }]
             },
             options: {
-                responsive: true,
-                maintainAspectRatio: false,
+                responsive: true, // Tự động co giãn
+                maintainAspectRatio: false, // Không giữ tỷ lệ khung hình
                 plugins: {
                     legend: {
-                        position: 'bottom'
+                        position: 'bottom' // Hiển thị chú giải ở dưới
                     }
                 }
             }
         });
         
-        // Trend Chart
+        // Biểu đồ Xu hướng đăng ký (Line Chart)
         const trendCtx = document.getElementById('trendChart').getContext('2d');
-        const trendData = <?php echo json_encode($studentStats['by_month']); ?>;
+        const trendData = <?php echo json_encode($studentStats['by_month']); ?>; // Dữ liệu sinh viên theo tháng
         const trendLabels = [];
         const trendValues = [];
         
         trendData.forEach(item => {
-            trendLabels.push(item.month);
-            trendValues.push(item.count);
+            trendLabels.push(item.month); // Nhãn là các tháng
+            trendValues.push(item.count); // Dữ liệu là số sinh viên
         });
         
         new Chart(trendCtx, {
-            type: 'line',
+            type: 'line', // Loại biểu đồ đường
             data: {
                 labels: trendLabels,
                 datasets: [{
                     label: 'Sinh viên mới',
                     data: trendValues,
                     borderColor: '#36A2EB',
-                    backgroundColor: 'rgba(54, 162, 235, 0.1)',
-                    tension: 0.4,
-                    fill: true
+                    backgroundColor: 'rgba(54, 162, 235, 0.1)', // Màu nền dưới đường line
+                    tension: 0.4, // Làm mịn đường cong
+                    fill: true // Tô màu nền
                 }]
             },
             options: {
@@ -386,30 +402,30 @@ $scoreStats = $scoreController->getScoreStatistics();
                 maintainAspectRatio: false,
                 scales: {
                     y: {
-                        beginAtZero: true
+                        beginAtZero: true // Trục Y bắt đầu từ 0
                     }
                 },
                 plugins: {
                     legend: {
-                        display: false
+                        display: false // Ẩn chú giải
                     }
                 }
             }
         });
         
-        // Subject Chart
+        // Biểu đồ Điểm trung bình theo môn (Bar Chart)
         const subjectCtx = document.getElementById('subjectChart').getContext('2d');
         const subjectData = <?php echo json_encode($scoreStats['by_subject']); ?>;
         const subjectLabels = [];
         const subjectValues = [];
         
-        subjectData.slice(0, 5).forEach(item => {
+        subjectData.slice(0, 5).forEach(item => { // Chỉ lấy 5 môn đầu tiên
             subjectLabels.push(item.subject);
             subjectValues.push(parseFloat(item.avg_score));
         });
         
         new Chart(subjectCtx, {
-            type: 'bar',
+            type: 'bar', // Loại biểu đồ cột
             data: {
                 labels: subjectLabels,
                 datasets: [{
@@ -426,23 +442,23 @@ $scoreStats = $scoreController->getScoreStatistics();
                 scales: {
                     y: {
                         beginAtZero: true,
-                        max: 10
+                        max: 10 // Giá trị tối đa của trục Y là 10
                     }
                 },
                 plugins: {
                     legend: {
-                        display: false
+                        display: false // Ẩn chú giải
                     }
                 }
             }
         });
         
-        // Grade Chart
+        // Biểu đồ Phân bố xếp loại (Doughnut Chart)
         const gradeCtx = document.getElementById('gradeChart').getContext('2d');
-        const gradeData = <?php echo json_encode($scoreStats['grade_distribution']); ?>;
+        const gradeData = <?php echo json_encode($scoreStats['grade_distribution']); ?>; // Dữ liệu phân bố xếp loại
         const gradeLabels = [];
         const gradeValues = [];
-        const gradeColors = ['#28a745', '#20c997', '#ffc107', '#fd7e14', '#dc3545'];
+        const gradeColors = ['#28a745', '#20c997', '#ffc107', '#fd7e14', '#dc3545']; // Màu cho các loại xếp loại
         
         gradeData.forEach((item, index) => {
             gradeLabels.push(item.grade);

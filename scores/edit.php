@@ -1,50 +1,76 @@
 <?php
+// Bắt đầu session để lưu trữ thông tin người dùng
 session_start();
+// Nạp file chứa các hàm tiện ích
 require_once '../utils.php';
+// Nạp file chứa class ScoreController
 require_once '../scoreController.php';
+// Nạp file chứa class StudentController
 require_once '../studentController.php';
 
+// Yêu cầu người dùng phải có quyền chỉnh sửa điểm
 requirePermission(PERMISSION_EDIT_SCORES);
 
+// Tạo đối tượng ScoreController
 $scoreController = new ScoreController();
+// Tạo đối tượng StudentController
 $studentController = new StudentController();
+// Lấy ID điểm từ tham số GET, mặc định là 0 nếu không có
 $scoreId = $_GET['id'] ?? 0;
+// Lấy thông tin điểm theo ID
 $score = $scoreController->getScoreById($scoreId);
 
+// Nếu không tìm thấy điểm
 if (!$score) {
+    // Chuyển hướng về trang danh sách với thông báo lỗi
     header('Location: list.php?error=score_not_found');
+    // Dừng thực thi script
     exit();
 }
 
+// Lấy danh sách tất cả sinh viên (tối đa 1000 bản ghi, không phân trang)
 $students = $studentController->getAllStudents('', 1000, 0);
 
+// Khởi tạo biến lưu thông báo lỗi
 $error = '';
+// Khởi tạo biến lưu thông báo thành công
 $success = '';
 
+// Kiểm tra xem request có phải là POST không (khi form được submit)
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    // Kiểm tra CSRF token
+    // Kiểm tra CSRF token để bảo vệ khỏi tấn công CSRF
     if (!isset($_POST['csrf_token']) || !verifyCSRFToken($_POST['csrf_token'])) {
+        // Nếu token không hợp lệ, gán thông báo lỗi
         $error = 'Lỗi xác thực. Vui lòng thử lại.';
     } else {
+        // Nếu token hợp lệ, bắt đầu xử lý dữ liệu form
+        // Tạo mảng chứa dữ liệu điểm đã được làm sạch và validate
         $data = [
-            'student_id' => $_POST['student_id'],
-            'subject' => sanitize($_POST['subject']),
-            'score' => floatval($_POST['score']),
-            'semester' => sanitize($_POST['semester'])
+            'student_id' => $_POST['student_id'],                    // ID sinh viên
+            'subject' => sanitize($_POST['subject']),                // Tên môn học đã được làm sạch
+            'score' => floatval($_POST['score']),                    // Điểm số (chuyển sang float)
+            'semester' => sanitize($_POST['semester'])               // Học kỳ đã được làm sạch
         ];
 
+        // Kiểm tra các trường bắt buộc có được điền đầy đủ không
         if (empty($data['student_id']) || empty($data['subject']) || empty($data['semester'])) {
+            // Nếu thiếu thông tin, gán thông báo lỗi
             $error = 'Vui lòng điền đầy đủ thông tin';
         } elseif ($data['score'] < 0 || $data['score'] > 10) {
+            // Kiểm tra điểm có trong khoảng hợp lệ (0-10) không
             $error = 'Điểm phải từ 0 đến 10';
         } else {
+            // Nếu tất cả đều hợp lệ, gọi phương thức updateScore để cập nhật điểm
             $result = $scoreController->updateScore($scoreId, $data);
 
+            // Nếu cập nhật thành công
             if ($result['success']) {
+                // Lưu thông báo thành công
                 $success = $result['message'];
-                // Update score data for display
+                // Cập nhật dữ liệu điểm để hiển thị
                 $score = array_merge($score, $data);
             } else {
+                // Nếu cập nhật thất bại, lưu thông báo lỗi
                 $error = $result['message'];
             }
         }
@@ -286,6 +312,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                                     </div>
                                     <div id="gradePreview" class="mt-2">
                                         <?php
+                                        // Xác định xếp loại dựa trên điểm số
+                                        // >= 9: A+, >= 8: A, >= 7: B+, >= 6: B, >= 5: C, < 5: D
                                         $grade = $score['score'] >= 9 ? 'A+' : ($score['score'] >= 8 ? 'A' : ($score['score'] >= 7 ? 'B+' : ($score['score'] >= 6 ? 'B' : ($score['score'] >= 5 ? 'C' : 'D'))));
                                         ?>
                                         <strong>Xếp loại: <?php echo $grade; ?></strong>
@@ -321,62 +349,78 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        // Hàm cập nhật preview điểm và xếp loại
         function updateScorePreview() {
+            // Lấy giá trị điểm và chuyển sang số thực, mặc định là 0 nếu không có
             const score = parseFloat(document.getElementById('score').value) || 0;
+            // Lấy phần tử hiển thị preview điểm
             const preview = document.getElementById('scorePreview');
+            // Lấy phần tử hiển thị xếp loại
             const gradePreview = document.getElementById('gradePreview');
 
+            // Hiển thị điểm với 1 chữ số thập phân
             preview.textContent = score.toFixed(1);
 
+            // Khởi tạo biến xếp loại và class màu
             let grade, className;
+            // Xác định xếp loại và màu sắc dựa trên điểm số
             if (score >= 9) {
-                grade = 'A+';
-                className = 'score-excellent';
+                grade = 'A+';                    // Xuất sắc
+                className = 'score-excellent';   // Màu xanh lá (tốt)
             } else if (score >= 8) {
-                grade = 'A';
-                className = 'score-good';
+                grade = 'A';                     // Giỏi
+                className = 'score-good';        // Màu vàng (khá)
             } else if (score >= 7) {
-                grade = 'B+';
-                className = 'score-good';
+                grade = 'B+';                    // Khá giỏi
+                className = 'score-good';        // Màu vàng (khá)
             } else if (score >= 6) {
-                grade = 'B';
-                className = 'score-good';
+                grade = 'B';                     // Khá
+                className = 'score-good';        // Màu vàng (khá)
             } else if (score >= 5) {
-                grade = 'C';
-                className = 'score-poor';
+                grade = 'C';                     // Trung bình
+                className = 'score-poor';        // Màu đỏ (kém)
             } else {
-                grade = 'D';
-                className = 'score-poor';
+                grade = 'D';                     // Yếu
+                className = 'score-poor';         // Màu đỏ (kém)
             }
 
+            // Cập nhật class màu cho preview
             preview.className = 'score-preview ' + className;
+            // Hiển thị xếp loại
             gradePreview.innerHTML = '<strong>Xếp loại: ' + grade + '</strong>';
         }
 
-        // Update preview when score changes
+        // Cập nhật preview khi điểm thay đổi
         document.getElementById('score').addEventListener('input', updateScorePreview);
 
-        // Form validation
+        // Validation form trước khi submit
         document.getElementById('scoreForm').addEventListener('submit', function(e) {
+            // Lấy giá trị các trường form
             const studentId = document.getElementById('student_id').value;
             const subject = document.getElementById('subject').value.trim();
             const score = parseFloat(document.getElementById('score').value);
             const semester = document.getElementById('semester').value;
 
+            // Kiểm tra các trường bắt buộc có được điền đầy đủ không
             if (!studentId || !subject || !semester) {
+                // Ngăn form submit
                 e.preventDefault();
+                // Hiển thị cảnh báo
                 alert('Vui lòng điền đầy đủ thông tin');
                 return false;
             }
 
+            // Kiểm tra điểm có hợp lệ không (phải là số và trong khoảng 0-10)
             if (isNaN(score) || score < 0 || score > 10) {
+                // Ngăn form submit
                 e.preventDefault();
+                // Hiển thị cảnh báo
                 alert('Điểm phải từ 0 đến 10');
                 return false;
             }
         });
 
-        // Initial preview update
+        // Cập nhật preview ban đầu
         updateScorePreview();
     </script>
 </body>

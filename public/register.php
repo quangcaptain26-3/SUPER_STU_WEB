@@ -1,39 +1,59 @@
 <?php
+// Bắt đầu session để lưu trữ thông tin người dùng sau khi đăng ký
 session_start();
+// Nạp file chứa class AuthController để xử lý logic đăng ký
 require_once '../authController.php';
+// Nạp file chứa các hàm tiện ích
 require_once '../utils.php';
 
-// Redirect if already logged in
+// Kiểm tra xem người dùng đã đăng nhập chưa
+// Nếu đã đăng nhập thì chuyển hướng về trang chủ để tránh đăng ký lại
 if (isLoggedIn()) {
+    // Chuyển hướng về trang chủ
     header('Location: index.php');
+    // Dừng thực thi script
     exit();
 }
 
+// Khởi tạo biến lưu thông báo lỗi
 $error = '';
+// Khởi tạo biến lưu thông báo thành công
 $success = '';
 
+// Kiểm tra xem request có phải là POST không (khi form đăng ký được submit)
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $username = sanitize($_POST['username']);
-    $password = $_POST['password'];
-    $confirmPassword = $_POST['confirm_password'];
-    $email = sanitize($_POST['email']);
-    $role = sanitize($_POST['role']);
+    // Lấy và làm sạch dữ liệu từ form
+    $username = sanitize($_POST['username']);              // Tên đăng nhập đã được làm sạch
+    $password = $_POST['password'];                         // Mật khẩu (không sanitize)
+    $confirmPassword = $_POST['confirm_password'];          // Mật khẩu xác nhận
+    $email = sanitize($_POST['email']);                     // Email đã được làm sạch
+    $role = sanitize($_POST['role']);                      // Vai trò đã được làm sạch
     
+    // Kiểm tra các trường bắt buộc có được điền đầy đủ không
     if (empty($username) || empty($password) || empty($email)) {
+        // Nếu thiếu thông tin, gán thông báo lỗi
         $error = 'Vui lòng nhập đầy đủ thông tin';
     } elseif ($password !== $confirmPassword) {
+        // Kiểm tra mật khẩu xác nhận có khớp với mật khẩu không
         $error = 'Mật khẩu xác nhận không khớp';
     } elseif (strlen($password) < 6) {
+        // Kiểm tra độ dài mật khẩu (tối thiểu 6 ký tự)
         $error = 'Mật khẩu phải có ít nhất 6 ký tự';
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        // Kiểm tra định dạng email có hợp lệ không
         $error = 'Email không hợp lệ';
     } else {
+        // Nếu tất cả validation đều pass, tạo đối tượng AuthController
         $auth = new AuthController();
+        // Gọi phương thức register để tạo tài khoản mới
         $result = $auth->register($username, $password, $email, $role);
         
+        // Nếu đăng ký thành công
         if ($result['success']) {
+            // Lưu thông báo thành công kèm hướng dẫn đăng nhập
             $success = $result['message'] . ' Bạn có thể đăng nhập ngay bây giờ.';
         } else {
+            // Nếu đăng ký thất bại, lưu thông báo lỗi
             $error = $result['message'];
         }
     }
@@ -209,58 +229,80 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         </div>
     </div>
 
+    <!-- Nạp Bootstrap JS từ CDN -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Password strength checker
+        // Kiểm tra độ mạnh mật khẩu khi người dùng nhập
+        // Hiển thị thanh độ mạnh mật khẩu để người dùng biết mật khẩu của họ có an toàn không
         document.getElementById('password').addEventListener('input', function() {
+            // Lấy giá trị mật khẩu
             const password = this.value;
+            // Lấy phần tử thanh độ mạnh
             const strengthBar = document.getElementById('strengthBar');
             
+            // Tính điểm độ mạnh mật khẩu (0-5 điểm)
             let strength = 0;
-            if (password.length >= 6) strength++;
-            if (password.match(/[a-z]/)) strength++;
-            if (password.match(/[A-Z]/)) strength++;
-            if (password.match(/[0-9]/)) strength++;
-            if (password.match(/[^a-zA-Z0-9]/)) strength++;
+            if (password.length >= 6) strength++;           // Độ dài >= 6 ký tự
+            if (password.match(/[a-z]/)) strength++;         // Có chữ thường
+            if (password.match(/[A-Z]/)) strength++;         // Có chữ hoa
+            if (password.match(/[0-9]/)) strength++;         // Có số
+            if (password.match(/[^a-zA-Z0-9]/)) strength++;  // Có ký tự đặc biệt
             
+            // Reset class của thanh độ mạnh
             strengthBar.className = 'password-strength-bar';
+            // Xác định màu sắc và độ rộng dựa trên điểm độ mạnh
             if (strength <= 1) {
+                // Yếu: màu đỏ, 25% độ rộng
                 strengthBar.classList.add('strength-weak');
             } else if (strength <= 2) {
+                // Trung bình: màu vàng, 50% độ rộng
                 strengthBar.classList.add('strength-fair');
             } else if (strength <= 3) {
+                // Khá: màu xanh dương, 75% độ rộng
                 strengthBar.classList.add('strength-good');
             } else {
+                // Mạnh: màu xanh lá, 100% độ rộng
                 strengthBar.classList.add('strength-strong');
             }
         });
         
-        // Form validation
+        // Validation form trước khi submit
+        // Kiểm tra dữ liệu ở phía client để tránh submit form không hợp lệ
         document.getElementById('registerForm').addEventListener('submit', function(e) {
+            // Lấy giá trị các trường
             const password = document.getElementById('password').value;
             const confirmPassword = document.getElementById('confirm_password').value;
             const agree = document.getElementById('agree').checked;
             
+            // Kiểm tra mật khẩu xác nhận có khớp không
             if (password !== confirmPassword) {
+                // Ngăn form submit
                 e.preventDefault();
+                // Hiển thị cảnh báo
                 alert('Mật khẩu xác nhận không khớp');
                 return false;
             }
             
+            // Kiểm tra độ dài mật khẩu
             if (password.length < 6) {
+                // Ngăn form submit
                 e.preventDefault();
+                // Hiển thị cảnh báo
                 alert('Mật khẩu phải có ít nhất 6 ký tự');
                 return false;
             }
             
+            // Kiểm tra người dùng có đồng ý với điều khoản không
             if (!agree) {
+                // Ngăn form submit
                 e.preventDefault();
+                // Hiển thị cảnh báo
                 alert('Vui lòng đồng ý với điều khoản sử dụng');
                 return false;
             }
         });
         
-        // Auto focus on first field
+        // Tự động focus vào trường đầu tiên khi trang load
         document.getElementById('username').focus();
     </script>
 </body>

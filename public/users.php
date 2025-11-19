@@ -1,53 +1,77 @@
 <?php
+// Bắt đầu session để lưu trữ thông tin người dùng
 session_start();
+// Nạp file chứa các hàm tiện ích
 require_once '../utils.php';
+// Nạp file chứa class AuthController
 require_once '../authController.php';
 
+// Yêu cầu người dùng phải có vai trò superadmin để truy cập trang này
+// Chỉ superadmin mới có quyền quản lý người dùng
 requireRole('superadmin');
 
+// Tạo đối tượng AuthController
 $authController = new AuthController();
+// Khởi tạo biến lưu thông báo lỗi
 $error = '';
+// Khởi tạo biến lưu thông báo thành công
 $success = '';
 
 // Xử lý thêm người dùng mới
+// Kiểm tra xem request có phải là POST và action là 'add_user' không
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['action'] == 'add_user') {
-    $username = sanitize($_POST['username']);
-    $password = $_POST['password'];
-    $email = sanitize($_POST['email']);
-    $role = sanitize($_POST['role']);
+    // Lấy và làm sạch dữ liệu từ form
+    $username = sanitize($_POST['username']);  // Tên đăng nhập đã được làm sạch
+    $password = $_POST['password'];              // Mật khẩu (không sanitize)
+    $email = sanitize($_POST['email']);          // Email đã được làm sạch
+    $role = sanitize($_POST['role']);            // Vai trò đã được làm sạch
     
+    // Kiểm tra các trường bắt buộc có được điền đầy đủ không
     if (empty($username) || empty($password) || empty($email) || empty($role)) {
+        // Nếu thiếu thông tin, gán thông báo lỗi
         $error = 'Vui lòng điền đầy đủ thông tin';
     } elseif (strlen($password) < 6) {
+        // Kiểm tra độ dài mật khẩu (tối thiểu 6 ký tự)
         $error = 'Mật khẩu phải có ít nhất 6 ký tự';
     } else {
+        // Nếu tất cả validation đều pass, gọi phương thức register để tạo tài khoản mới
         $result = $authController->register($username, $password, $email, $role);
+        // Nếu thêm thành công
         if ($result['success']) {
+            // Lưu thông báo thành công
             $success = $result['message'];
         } else {
+            // Nếu thêm thất bại, lưu thông báo lỗi
             $error = $result['message'];
         }
     }
 }
 
 // Xử lý xóa người dùng
+// Kiểm tra xem request có phải là POST và action là 'delete_user' không
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['action'] == 'delete_user') {
+    // Lấy ID người dùng cần xóa
     $userId = $_POST['user_id'];
     
+    // Kiểm tra xem có phải đang cố xóa chính tài khoản của mình không
     if ($userId == $_SESSION['user_id']) {
+        // Không cho phép xóa tài khoản của chính mình (bảo vệ an toàn)
         $error = 'Không thể xóa tài khoản của chính mình';
     } else {
-        // Thêm logic xóa user vào AuthController
+        // Nếu không phải tài khoản của chính mình, gọi phương thức deleteUser để xóa
         $result = $authController->deleteUser($userId);
+        // Nếu xóa thành công
         if ($result['success']) {
+            // Lưu thông báo thành công
             $success = $result['message'];
         } else {
+            // Nếu xóa thất bại, lưu thông báo lỗi
             $error = $result['message'];
         }
     }
 }
 
-// Lấy danh sách người dùng
+// Lấy danh sách tất cả người dùng trong hệ thống
 $users = $authController->getAllUsers();
 ?>
 <!DOCTYPE html>
@@ -318,29 +342,39 @@ $users = $authController->getAllUsers();
         </div>
     </div>
 
+    <!-- Nạp Bootstrap JS từ CDN -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Nạp SweetAlert2 để hiển thị hộp thoại đẹp -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Nạp file notifications.js để hiển thị thông báo -->
     <script src="../assets/js/notifications.js"></script>
     <script>
+        // Hàm xóa người dùng
         function deleteUser(id, username) {
+            // Hiển thị hộp thoại xác nhận xóa
             Swal.fire({
                 title: 'Xác nhận xóa người dùng',
                 text: 'Bạn có chắc chắn muốn xóa người dùng "' + username + '"? Hành động này không thể hoàn tác.',
                 icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#dc3545',
-                cancelButtonColor: '#6c757d',
+                showCancelButton: true, // Hiển thị nút hủy
+                confirmButtonColor: '#dc3545', // Màu đỏ cho nút xác nhận
+                cancelButtonColor: '#6c757d', // Màu xám cho nút hủy
                 confirmButtonText: 'Xóa',
                 cancelButtonText: 'Hủy'
             }).then((result) => {
+                // Nếu người dùng xác nhận xóa
                 if (result.isConfirmed) {
+                    // Tạo form ẩn để submit request xóa
                     const form = document.createElement('form');
-                    form.method = 'POST';
+                    form.method = 'POST'; // Phương thức POST
+                    // Thêm các input ẩn chứa action và user_id
                     form.innerHTML = `
                         <input type="hidden" name="action" value="delete_user">
                         <input type="hidden" name="user_id" value="${id}">
                     `;
+                    // Thêm form vào body
                     document.body.appendChild(form);
+                    // Submit form để gửi request xóa
                     form.submit();
                 }
             });

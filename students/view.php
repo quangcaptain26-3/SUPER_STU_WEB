@@ -1,29 +1,46 @@
 <?php
+// Bắt đầu session để lưu trữ thông tin người dùng
 session_start();
+// Nạp file chứa các hàm tiện ích
 require_once '../utils.php';
+// Nạp file chứa class StudentController
 require_once '../studentController.php';
+// Nạp file chứa class ScoreController
 require_once '../scoreController.php';
 
+// Yêu cầu người dùng phải có quyền xem sinh viên
 requirePermission(PERMISSION_VIEW_STUDENTS);
 
+// Tạo đối tượng StudentController
 $studentController = new StudentController();
+// Tạo đối tượng ScoreController
 $scoreController = new ScoreController();
+// Lấy ID sinh viên từ tham số GET, mặc định là 0 nếu không có
 $studentId = $_GET['id'] ?? 0;
+// Lấy thông tin sinh viên theo ID
 $student = $studentController->getStudentById($studentId);
 
+// Nếu không tìm thấy sinh viên
 if (!$student) {
+    // Chuyển hướng về trang danh sách với thông báo lỗi
     header('Location: list.php?error=student_not_found');
+    // Dừng thực thi script
     exit();
 }
 
-// Kiểm tra quyền xem
+// Kiểm tra quyền xem - người dùng có thể xem sinh viên này không
 if (!canViewStudent($studentId)) {
+    // Lưu thông báo lỗi vào session
     $_SESSION['error'] = 'Bạn không có quyền xem dữ liệu này';
+    // Chuyển hướng về trang danh sách với thông báo lỗi
     header('Location: list.php?error=access_denied');
+    // Dừng thực thi script
     exit();
 }
 
+// Lấy danh sách điểm của sinh viên
 $scores = $scoreController->getStudentScores($studentId);
+// Lấy điểm trung bình của sinh viên
 $averageScore = $scoreController->getStudentAverageScore($studentId);
 ?>
 <!DOCTYPE html>
@@ -219,11 +236,13 @@ $averageScore = $scoreController->getStudentAverageScore($studentId);
                                         <div>
                                             <strong>Giới tính:</strong><br>
                                             <?php
+                                            // Mảng chuyển đổi giới tính từ tiếng Anh sang tiếng Việt
                                             $genderText = [
                                                 'male' => 'Nam',
                                                 'female' => 'Nữ',
                                                 'other' => 'Khác'
                                             ];
+                                            // Hiển thị giới tính, nếu không tìm thấy thì hiển thị 'N/A'
                                             echo $genderText[$student['gender']] ?? 'N/A';
                                             ?>
                                         </div>
@@ -279,8 +298,11 @@ $averageScore = $scoreController->getStudentAverageScore($studentId);
                                     <?php if (!empty($scores)): ?>
                                         <h6 class="mb-3">Điểm theo học kỳ:</h6>
                                         <?php
+                                        // Nhóm điểm theo học kỳ
                                         $scoresBySemester = [];
+                                        // Duyệt qua từng điểm
                                         foreach ($scores as $score) {
+                                            // Thêm điểm vào mảng theo học kỳ
                                             $scoresBySemester[$score['semester']][] = $score;
                                         }
                                         ?>
@@ -352,7 +374,10 @@ $averageScore = $scoreController->getStudentAverageScore($studentId);
                                                     <td><?php echo htmlspecialchars($score['semester']); ?></td>
                                                     <td>
                                                         <?php
+                                                        // Xác định xếp loại dựa trên điểm số
+                                                        // >= 9: A+, >= 8: A, >= 7: B+, >= 6: B, >= 5: C, < 5: D
                                                         $grade = $score['score'] >= 9 ? 'A+' : ($score['score'] >= 8 ? 'A' : ($score['score'] >= 7 ? 'B+' : ($score['score'] >= 6 ? 'B' : ($score['score'] >= 5 ? 'C' : 'D'))));
+                                                        // Hiển thị xếp loại
                                                         echo $grade;
                                                         ?>
                                                     </td>
@@ -383,42 +408,46 @@ $averageScore = $scoreController->getStudentAverageScore($studentId);
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="../assets/js/notifications.js"></script>
     <script>
+        // Hàm xóa điểm
         function deleteScore(id) {
+            // Hiển thị hộp thoại xác nhận xóa
             Swal.fire({
                 title: 'Xác nhận xóa điểm',
                 text: 'Bạn có chắc chắn muốn xóa điểm này? Hành động này không thể hoàn tác.',
                 icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#dc3545',
-                cancelButtonColor: '#6c757d',
+                showCancelButton: true, // Hiển thị nút hủy
+                confirmButtonColor: '#dc3545', // Màu đỏ cho nút xác nhận
+                cancelButtonColor: '#6c757d', // Màu xám cho nút hủy
                 confirmButtonText: 'Xóa',
                 cancelButtonText: 'Hủy'
             }).then((result) => {
+                // Nếu người dùng xác nhận xóa
                 if (result.isConfirmed) {
                     // Hiển thị loading
                     Swal.fire({
                         title: 'Đang xử lý...',
                         text: 'Vui lòng chờ trong giây lát',
                         icon: 'info',
-                        allowOutsideClick: false,
-                        allowEscapeKey: false,
-                        showConfirmButton: false,
+                        allowOutsideClick: false, // Không cho click bên ngoài
+                        allowEscapeKey: false, // Không cho phím ESC
+                        showConfirmButton: false, // Không hiển thị nút xác nhận
                         didOpen: () => {
-                            Swal.showLoading();
+                            Swal.showLoading(); // Hiển thị spinner loading
                         }
                     });
 
-                    // Gửi request xóa
+                    // Gửi request xóa đến server
                     fetch('../scores/delete.php', {
-                            method: 'POST',
+                            method: 'POST', // Phương thức POST
                             headers: {
-                                'Content-Type': 'application/x-www-form-urlencoded',
+                                'Content-Type': 'application/x-www-form-urlencoded', // Header
                             },
-                            body: 'id=' + id
+                            body: 'id=' + id // Body chứa ID điểm cần xóa
                         })
-                        .then(response => response.json())
+                        .then(response => response.json()) // Chuyển response sang JSON
                         .then(data => {
-                            Swal.close();
+                            Swal.close(); // Đóng loading
+                            // Nếu xóa thành công
                             if (data.success) {
                                 Swal.fire({
                                     title: 'Thành công!',
@@ -426,9 +455,10 @@ $averageScore = $scoreController->getStudentAverageScore($studentId);
                                     icon: 'success',
                                     confirmButtonText: 'OK'
                                 }).then(() => {
-                                    location.reload();
+                                    location.reload(); // Tải lại trang
                                 });
                             } else {
+                                // Nếu xóa thất bại, hiển thị lỗi
                                 Swal.fire({
                                     title: 'Lỗi!',
                                     text: data.message,
@@ -438,7 +468,8 @@ $averageScore = $scoreController->getStudentAverageScore($studentId);
                             }
                         })
                         .catch(error => {
-                            Swal.close();
+                            Swal.close(); // Đóng loading
+                            // Nếu có lỗi xảy ra
                             Swal.fire({
                                 title: 'Lỗi!',
                                 text: 'Có lỗi xảy ra: ' + error,

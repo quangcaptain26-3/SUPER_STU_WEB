@@ -1,22 +1,36 @@
 <?php
+// Bắt đầu session để lưu trữ thông tin người dùng
 session_start();
+// Nạp file chứa các hàm tiện ích
 require_once '../utils.php';
+// Nạp file chứa class ScoreController
 require_once '../scoreController.php';
+// Nạp file chứa class StudentController
 require_once '../studentController.php';
 
+// Yêu cầu người dùng phải có quyền xem điểm
 requirePermission(PERMISSION_VIEW_SCORES);
 
+// Tạo đối tượng ScoreController
 $scoreController = new ScoreController();
+// Tạo đối tượng StudentController
 $studentController = new StudentController();
 
+// Lấy ID sinh viên từ tham số GET để lọc (nếu có)
 $studentId = $_GET['student_id'] ?? null;
+// Lấy học kỳ từ tham số GET để lọc (nếu có)
 $semester = $_GET['semester'] ?? '';
+// Lấy số trang từ tham số GET, đảm bảo >= 1
 $page = max(1, intval($_GET['page'] ?? 1));
+// Số lượng điểm hiển thị trên mỗi trang
 $limit = 10;
+// Tính offset để phân trang (số bản ghi bỏ qua)
 $offset = ($page - 1) * $limit;
 
+// Lấy danh sách điểm với bộ lọc sinh viên và học kỳ
 $scores = $scoreController->getAllScores($studentId, $semester);
-$students = $studentController->getAllStudents('', 1000, 0); // Get all students for filter
+// Lấy danh sách tất cả sinh viên để hiển thị trong bộ lọc
+$students = $studentController->getAllStudents('', 1000, 0);
 ?>
 <!DOCTYPE html>
 <html lang="vi">
@@ -247,7 +261,11 @@ $students = $studentController->getAllStudents('', 1000, 0); // Get all students
                                                     <td><?php echo htmlspecialchars($score['semester']); ?></td>
                                                     <td>
                                                         <?php
+                                                        // Xác định xếp loại dựa trên điểm số
+                                                        // >= 9: A+, >= 8: A, >= 7: B+, >= 6: B, >= 5: C, < 5: D
                                                         $grade = $score['score'] >= 9 ? 'A+' : ($score['score'] >= 8 ? 'A' : ($score['score'] >= 7 ? 'B+' : ($score['score'] >= 6 ? 'B' : ($score['score'] >= 5 ? 'C' : 'D'))));
+                                                        // Xác định màu sắc cho xếp loại
+                                                        // >= 8: màu xanh (tốt), >= 6: màu vàng (khá), < 6: màu đỏ (kém)
                                                         $gradeClass = $score['score'] >= 8 ? 'text-success' : ($score['score'] >= 6 ? 'text-warning' : 'text-danger');
                                                         ?>
                                                         <span class="<?php echo $gradeClass; ?> fw-bold"><?php echo $grade; ?></span>
@@ -284,42 +302,46 @@ $students = $studentController->getAllStudents('', 1000, 0); // Get all students
     <script src="../assets/js/notifications.js"></script>
     <!-- <script src="../assets/js/realtime.js"></script> -->
     <script>
+        // Hàm xóa điểm
         function deleteScore(id) {
+            // Hiển thị hộp thoại xác nhận xóa
             Swal.fire({
                 title: 'Xác nhận xóa điểm',
                 text: 'Bạn có chắc chắn muốn xóa điểm này? Hành động này không thể hoàn tác.',
                 icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#dc3545',
-                cancelButtonColor: '#6c757d',
+                showCancelButton: true, // Hiển thị nút hủy
+                confirmButtonColor: '#dc3545', // Màu đỏ cho nút xác nhận
+                cancelButtonColor: '#6c757d', // Màu xám cho nút hủy
                 confirmButtonText: 'Xóa',
                 cancelButtonText: 'Hủy'
             }).then((result) => {
+                // Nếu người dùng xác nhận xóa
                 if (result.isConfirmed) {
                     // Hiển thị loading
                     Swal.fire({
                         title: 'Đang xử lý...',
                         text: 'Vui lòng chờ trong giây lát',
                         icon: 'info',
-                        allowOutsideClick: false,
-                        allowEscapeKey: false,
-                        showConfirmButton: false,
+                        allowOutsideClick: false, // Không cho click bên ngoài
+                        allowEscapeKey: false, // Không cho phím ESC
+                        showConfirmButton: false, // Không hiển thị nút xác nhận
                         didOpen: () => {
-                            Swal.showLoading();
+                            Swal.showLoading(); // Hiển thị spinner loading
                         }
                     });
 
-                    // Gửi request xóa
+                    // Gửi request xóa đến server
                     fetch('delete.php', {
-                            method: 'POST',
+                            method: 'POST', // Phương thức POST
                             headers: {
-                                'Content-Type': 'application/x-www-form-urlencoded',
+                                'Content-Type': 'application/x-www-form-urlencoded', // Header
                             },
-                            body: 'id=' + id
+                            body: 'id=' + id // Body chứa ID điểm cần xóa
                         })
-                        .then(response => response.json())
+                        .then(response => response.json()) // Chuyển response sang JSON
                         .then(data => {
-                            Swal.close();
+                            Swal.close(); // Đóng loading
+                            // Nếu xóa thành công
                             if (data.success) {
                                 Swal.fire({
                                     title: 'Thành công!',
@@ -327,9 +349,10 @@ $students = $studentController->getAllStudents('', 1000, 0); // Get all students
                                     icon: 'success',
                                     confirmButtonText: 'OK'
                                 }).then(() => {
-                                    location.reload();
+                                    location.reload(); // Tải lại trang
                                 });
                             } else {
+                                // Nếu xóa thất bại, hiển thị lỗi
                                 Swal.fire({
                                     title: 'Lỗi!',
                                     text: data.message,
@@ -339,7 +362,8 @@ $students = $studentController->getAllStudents('', 1000, 0); // Get all students
                             }
                         })
                         .catch(error => {
-                            Swal.close();
+                            Swal.close(); // Đóng loading
+                            // Nếu có lỗi xảy ra
                             Swal.fire({
                                 title: 'Lỗi!',
                                 text: 'Có lỗi xảy ra: ' + error,

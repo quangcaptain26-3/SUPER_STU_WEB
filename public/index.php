@@ -1,13 +1,21 @@
 <?php
+// Bắt đầu session để lưu trữ thông tin người dùng
 session_start();
+// Nạp file chứa các hàm tiện ích
 require_once '../utils.php';
 
+// Kiểm tra xem người dùng đã đăng nhập chưa
+// Nếu chưa đăng nhập thì chuyển hướng về trang đăng nhập
 if (!isLoggedIn()) {
+    // Chuyển hướng về trang đăng nhập
     header('Location: login.php');
+    // Dừng thực thi script
     exit();
 }
 
+// Lấy vai trò của người dùng từ session
 $userRole = $_SESSION['role'];
+// Lấy tên đăng nhập của người dùng từ session
 $username = $_SESSION['username'];
 ?>
 <!DOCTYPE html>
@@ -239,66 +247,82 @@ $username = $_SESSION['username'];
         </div>
     </div>
 
+    <!-- Nạp Bootstrap JS từ CDN -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Nạp Chart.js để vẽ biểu đồ -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Nạp file realtime.js để cập nhật thời gian realtime -->
     <script src="../assets/js/realtime.js"></script>
+    <!-- Nạp file clock-widget.js để hiển thị đồng hồ -->
     <script src="../assets/js/clock-widget.js"></script>
     <script>
         // Khởi tạo đồng hồ mini trong sidebar
+        // Hiển thị thời gian realtime trong phần sidebar
         new MiniClockWidget('mini-clock');
         
-        // Load statistics
+        // Tải dữ liệu thống kê từ API
+        // Gọi API để lấy các số liệu thống kê về sinh viên và điểm số
         fetch('../charts/api/statistics.php')
-            .then(response => response.json())
+            .then(response => response.json()) // Chuyển response sang JSON
             .then(data => {
+                // Cập nhật số liệu thống kê vào các phần tử HTML
+                // Tổng số sinh viên
                 document.getElementById('totalStudents').textContent = data.total_students || 0;
+                // Số sinh viên nam
                 document.getElementById('maleStudents').textContent = data.male_students || 0;
+                // Số sinh viên nữ
                 document.getElementById('femaleStudents').textContent = data.female_students || 0;
+                // Điểm trung bình
                 document.getElementById('avgScore').textContent = data.avg_score || '0.0';
                 
-                // Gender Chart
+                // Vẽ biểu đồ phân bố giới tính (dạng doughnut)
                 const genderCtx = document.getElementById('genderChart').getContext('2d');
                 new Chart(genderCtx, {
-                    type: 'doughnut',
+                    type: 'doughnut', // Loại biểu đồ: doughnut (bánh rán)
                     data: {
-                        labels: ['Nam', 'Nữ', 'Khác'],
+                        labels: ['Nam', 'Nữ', 'Khác'], // Nhãn các phần
                         datasets: [{
+                            // Dữ liệu: số lượng nam, nữ, khác
                             data: [data.male_students || 0, data.female_students || 0, data.other_students || 0],
+                            // Màu sắc cho từng phần: xanh dương, hồng, vàng
                             backgroundColor: ['#36A2EB', '#FF6384', '#FFCE56']
                         }]
                     },
                     options: {
-                        responsive: true,
-                        maintainAspectRatio: false
+                        responsive: true, // Tự động điều chỉnh kích thước
+                        maintainAspectRatio: false // Không giữ tỷ lệ khung hình
                     }
                 });
                 
-                // Trend Chart
+                // Vẽ biểu đồ xu hướng đăng ký (dạng line)
                 const trendCtx = document.getElementById('trendChart').getContext('2d');
                 new Chart(trendCtx, {
-                    type: 'line',
+                    type: 'line', // Loại biểu đồ: line (đường)
                     data: {
+                        // Nhãn trục X: các tháng
                         labels: data.monthly_labels || [],
                         datasets: [{
-                            label: 'Sinh viên mới',
+                            label: 'Sinh viên mới', // Tên của dataset
+                            // Dữ liệu: số sinh viên mới theo từng tháng
                             data: data.monthly_data || [],
-                            borderColor: '#36A2EB',
-                            backgroundColor: 'rgba(54, 162, 235, 0.1)',
-                            tension: 0.4
+                            borderColor: '#36A2EB', // Màu đường viền
+                            backgroundColor: 'rgba(54, 162, 235, 0.1)', // Màu nền với độ trong suốt
+                            tension: 0.4 // Độ cong của đường (0.4 = cong vừa phải)
                         }]
                     },
                     options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
+                        responsive: true, // Tự động điều chỉnh kích thước
+                        maintainAspectRatio: false, // Không giữ tỷ lệ khung hình
                         scales: {
                             y: {
-                                beginAtZero: true
+                                beginAtZero: true // Bắt đầu trục Y từ 0
                             }
                         }
                     }
                 });
             })
             .catch(error => {
+                // Xử lý lỗi nếu không tải được dữ liệu
                 console.error('Error loading statistics:', error);
             });
     </script>

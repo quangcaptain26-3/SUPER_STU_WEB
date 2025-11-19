@@ -9,85 +9,105 @@ require_once 'utils.php';
  */
 class ExportController
 {
-    // Khai báo biến private để lưu trữ kết nối cơ sở dữ liệu
+    // Biến private lưu kết nối cơ sở dữ liệu
     private $conn;
 
     /**
      * Hàm khởi tạo ExportController
-     * Khởi tạo kết nối cơ sở dữ liệu
+     * Khởi tạo kết nối cơ sở dữ liệu thông qua lớp Database
      */
     public function __construct()
     {
-        // Tạo đối tượng Database mới
+        // Tạo đối tượng Database mới để kết nối DB
         $database = new Database();
         // Gán kết nối cơ sở dữ liệu vào biến $conn
         $this->conn = $database->getConnection();
     }
 
     /**
-     * Exports data to a PDF file.
-     * @param string $type The type of data to export ('students' or 'scores').
-     * @param array $filters Filters to apply to the data.
+     * Xuất dữ liệu ra file PDF
+     * @param string $type Loại dữ liệu cần xuất ('students' hoặc 'scores')
+     * @param array $filters Mảng bộ lọc dữ liệu để xuất
      */
     public function exportToPDF($type = 'students', $filters = [])
     {
-        // Include the TCPDF library
+        // Bao gồm thư viện TCPDF để tạo file PDF
         require_once 'assets/libs/tcpdf/tcpdf.php';
 
-        // Create a new PDF document
+        // Khởi tạo đối tượng PDF mới với các tham số cơ bản
         $pdf = new TCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
+
+        // Thiết lập thông tin tài liệu PDF
         $pdf->SetCreator('Student Management System');
         $pdf->SetTitle('Báo cáo ' . ($type == 'students' ? 'Danh sách sinh viên' : 'Bảng điểm'));
+
+        // Thiết lập tiêu đề header của file PDF
         $pdf->SetHeaderData('', 0, 'Hệ thống quản lý sinh viên', 'Báo cáo ' . date('d/m/Y H:i'));
 
-        // Set header and footer fonts
+        // Cấu hình font chữ cho header và footer
         $pdf->setHeaderFont(array(PDF_FONT_NAME_MAIN, '', PDF_FONT_SIZE_MAIN));
         $pdf->setFooterFont(array(PDF_FONT_NAME_DATA, '', PDF_FONT_SIZE_DATA));
+
+        // Cấu hình font mặc định cho chữ trong PDF
         $pdf->SetDefaultMonospacedFont(PDF_FONT_MONOSPACED);
+
+        // Thiết lập lề trang PDF
         $pdf->SetMargins(PDF_MARGIN_LEFT, PDF_MARGIN_TOP, PDF_MARGIN_RIGHT);
         $pdf->SetHeaderMargin(PDF_MARGIN_HEADER);
         $pdf->SetFooterMargin(PDF_MARGIN_FOOTER);
+
+        // Bật chế độ ngắt trang tự động
         $pdf->SetAutoPageBreak(TRUE, PDF_MARGIN_BOTTOM);
+
+        // Thiết lập tỉ lệ ảnh trong file PDF
         $pdf->setImageScale(PDF_IMAGE_SCALE_RATIO);
+
+        // Thiết lập font chữ chính cho nội dung
         $pdf->setFont('dejavusans', '', 10);
 
+        // Thêm một trang mới vào PDF
         $pdf->AddPage();
 
-        // Generate the PDF content based on the specified type
+        // Tùy theo $type, tạo nội dung phù hợp
         if ($type == 'students') {
             $this->generateStudentsPDF($pdf, $filters);
         } else {
             $this->generateScoresPDF($pdf, $filters);
         }
 
-        // Output the PDF for download
+        // Tạo tên file gồm loại dữ liệu và timestamp
         $filename = $type . '_' . date('Y-m-d_H-i-s') . '.pdf';
+
+        // Xuất file PDF để tải về (D = Download)
         $pdf->Output($filename, 'D');
     }
 
     /**
-     * Generates the student list content for the PDF.
-     * @param TCPDF $pdf The PDF object.
-     * @param array $filters Filters to apply to the student data.
+     * Tạo nội dung danh sách sinh viên cho file PDF
+     * @param TCPDF $pdf Đối tượng PDF
+     * @param array $filters Các bộ lọc để lấy danh sách sinh viên
      */
     private function generateStudentsPDF($pdf, $filters)
     {
+        // Tạo đối tượng StudentController để lấy dữ liệu sinh viên
         $studentController = new StudentController();
         $students = $studentController->getAllStudents($filters['search'] ?? '');
 
-        // Create HTML content for the student list
+        // Tạo HTML bảng danh sách sinh viên để in ra PDF
         $html = '<h2>DANH SÁCH SINH VIÊN</h2>';
         $html .= '<table border="1" cellpadding="5">';
         $html .= '<tr style="background-color:#f0f0f0;">';
         $html .= '<th>STT</th><th>Mã SV</th><th>Họ tên</th><th>Ngày sinh</th><th>Giới tính</th><th>Email</th><th>SĐT</th>';
         $html .= '</tr>';
 
+        // Duyệt từng sinh viên để tạo các dòng dữ liệu
         foreach ($students as $index => $student) {
             $html .= '<tr>';
             $html .= '<td>' . ($index + 1) . '</td>';
             $html .= '<td>' . $student['msv'] . '</td>';
             $html .= '<td>' . $student['fullname'] . '</td>';
             $html .= '<td>' . formatDate($student['dob']) . '</td>';
+            // Chuyển giới tính sang chữ phù hợp
             $html .= '<td>' . ($student['gender'] == 'male' ? 'Nam' : ($student['gender'] == 'female' ? 'Nữ' : 'Khác')) . '</td>';
             $html .= '<td>' . $student['email'] . '</td>';
             $html .= '<td>' . $student['phone'] . '</td>';
@@ -95,27 +115,30 @@ class ExportController
         }
 
         $html .= '</table>';
-        // Write the HTML content to the PDF
+
+        // Ghi nội dung HTML ra file PDF
         $pdf->writeHTML($html, true, false, true, false, '');
     }
 
     /**
-     * Generates the score list content for the PDF.
-     * @param TCPDF $pdf The PDF object.
-     * @param array $filters Filters to apply to the score data.
+     * Tạo nội dung bảng điểm cho file PDF
+     * @param TCPDF $pdf Đối tượng PDF
+     * @param array $filters Các bộ lọc (mã sinh viên, học kỳ) để lấy dữ liệu điểm
      */
     private function generateScoresPDF($pdf, $filters)
     {
+        // Tạo đối tượng ScoreController để lấy dữ liệu điểm
         $scoreController = new ScoreController();
         $scores = $scoreController->getAllScores($filters['student_id'] ?? null, $filters['semester'] ?? null);
 
-        // Create HTML content for the score list
+        // Tạo HTML bảng điểm sinh viên
         $html = '<h2>BẢNG ĐIỂM</h2>';
         $html .= '<table border="1" cellpadding="5">';
         $html .= '<tr style="background-color:#f0f0f0;">';
         $html .= '<th>STT</th><th>Mã SV</th><th>Họ tên</th><th>Môn học</th><th>Điểm</th><th>Học kỳ</th>';
         $html .= '</tr>';
 
+        // Duyệt từng dòng điểm để tạo bảng
         foreach ($scores as $index => $score) {
             $html .= '<tr>';
             $html .= '<td>' . ($index + 1) . '</td>';
@@ -128,19 +151,20 @@ class ExportController
         }
 
         $html .= '</table>';
-        // Write the HTML content to the PDF
+
+        // Ghi nội dung HTML ra file PDF
         $pdf->writeHTML($html, true, false, true, false, '');
     }
 
     /**
-     * Exports data to a DOCX file.
-     * @param string $type The type of data to export ('students' or 'scores').
-     * @param array $filters Filters to apply to the data.
+     * Xuất dữ liệu ra file DOCX (thực ra là file .txt đơn giản)
+     * @param string $type Loại dữ liệu cần xuất ('students' hoặc 'scores')
+     * @param array $filters Mảng bộ lọc
      */
     public function exportToDOCX($type = 'students', $filters = [])
     {
-        // Note: This is a simple DOCX export using basic HTML to DOCX conversion.
-        // In a production environment, it's better to use a library like PhpOffice\PhpWord.
+        // Lưu ý: Đây là cách xuất file dạng văn bản đơn giản (txt).
+        // Trong thực tế nên sử dụng thư viện như PhpOffice\PhpWord để tạo file DOCX chuẩn.
 
         if ($type == 'students') {
             $this->generateStudentsDOCX($filters);
@@ -150,22 +174,25 @@ class ExportController
     }
 
     /**
-     * Generates the student list content for the DOCX file.
-     * @param array $filters Filters to apply to the student data.
+     * Tạo nội dung danh sách sinh viên cho file DOCX (định dạng text)
+     * @param array $filters Bộ lọc tìm kiếm sinh viên
      */
     private function generateStudentsDOCX($filters)
     {
+        // Lấy danh sách sinh viên dựa trên bộ lọc
         $studentController = new StudentController();
         $students = $studentController->getAllStudents($filters['search'] ?? '');
 
-        // Create plain text content for the student list
+        // Tạo nội dung dạng văn bản thô với định dạng cột tương đối
         $content = "DANH SÁCH SINH VIÊN\n";
         $content .= "Ngày xuất: " . date('d/m/Y H:i') . "\n\n";
 
+        // Tiêu đề bảng với căn chỉnh độ rộng cột bằng str_pad
         $content .= str_pad("STT", 5) . str_pad("Mã SV", 15) . str_pad("Họ tên", 30) .
             str_pad("Ngày sinh", 12) . str_pad("Giới tính", 10) . str_pad("Email", 25) . "SĐT\n";
         $content .= str_repeat("-", 100) . "\n";
 
+        // Duyệt từng sinh viên tạo dòng dữ liệu
         foreach ($students as $index => $student) {
             $content .= str_pad($index + 1, 5) .
                 str_pad($student['msv'], 15) .
@@ -176,31 +203,38 @@ class ExportController
                 $student['phone'] . "\n";
         }
 
-        // Set headers for file download
-        $filename = 'students_' . date('Y-m-d_H-i-s') . '.txt'; // Using .txt for simplicity
+        // Gửi header để trình duyệt tải file TXT
+        $filename = 'students_' . date('Y-m-d_H-i-s') . '.txt'; // Đổi tên file sử dụng đuôi .txt
         header('Content-Type: application/octet-stream');
         header('Content-Disposition: attachment; filename="' . $filename . '"');
+
+        // Xuất nội dung ra file
         echo $content;
+
+        // Kết thúc script để tránh in thêm dữ liệu không mong muốn
         exit;
     }
 
     /**
-     * Generates the score list content for the DOCX file.
-     * @param array $filters Filters to apply to the score data.
+     * Tạo nội dung bảng điểm cho file DOCX (định dạng text)
+     * @param array $filters Bộ lọc mã sinh viên và học kỳ
      */
     private function generateScoresDOCX($filters)
     {
+        // Lấy dữ liệu điểm dựa trên bộ lọc
         $scoreController = new ScoreController();
         $scores = $scoreController->getAllScores($filters['student_id'] ?? null, $filters['semester'] ?? null);
 
-        // Create plain text content for the score list
+        // Tạo nội dung bảng điểm dạng văn bản thô
         $content = "BẢNG ĐIỂM\n";
         $content .= "Ngày xuất: " . date('d/m/Y H:i') . "\n\n";
 
+        // Tiêu đề bảng với căn chỉnh cột
         $content .= str_pad("STT", 5) . str_pad("Mã SV", 15) . str_pad("Họ tên", 30) .
             str_pad("Môn học", 25) . str_pad("Điểm", 8) . "Học kỳ\n";
         $content .= str_repeat("-", 100) . "\n";
 
+        // Lặp từng bản ghi điểm sinh viên
         foreach ($scores as $index => $score) {
             $content .= str_pad($index + 1, 5) .
                 str_pad($score['msv'], 15) .
@@ -210,10 +244,12 @@ class ExportController
                 $score['semester'] . "\n";
         }
 
-        // Set headers for file download
-        $filename = 'scores_' . date('Y-m-d_H-i-s') . '.txt'; // Using .txt for simplicity
+        // Gửi header xuống client để tải file dạng TXT
+        $filename = 'scores_' . date('Y-m-d_H-i-s') . '.txt'; // File text tạm thời cho xuất DOCX
         header('Content-Type: application/octet-stream');
         header('Content-Disposition: attachment; filename="' . $filename . '"');
+
+        // Xuất nội dung bảng điểm
         echo $content;
         exit;
     }
