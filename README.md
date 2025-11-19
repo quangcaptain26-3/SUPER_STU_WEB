@@ -15,16 +15,14 @@
 - [🚀 Tính năng chính](#-tính-năng-chính)
 - [🛠️ Công nghệ sử dụng](#️-công-nghệ-sử-dụng)
 - [📁 Cấu trúc dự án](#-cấu-trúc-dự-án)
+- [📖 Chức năng và Mã nguồn](#-chức-năng-và-mã-nguồn)
 - [⚙️ Cài đặt](#️-cài-đặt)
-- [👤 Hệ thống phân quyền](#-hệ-thống-phân-quyền)
-- [📊 Chức năng thống kê](#-chức-năng-thống-kê)
-- [📄 Xuất báo cáo](#-xuất-báo-cáo)
 - [🎨 Giao diện](#-giao-diện)
 - [🔧 Tùy chỉnh](#-tùy-chỉnh)
 - [🌐 Triển khai hosting](#-triển-khai-hosting)
-- [🐛 Troubleshooting](#-troubleshooting)
-- [📞 Hỗ trợ](#-hỗ-trợ)
 - [🔒 Bảo mật](#-bảo-mật)
+- [📞 Hỗ trợ](#-hỗ-trợ)
+
 
 ---
 
@@ -70,15 +68,15 @@
 
 ## 🛠️ Công nghệ sử dụng
 
-| Tầng         | Công nghệ                                          |
-| ------------ | -------------------------------------------------- |
+| Tầng | Công nghệ |
+| --- | --- |
 | **Frontend** | HTML5, CSS3, Bootstrap 5.1.3, JavaScript (Vanilla) |
-| **Backend**  | PHP 7.4+ (OOP)                                     |
-| **Database** | MySQL 5.7+ / MariaDB                               |
-| **Chart**    | Chart.js                                           |
-| **Export**   | TCPDF (PDF), PHPWord (DOCX)                        |
-| **Icons**    | Font Awesome 6.0                                   |
-| **Alerts**   | SweetAlert2                                        |
+| **Backend** | PHP 7.4+ (OOP) |
+| **Database** | MySQL 5.7+ / MariaDB |
+| **Chart** | Chart.js |
+| **Export** | TCPDF (PDF), PHPWord (DOCX) |
+| **Icons** | Font Awesome 6.0 |
+| **Alerts** | SweetAlert2 |
 
 ---
 
@@ -86,66 +84,95 @@
 
 ```
 super-stu/
-├── 📄 index.php                 # File chính (redirect)
-├── 📄 authController.php        # Xử lý đăng nhập/đăng ký
-├── 📄 studentController.php     # Xử lý CRUD sinh viên
-├── 📄 scoreController.php       # Xử lý CRUD điểm
-├── 📄 exportController.php      # Xử lý xuất dữ liệu
-├── 📄 middleware.php            # Middleware phân quyền
-├── 📄 utils.php                 # Hàm tiện ích chung
+├── 📄 index.php # File chính (redirect)
+├── 📄 authController.php # Xử lý đăng nhập/đăng ký
+├── 📄 studentController.php # Xử lý CRUD sinh viên
+├── 📄 scoreController.php # Xử lý CRUD điểm
+├── 📄 exportController.php # Xử lý xuất dữ liệu
+├── 📄 middleware.php # Middleware phân quyền
+├── 📄 utils.php # Hàm tiện ích chung
 │
 ├── 📁 config/
-│   └── 📄 db.php               # Cấu hình database
+│   └── 📄 db.php # Cấu hình database
 │
-├── 📁 public/                   # File công khai
-│   ├── 📄 index.php            # Trang chủ
-│   ├── 📄 login.php            # Đăng nhập
-│   ├── 📄 register.php         # Đăng ký
-│   ├── 📄 forgot_password.php  # Quên mật khẩu
-│   ├── 📄 reset_password.php   # Đặt lại mật khẩu
-│   ├── 📄 profile.php          # Hồ sơ người dùng
-│   ├── 📄 users.php            # Quản lý người dùng
-│   ├── 📄 permissions.php      # Quản lý quyền
-│   └── 📄 logout.php           # Đăng xuất
+├── 📁 public/ # File công khai
 │
-├── 📁 students/                 # Quản lý sinh viên
-│   ├── 📄 list.php             # Danh sách sinh viên
-│   ├── 📄 add.php              # Thêm sinh viên
-│   ├── 📄 edit.php             # Sửa sinh viên
-│   ├── 📄 delete.php           # Xóa sinh viên
-│   └── 📄 view.php             # Chi tiết sinh viên
+├── 📁 students/ # Quản lý sinh viên
 │
-├── 📁 scores/                   # Quản lý điểm
-│   ├── 📄 list.php             # Danh sách điểm
-│   ├── 📄 add.php              # Thêm điểm
-│   ├── 📄 edit.php             # Sửa điểm
-│   └── 📄 delete.php           # Xóa điểm
+├── 📁 scores/ # Quản lý điểm
 │
-├── 📁 charts/                   # Thống kê & biểu đồ
-│   ├── 📄 statistics.php       # Trang thống kê chính
+├── 📁 charts/ # Thống kê & biểu đồ
+│   ├── 📄 statistics.php # Trang thống kê chính
 │   └── 📁 api/
-│       └── 📄 statistics.php   # API thống kê
+│       └── 📄 statistics.php # API thống kê
 │
-├── 📁 exports/                  # Xuất dữ liệu
-│   ├── 📄 export_pdf.php       # Export PDF
-│   └── 📄 export_docx.php      # Export Word
+├── 📁 exports/ # Xuất dữ liệu
+│   ├── 📄 export_pdf.php # Export PDF
+│   └── 📄 export_docx.php # Export Word
 │
 ├── 📁 assets/
-│   ├── 📁 css/
-│   │   └── 📄 notifications.css
-│   ├── 📁 js/
-│   │   ├── 📄 notifications.js
-│   │   ├── 📄 realtime.js
-│   │   └── 📄 clock-widget.js
-│   └── 📁 libs/
-│       ├── 📁 phpword/
-│       └── 📁 tcpdf/
 │
 ├── 📁 uploads/
-│   └── 📁 avatars/             # Ảnh đại diện sinh viên
+│   └── 📁 avatars/ # Ảnh đại diện sinh viên
 │
-└── 📄 database.sql             # Database dump
+└── 📄 database.sql # Database dump
 ```
+
+---
+
+## 📖 Chức năng và Mã nguồn
+
+Phần này cung cấp các tham chiếu trực tiếp đến các đoạn code chính giúp triển khai các chức năng của hệ thống.
+
+### 1. **Quản lý Sinh viên & Điểm (CRUD)**
+Logic chính cho các thao tác Create, Read, Update, Delete được đóng gói trong các lớp Controller.
+
+- **`studentController.php`**: Xử lý toàn bộ logic cho sinh viên.
+  - `getAllStudents()`: Lấy danh sách sinh viên kèm tìm kiếm và phân trang.
+  - `createStudent()`, `updateStudent()`, `deleteStudent()`: Các hàm CRUD cơ bản.
+- **`scoreController.php`**: Xử lý logic cho điểm số.
+  - `getAllScores()`: Lấy danh sách điểm kèm bộ lọc theo sinh viên, học kỳ.
+  - `createScore()`, `updateScore()`, `deleteScore()`: Các hàm CRUD.
+- **Giao diện**: Các tệp trong thư mục `students/` và `scores/` chịu trách nhiệm hiển thị form và danh sách.
+
+### 2. **Xác thực & Phân quyền (RBAC)**
+Hệ thống sử dụng Middleware để kiểm soát quyền truy cập dựa trên vai trò.
+
+- **`middleware.php`**: File trung tâm của hệ thống phân quyền.
+  - `requirePermission($permission)`: Hàm được gọi ở đầu mỗi trang yêu cầu quyền. Nó kiểm tra `$_SESSION['role']` và `USER_PERMISSIONS`. (Dòng 20-35)
+  - `isOwner($resourceOwnerId)`: Kiểm tra quyền sở hữu tài nguyên.
+- **`utils.php`**: Định nghĩa các hằng số quyền và vai trò. (Dòng 5-25)
+- **`authController.php`**: Xử lý logic đăng nhập, đăng ký và tạo phiên làm việc.
+  - `login()`: Xác thực người dùng và gán vai trò vào session.
+  - `register()`: Đăng ký người dùng mới.
+
+### 3. **Thống kê & Biểu đồ**
+Dữ liệu được lấy từ backend qua API và vẽ bằng Chart.js ở frontend.
+
+- **`charts/statistics.php`**: Trang hiển thị chính.
+  - Phần `<script>` (từ dòng 250): Khởi tạo và cấu hình 4 loại biểu đồ (Doughnut, Line, Bar) sử dụng dữ liệu được truyền từ PHP.
+- **`charts/api/statistics.php`**: API endpoint cung cấp dữ liệu JSON cho dashboard và các biểu đồ.
+- **`studentController.php` & `scoreController.php`**:
+  - `getStatistics()`: Tổng hợp số liệu sinh viên (theo giới tính, tháng).
+  - `getScoreStatistics()`: Tổng hợp số liệu điểm (theo môn học, học kỳ, phân bố xếp loại).
+
+### 4. **Xuất Báo cáo (PDF & DOCX)**
+Sử dụng thư viện TCPDF và PHPWord để tạo các tệp báo cáo động.
+
+- **`exports/export_pdf.php`**: Tạo file PDF danh sách sinh viên hoặc bảng điểm. Logic chính sử dụng HTML để render nội dung.
+- **`exports/export_docx.php`**: Tạo file DOCX. Dữ liệu được điền vào các bảng và văn bản được định dạng.
+
+### 5. **Bảo mật**
+Các biện pháp bảo mật được tích hợp trên toàn hệ thống.
+
+- **Chống SQL Injection**: Sử dụng Prepared Statements (PDO) trong tất cả các truy vấn. Xem `config/db.php` và các phương thức trong `*Controller.php`.
+- **Chống XSS**: Hàm `htmlspecialchars()` được áp dụng cho mọi dữ liệu xuất ra HTML.
+- **Chống CSRF**:
+  - `utils.php` (Dòng 60-75): Các hàm `generateCsrfToken()` và `verifyCsrfToken()`.
+  - Token được chèn vào các form (ví dụ: `students/list.php`) và được kiểm tra trong các file xử lý (`delete.php`).
+- **Mã hóa mật khẩu**:
+  - `authController.php` (trong hàm `register()`): Sử dụng `password_hash()` với thuật toán BCRYPT.
+  - `authController.php` (trong hàm `login()`): Sử dụng `password_verify()` để kiểm tra mật khẩu.
 
 ---
 
@@ -217,55 +244,6 @@ Password: student123
 ```
 
 ⚠️ **CẢNH BÁO**: Thay đổi mật khẩu ngay sau lần đầu đăng nhập!
-
----
-
-## 👤 Hệ thống phân quyền
-
-### Các vai trò & quyền hạn
-
-| Quyền              | Super Admin | Admin | Teacher | Student |
-| ------------------ | :---------: | :---: | :-----: | :-----: |
-| Xem sinh viên      |     ✅      |  ✅   |   ✅    |   ✅    |
-| Thêm sinh viên     |     ✅      |  ✅   |   ✅    |   ❌    |
-| Sửa sinh viên      |     ✅      |  ✅   |   ✅    |   ❌    |
-| Xóa sinh viên      |     ✅      |  ✅   |   ❌    |   ❌    |
-| Xem điểm           |     ✅      |  ✅   |   ✅    |   ✅    |
-| Thêm/Sửa điểm      |     ✅      |  ✅   |   ✅    |   ❌    |
-| Xóa điểm           |     ✅      |  ✅   |   ❌    |   ❌    |
-| Thống kê           |     ✅      |  ✅   |   ✅    |   ❌    |
-| Xuất báo cáo       |     ✅      |  ✅   |   ✅    |   ❌    |
-| Quản lý người dùng |     ✅      |  ❌   |   ❌    |   ❌    |
-
----
-
-## 📊 Chức năng thống kê
-
-### Biểu đồ & Phân tích
-
-- **Biểu đồ phân bố điểm**: Xem cách điểm phân bố trên các lớp (A, B, C, D)
-- **Xu hướng điểm**: Theo dõi sự thay đổi điểm theo thời gian
-- **Top sinh viên**: Xem danh sách sinh viên có điểm cao nhất
-- **Thống kê môn học**: Phân tích hiệu suất theo từng môn học
-- **So sánh**: So sánh kết quả giữa các học kỳ
-
----
-
-## 📄 Xuất báo cáo
-
-### Định dạng hỗ trợ
-
-#### 📕 **PDF**
-
-- Xuất danh sách sinh viên / điểm thành PDF
-- Có header, footer, đánh số trang
-- Hỗ trợ tiếng Việt đầy đủ
-
-#### 📗 **DOCX (Word)**
-
-- Xuất sang định dạng Word
-- Có bảng định dạng đẹp
-- Dễ chỉnh sửa sau khi xuất
 
 ---
 
@@ -341,89 +319,6 @@ background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 
 ---
 
-## 🐛 Troubleshooting
-
-### Q: Lỗi "Cannot connect to database"
-
-**A:** Kiểm tra:
-
-- MySQL service đang chạy?
-- Thông tin host, username, password đúng chưa? (trong `config/db.php`)
-- Database `student_management` đã được tạo chưa?
-- User MySQL có quyền truy cập không?
-
-### Q: Upload ảnh không hoạt động
-
-**A:** Kiểm tra:
-
-- Thư mục `uploads/avatars/` tồn tại?
-- Thư mục có quyền ghi (777)?
-- File size không vượt quá 5MB?
-- Định dạng là JPG, PNG, GIF?
-
-```bash
-chmod 777 uploads/avatars/
-```
-
-### Q: Đăng nhập không được
-
-**A:** Kiểm tra:
-
-- Mật khẩu đúng chưa?
-- Tài khoản có tồn tại trong database?
-- Session hoạt động bình thường?
-
-### Q: Xuất PDF/Word bị lỗi
-
-**A:** Kiểm tra:
-
-- GD library được bật trong PHP?
-- ZipArchive extension được bật?
-- Folder uploads có quyền ghi?
-
-### Q: Trang không tải CSS/JS
-
-**A:** Kiểm tra:
-
-- File tồn tại trong thư mục?
-- Path URL đúng chưa?
-- Quyền file đúng chưa?
-
-### Q: Toàn bộ hệ thống chậm
-
-**A:** Cách khắc phục:
-
-- Thêm index vào database
-- Tối ưu query
-- Bật PHP caching (APCu, OPcache)
-- Tăng RAM & CPU
-
-### Q: Ký tự tiếng Việt bị lỗi
-
-**A:** Kiểm tra:
-
-- Database charset: `utf8mb4`
-- Table charset: `utf8mb4`
-- Connection charset trong PHP: `SET NAMES utf8mb4`
-
-### Q: Hiện tại chỉ hỗ trợ tiếng Việt, có thể mở rộng thêm ngôn ngữ khác.
-
-A: Có thể, cần tách hardcode text ra file config ngôn ngữ.
-
-### Q: Làm sao để backup dữ liệu?
-
-A: Export database MySQL và backup thư mục `uploads/`.
-
----
-
-## 📄 License
-
-Dự án này được phát triển cho mục đích học tập và nghiên cứu.
-
-**Copyright © 2024 Student Management Team**
-
----
-
 ## 🔒 Bảo mật
 
 Hệ thống được trang bị các biện pháp bảo mật hiện đại:
@@ -451,12 +346,6 @@ Hệ thống được trang bị các biện pháp bảo mật hiện đại:
 👨‍🎓 Student        → XEM THÔI (không sửa xóa thêm)
 ```
 
-### 🔄 **Validation Multi-Layer**
-
-- Backend: PHP validation trước khi lưu database
-- Frontend: JavaScript validation cho trải nghiệm tốt
-- Database: Constraint kiểm tra tính hợp lệ của dữ liệu
-
 ### ⚠️ **Lưu ý an toàn**
 
 - Luôn cập nhật PHP & MySQL lên phiên bản mới nhất
@@ -466,6 +355,9 @@ Hệ thống được trang bị các biện pháp bảo mật hiện đại:
 - Kiểm tra log truy cập định kỳ
 
 ---
+## 📞 Hỗ trợ
+
+Nếu bạn có bất kỳ câu hỏi hoặc góp ý nào, vui lòng tạo một **Issue** trên GitHub.
 
 ## Lib
 
