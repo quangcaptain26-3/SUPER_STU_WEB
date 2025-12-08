@@ -186,11 +186,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                                 Vui lòng kiểm tra hộp thư của bạn và click vào link để đặt lại mật khẩu.
                                 Link có hiệu lực trong <?php echo isDevelopmentMode() ? '24 giờ' : '12 giờ'; ?>.
                             </p>
-                            <div class="mt-4">
-                                <a href="login.php" class="btn btn-outline-primary">
-                                    <i class="fas fa-arrow-left me-2"></i>Quay lại đăng nhập
-                                </a>
-                            </div>
                         </div>
                         <?php endif; ?>
                         
