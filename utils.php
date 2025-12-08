@@ -24,14 +24,14 @@ function generateToken($length = 32)
 }
 
 /**
- * Băm mật khẩu bằng thuật toán bcrypt.
+ * Băm mật khẩu bằng thuật toán SHA256.
  * @param string $password Mật khẩu cần băm.
- * @return string Mật khẩu đã được băm.
+ * @return string Mật khẩu đã được băm (SHA256 hash).
  */
 function hashPassword($password)
 {
-    // Sử dụng bcrypt với cost = 12 để băm mật khẩu (cost càng cao càng an toàn nhưng chậm hơn)
-    return password_hash($password, PASSWORD_BCRYPT, ['cost' => 12]);
+    // Sử dụng SHA256 để băm mật khẩu (64 ký tự hex)
+    return hash('sha256', $password);
 }
 
 /**
@@ -343,6 +343,27 @@ function deleteFile($filepath)
 }
 
 /**
+ * Kiểm tra xem có phải môi trường development không.
+ * @return bool True nếu là development mode (localhost), false nếu không.
+ */
+function isDevelopmentMode()
+{
+    // Kiểm tra xem có phải localhost hoặc 127.0.0.1 không
+    $host = $_SERVER['HTTP_HOST'] ?? '';
+    $serverName = $_SERVER['SERVER_NAME'] ?? '';
+    
+    // Nếu là localhost, 127.0.0.1, hoặc chứa từ "localhost" thì là dev mode
+    return (
+        strpos($host, 'localhost') !== false ||
+        strpos($host, '127.0.0.1') !== false ||
+        strpos($serverName, 'localhost') !== false ||
+        strpos($serverName, '127.0.0.1') !== false ||
+        $host === '127.0.0.1' ||
+        $serverName === 'localhost'
+    );
+}
+
+/**
  * Gửi email.
  * @param string $to Địa chỉ email người nhận.
  * @param string $subject Tiêu đề email.
@@ -351,6 +372,11 @@ function deleteFile($filepath)
  */
 function sendEmail($to, $subject, $message)
 {
+    // Nếu là development mode, không gửi email thật (trả về true để bypass)
+    if (isDevelopmentMode()) {
+        return true; // Trả về true để code tiếp tục chạy, nhưng không gửi email thật
+    }
+    
     // Lưu ý: Đây là hàm gửi email đơn giản. Trong môi trường production, nên sử dụng thư viện như PHPMailer.
     // Thiết lập header email - địa chỉ người gửi
     $headers = "From: noreply@studentmanagement.com\r\n";

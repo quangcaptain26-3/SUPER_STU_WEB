@@ -42,6 +42,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         if ($result['success']) {
             // Lưu thông báo thành công
             $success = $result['message'];
+            // Nếu là development mode, lưu link reset để hiển thị
+            if (isset($result['reset_link'])) {
+                $resetLink = $result['reset_link'];
+                $resetToken = $result['token'] ?? '';
+            }
         } else {
             // Nếu gửi email thất bại, lưu thông báo lỗi
             $error = $result['message'];
@@ -130,6 +135,29 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                             <i class="fas fa-check-circle me-2"></i>
                             <?php echo htmlspecialchars($success); ?>
                         </div>
+                        
+                        <?php if (isset($resetLink)): ?>
+                        <!-- Development Mode: Hiển thị link reset trực tiếp -->
+                        <div class="alert alert-info" role="alert">
+                            <h6><i class="fas fa-code me-2"></i>Development Mode - Link Reset:</h6>
+                            <div class="mb-2">
+                                <strong>Link đặt lại mật khẩu:</strong><br>
+                                <a href="<?php echo htmlspecialchars($resetLink); ?>" target="_blank" class="text-break">
+                                    <?php echo htmlspecialchars($resetLink); ?>
+                                </a>
+                            </div>
+                            <?php if (!empty($resetToken)): ?>
+                            <div class="mb-2">
+                                <strong>Token:</strong><br>
+                                <code class="text-break"><?php echo htmlspecialchars($resetToken); ?></code>
+                            </div>
+                            <?php endif; ?>
+                            <small class="text-muted">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Trong môi trường development, link được hiển thị trực tiếp thay vì gửi email.
+                            </small>
+                        </div>
+                        <?php endif; ?>
                         <?php endif; ?>
                         
                         <?php if (!$success): ?>
@@ -156,7 +184,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                             <h5>Email đã được gửi!</h5>
                             <p class="text-muted">
                                 Vui lòng kiểm tra hộp thư của bạn và click vào link để đặt lại mật khẩu.
-                                Link có hiệu lực trong 1 giờ.
+                                Link có hiệu lực trong <?php echo isDevelopmentMode() ? '24 giờ' : '12 giờ'; ?>.
                             </p>
                             <div class="mt-4">
                                 <a href="login.php" class="btn btn-outline-primary">

@@ -46,47 +46,11 @@ class AuthController
             // Lấy dữ liệu người dùng
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-            // Cố gắng xác minh mật khẩu bằng thuật toán bcrypt hiện đại
-            if (password_verify($password, $user['password'])) {
-                // Nếu hash cần được cập nhật lên phiên bản mới, hãy rehash mật khẩu
-                if (password_needs_rehash($user['password'], PASSWORD_BCRYPT, ['cost' => 12])) {
-                    // Hash mật khẩu bằng bcrypt
-                    $newHash = hashPassword($password);
-                    // Chuẩn bị câu lệnh UPDATE để lưu hash mới
-                    $upd = $this->conn->prepare("UPDATE users SET password = :password WHERE id = :id");
-                    // Bind mật khẩu mới đã hash
-                    $upd->bindParam(':password', $newHash);
-                    // Bind ID người dùng
-                    $upd->bindParam(':id', $user['id']);
-                    // Thực thi câu lệnh
-                    $upd->execute();
-                }
-
+            // Xác minh mật khẩu bằng SHA256
+            $hashedPassword = hash('sha256', $password);
+            // Sử dụng hash_equals để so sánh an toàn (tránh timing attack)
+            if (hash_equals($hashedPassword, $user['password'])) {
                 // Đặt các biến session khi đăng nhập thành công
-                $_SESSION['user_id'] = $user['id'];
-                $_SESSION['username'] = $user['username'];
-                $_SESSION['role'] = $user['role'];
-                $_SESSION['email'] = $user['email'];
-                // Trả về thông báo thành công
-                return ['success' => true, 'message' => 'Đăng nhập thành công'];
-            }
-
-            // Fallback cho mật khẩu lưu trữ bằng SHA256 cũ: xác minh và nâng cấp lên bcrypt
-            $sha256 = hash('sha256', $password);
-            // Nếu mật khẩu SHA256 khớp
-            if (hash_equals($sha256, $user['password'])) {
-                // Hash lại mật khẩu bằng bcrypt
-                $newHash = hashPassword($password);
-                // Chuẩn bị câu lệnh UPDATE
-                $upd = $this->conn->prepare("UPDATE users SET password = :password WHERE id = :id");
-                // Bind mật khẩu mới
-                $upd->bindParam(':password', $newHash);
-                // Bind ID người dùng
-                $upd->bindParam(':id', $user['id']);
-                // Thực thi câu lệnh
-                $upd->execute();
-
-                // Tiếp tục đăng nhập
                 $_SESSION['user_id'] = $user['id'];
                 $_SESSION['username'] = $user['username'];
                 $_SESSION['role'] = $user['role'];
@@ -141,7 +105,7 @@ class AuthController
         $query = "INSERT INTO users (username, password, email, role) VALUES (:username, :password, :email, :role)";
         // Chuẩn bị câu lệnh
         $stmt = $this->conn->prepare($query);
-        // Hash mật khẩu bằng bcrypt
+        // Hash mật khẩu bằng SHA256
         $hashedPassword = hashPassword($password);
         // Bind tất cả các tham số
         $stmt->bindParam(':username', $username);
@@ -181,8 +145,13 @@ class AuthController
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
             // Tạo token ngẫu nhiên để đặt lại mật khẩu
             $token = generateToken();
-            // Đặt thời gian hết hạn của token (1 giờ từ bây giờ)
-            $expires = date('Y-m-d H:i:s', strtotime('+1 hour'));
+            // Đặt thời gian hết hạn của token
+            // Development mode: 24 giờ, Production: 12 giờ
+            $hours = isDevelopmentMode() ? 24 : 12;
+            // Sử dụng DateTime để đảm bảo timezone nhất quán
+            $now = new DateTime('now', new DateTimeZone('Asia/Ho_Chi_Minh'));
+            $now->modify("+{$hours} hours");
+            $expires = $now->format('Y-m-d H:i:s');
 
             // Xóa tất cả các token cũ cho người dùng này
             $query = "DELETE FROM reset_tokens WHERE user_id = :user_id";
@@ -208,8 +177,20 @@ class AuthController
             if ($stmt->execute()) {
                 // Tạo link đặt lại mật khẩu
                 $resetLink = "http://" . $_SERVER['HTTP_HOST'] . dirname($_SERVER['PHP_SELF']) . "/reset_password.php?token=" . $token;
+                
+                // Nếu là development mode, trả về link reset để hiển thị trực tiếp
+                if (isDevelopmentMode()) {
+                    return [
+                        'success' => true, 
+                        'message' => 'Link đặt lại mật khẩu đã được tạo (Development Mode)',
+                        'reset_link' => $resetLink,
+                        'token' => $token
+                    ];
+                }
+                
                 // Tạo nội dung email
-                $message = "Để đặt lại mật khẩu, vui lòng click vào link sau: <a href='$resetLink'>$resetLink</a><br>Link có hiệu lực trong 1 giờ.";
+                $hours = isDevelopmentMode() ? 24 : 12;
+                $message = "Để đặt lại mật khẩu, vui lòng click vào link sau: <a href='$resetLink'>$resetLink</a><br>Link có hiệu lực trong {$hours} giờ.";
 
                 // Gửi email đặt lại mật khẩu
                 if (sendEmail($email, 'Đặt lại mật khẩu', $message)) {
@@ -234,7 +215,9 @@ class AuthController
     public function resetPassword($token, $newPassword)
     {
         // Xác minh token và kiểm tra xem nó đã hết hạn chưa
-        $query = "SELECT user_id FROM reset_tokens WHERE token = :token AND expires_at > NOW()";
+        // Sử dụng UTC_TIMESTAMP() để đảm bảo timezone nhất quán với PHP
+        // Hoặc convert NOW() sang cùng timezone với expires_at
+        $query = "SELECT user_id, expires_at FROM reset_tokens WHERE token = :token";
         // Chuẩn bị câu lệnh
         $stmt = $this->conn->prepare($query);
         // Bind token
@@ -242,16 +225,35 @@ class AuthController
         // Thực thi câu lệnh
         $stmt->execute();
 
-        // Nếu token hợp lệ
-        if ($stmt->rowCount() > 0) {
-            // Lấy dữ liệu token
-            $tokenData = $stmt->fetch(PDO::FETCH_ASSOC);
+        // Lấy dữ liệu token
+        $tokenData = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        // Kiểm tra token có tồn tại không
+        if (!$tokenData) {
+            return ['success' => false, 'message' => 'Token không hợp lệ'];
+        }
+        
+        // Kiểm tra token đã hết hạn chưa bằng PHP để tránh timezone mismatch
+        $expiresAt = new DateTime($tokenData['expires_at'], new DateTimeZone('Asia/Ho_Chi_Minh'));
+        $now = new DateTime('now', new DateTimeZone('Asia/Ho_Chi_Minh'));
+        
+        if ($now > $expiresAt) {
+            // Token đã hết hạn, xóa token cũ
+            $deleteQuery = "DELETE FROM reset_tokens WHERE token = :token";
+            $deleteStmt = $this->conn->prepare($deleteQuery);
+            $deleteStmt->bindParam(':token', $token);
+            $deleteStmt->execute();
+            
+            return ['success' => false, 'message' => 'Token đã hết hạn. Vui lòng yêu cầu link reset mật khẩu mới.'];
+        }
 
+        // Nếu token hợp lệ và chưa hết hạn
+        if ($tokenData) {
             // Cập nhật mật khẩu của người dùng
             $query = "UPDATE users SET password = :password WHERE id = :user_id";
             // Chuẩn bị câu lệnh
             $stmt = $this->conn->prepare($query);
-            // Hash mật khẩu mới
+            // Hash mật khẩu mới bằng SHA256
             $hashedPassword = hashPassword($newPassword);
             // Bind mật khẩu mới đã hash
             $stmt->bindParam(':password', $hashedPassword);
@@ -271,9 +273,12 @@ class AuthController
 
                 // Trả về thông báo thành công
                 return ['success' => true, 'message' => 'Mật khẩu đã được đặt lại thành công'];
+            } else {
+                return ['success' => false, 'message' => 'Lỗi cập nhật mật khẩu'];
             }
         }
-        // Trả về lỗi nếu token không hợp lệ hoặc đã hết hạn
+        
+        // Fallback: Trả về lỗi nếu token không hợp lệ
         return ['success' => false, 'message' => 'Token không hợp lệ hoặc đã hết hạn'];
     }
 
@@ -395,7 +400,7 @@ class AuthController
         $query = "UPDATE users SET password = :password WHERE id = :id";
         // Chuẩn bị câu lệnh
         $stmt = $this->conn->prepare($query);
-        // Hash mật khẩu mới bằng bcrypt
+        // Hash mật khẩu mới bằng SHA256
         $hashedPassword = hashPassword($newPassword);
         // Bind mật khẩu mới đã hash
         $stmt->bindParam(':password', $hashedPassword);
