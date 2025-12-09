@@ -350,14 +350,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                                     <div class="avatar-upload mb-3">
                                         <!-- Ảnh preview, mặc định hiển thị placeholder -->
                                         <img id="avatarPreview" src="https://via.placeholder.com/150x150?text=No+Image" 
-                                             class="avatar-preview" alt="Avatar Preview">
+                                             class="avatar-preview" alt="Avatar Preview" onclick="selectAvatar()">
                                         <!-- Input file ẩn, được kích hoạt khi click vào ảnh -->
                                         <input type="file" id="avatar" name="avatar" accept="image/*" onchange="previewImage(this)">
                                     </div>
+                                    <button type="button" class="btn btn-outline-primary btn-sm mb-2" onclick="selectAvatar()">
+                                        <i class="fas fa-upload me-1"></i>Chọn ảnh
+                                    </button>
                                     <!-- Hướng dẫn upload -->
-                                    <p class="text-muted small">
+                                    <p class="text-muted small mb-0">
                                         <i class="fas fa-info-circle me-1"></i>
-                                        Click vào ảnh để chọn file<br>
+                                        Click vào ảnh hoặc nút “Chọn ảnh”<br>
                                         Hỗ trợ: JPG, PNG, GIF (tối đa 5MB)
                                     </p>
                                 </div>
@@ -387,6 +390,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <!-- Nạp Bootstrap JS từ CDN -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        // Hàm mở hộp thoại chọn ảnh
+        function selectAvatar() {
+            document.getElementById('avatar')?.click();
+        }
+
         // Hàm preview ảnh khi người dùng chọn file
         function previewImage(input) {
             // Kiểm tra xem có file được chọn không

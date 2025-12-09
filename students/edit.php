@@ -68,6 +68,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             }
         }
 
+        // Nếu người dùng chọn xóa ảnh đại diện mà không upload mới
+        if (empty($error) && isset($_POST['remove_avatar']) && $student['avatar']) {
+            deleteFile('uploads/avatars/' . $student['avatar']);
+            $data['avatar'] = '';
+        }
+
         // Nếu không có lỗi nào
         if (empty($error)) {
             // Gọi phương thức updateStudent để cập nhật thông tin sinh viên
@@ -378,13 +384,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                                         <!-- Ảnh preview, hiển thị ảnh hiện tại hoặc placeholder -->
                                         <img id="avatarPreview"
                                             src="<?php echo $student['avatar'] ? '../uploads/avatars/' . htmlspecialchars($student['avatar']) : 'https://via.placeholder.com/150x150?text=No+Image'; ?>"
-                                            class="avatar-preview" alt="Avatar Preview">
+                                            class="avatar-preview" alt="Avatar Preview" onclick="selectAvatar()">
                                         <!-- Input file ẩn -->
                                         <input type="file" id="avatar" name="avatar" accept="image/*" onchange="previewImage(this)">
                                     </div>
-                                    <p class="text-muted small">
+                                    <button type="button" class="btn btn-outline-primary btn-sm mb-2" onclick="selectAvatar()">
+                                        <i class="fas fa-upload me-1"></i>Chọn ảnh
+                                    </button>
+                                    <p class="text-muted small mb-0">
                                         <i class="fas fa-info-circle me-1"></i>
-                                        Click vào ảnh để thay đổi<br>
+                                        Click vào ảnh hoặc nút “Chọn ảnh”<br>
                                         Hỗ trợ: JPG, PNG, GIF (tối đa 5MB)
                                     </p>
                                     <!-- Nút xóa ảnh nếu có ảnh -->
@@ -432,6 +441,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <!-- Nạp file notifications.js -->
     <script src="../assets/js/notifications.js"></script>
     <script>
+        // Hàm mở hộp thoại chọn ảnh
+        function selectAvatar() {
+            document.getElementById('avatar')?.click();
+        }
+
         // Hàm preview ảnh khi chọn file
         function previewImage(input) {
             if (input.files && input.files[0]) {
@@ -462,29 +476,29 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     notification.success('Đã xóa ảnh đại diện');
                 }
             );
-
-            // Validation form
-            document.getElementById('studentForm').addEventListener('submit', function(e) {
-                const msv = document.getElementById('msv').value.trim();
-                const fullname = document.getElementById('fullname').value.trim();
-                const email = document.getElementById('email').value.trim();
-                const dob = document.getElementById('dob').value;
-                const gender = document.getElementById('gender').value;
-
-                if (!msv || !fullname || !email || !dob || !gender) {
-                    e.preventDefault();
-                    alert('Vui lòng điền đầy đủ thông tin bắt buộc');
-                    return false;
-                }
-
-                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                if (!emailRegex.test(email)) {
-                    e.preventDefault();
-                    alert('Email không hợp lệ');
-                    return false;
-                }
-            });
         }
+
+        // Validation form
+        document.getElementById('studentForm').addEventListener('submit', function(e) {
+            const msv = document.getElementById('msv').value.trim();
+            const fullname = document.getElementById('fullname').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const dob = document.getElementById('dob').value;
+            const gender = document.getElementById('gender').value;
+
+            if (!msv || !fullname || !email || !dob || !gender) {
+                e.preventDefault();
+                alert('Vui lòng điền đầy đủ thông tin bắt buộc');
+                return false;
+            }
+
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                e.preventDefault();
+                alert('Email không hợp lệ');
+                return false;
+            }
+        });
     </script>
 </body>
 
