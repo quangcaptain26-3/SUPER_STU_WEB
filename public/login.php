@@ -1,50 +1,57 @@
 <?php
-// Bắt đầu session để lưu trữ thông tin người dùng sau khi đăng nhập
+// Bắt đầu hoặc tiếp tục một phiên làm việc (session).
+// Session được dùng để lưu trữ trạng thái đăng nhập của người dùng qua các trang khác nhau.
 session_start();
-// Nạp file chứa class AuthController để xử lý logic đăng nhập
-require_once '../authController.php';
-// Nạp file chứa các hàm tiện ích (sanitize, isLoggedIn, v.v.)
-require_once '../utils.php';
 
-// Kiểm tra xem người dùng đã đăng nhập chưa
-// Nếu đã đăng nhập thì chuyển hướng về trang chủ để tránh đăng nhập lại
+// Nạp các file mã nguồn cần thiết.
+// `require_once` đảm bảo file chỉ được nạp một lần duy nhất, tránh lỗi định nghĩa lại.
+require_once '../authController.php'; // Nạp controller xử lý logic xác thực.
+require_once '../utils.php';         // Nạp file chứa các hàm tiện ích chung như `isLoggedIn`, `sanitize`.
+
+// --- KIỂM TRA TRẠNG THÁI ĐĂNG NHẬP ---
+// Nếu người dùng đã đăng nhập rồi (hàm `isLoggedIn` trả về true), không cho phép họ xem lại trang login.
 if (isLoggedIn()) {
-    // Chuyển hướng về trang chủ
+    // Gửi header chuyển hướng trình duyệt đến trang chủ (Dashboard).
     header('Location: index.php');
-    // Dừng thực thi script
+    // Dừng thực thi script ngay lập tức để đảm bảo không có code nào khác được chạy sau khi chuyển hướng.
     exit();
 }
 
-// Khởi tạo biến lưu thông báo lỗi
+// --- KHỞI TẠO BIẾN CHO VIEW ---
+// Khởi tạo biến `$error` để lưu thông báo lỗi. Sẽ được hiển thị trên form nếu có lỗi xảy ra.
 $error = '';
-// Khởi tạo biến lưu thông báo thành công
+// Khởi tạo biến `$success` để lưu thông báo thành công (ít dùng ở trang login, nhưng là một practice tốt).
 $success = '';
 
-// Kiểm tra xem request có phải là POST không (khi form đăng nhập được submit)
+// --- XỬ LÝ DỮ LIỆU FORM KHI SUBMIT ---
+// `$_SERVER['REQUEST_METHOD']` chứa phương thức của request (GET, POST, ...).
+// Chỉ xử lý logic khi người dùng gửi form (phương thức là POST).
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    // Lấy tên đăng nhập từ form và làm sạch để tránh XSS
+    // Lấy dữ liệu từ mảng `$_POST` và làm sạch để chống XSS.
     $username = sanitize($_POST['username']);
-    // Lấy mật khẩu từ form (không sanitize vì mật khẩu có thể chứa ký tự đặc biệt)
+    // Mật khẩu không cần `sanitize` vì nó không được hiển thị ra HTML và có thể chứa các ký tự đặc biệt.
     $password = $_POST['password'];
     
-    // Kiểm tra các trường bắt buộc có được điền đầy đủ không
+    // Kiểm tra dữ liệu đầu vào cơ bản.
     if (empty($username) || empty($password)) {
-        // Nếu thiếu thông tin, gán thông báo lỗi
-        $error = 'Vui lòng nhập đầy đủ thông tin';
+        // Nếu một trong hai trường bị bỏ trống, gán thông báo lỗi.
+        $error = 'Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu.';
     } else {
-        // Nếu đầy đủ thông tin, tạo đối tượng AuthController
+        // Nếu dữ liệu hợp lệ, bắt đầu quá trình xác thực.
+        // Tạo một đối tượng mới từ lớp `AuthController`.
         $auth = new AuthController();
-        // Gọi phương thức login để xác thực người dùng
+        // Gọi phương thức `login` của controller, truyền username và password vào.
         $result = $auth->login($username, $password);
         
-        // Nếu đăng nhập thành công
+        // Kiểm tra kết quả trả về từ phương thức `login`.
         if ($result['success']) {
-            // Chuyển hướng về trang chủ
+            // Nếu đăng nhập thành công (`success` là true).
+            // Chuyển hướng người dùng đến trang chủ.
             header('Location: index.php');
-            // Dừng thực thi script
+            // Dừng script.
             exit();
         } else {
-            // Nếu đăng nhập thất bại, lưu thông báo lỗi từ kết quả
+            // Nếu đăng nhập thất bại, lấy thông báo lỗi từ kết quả trả về.
             $error = $result['message'];
         }
     }

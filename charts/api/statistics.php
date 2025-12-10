@@ -1,68 +1,93 @@
 <?php
-// Bắt đầu phiên làm việc
+// --- SETUP & SECURITY ---
+
+// Bắt đầu hoặc tiếp tục phiên làm việc để truy cập quyền của người dùng.
 session_start();
-// Nạp các tệp cần thiết
-require_once '../../utils.php'; // Chứa các hàm tiện ích và hằng số
-require_once '../../studentController.php'; // Chứa logic xử lý sinh viên
-require_once '../../scoreController.php'; // Chứa logic xử lý điểm
 
-// Yêu cầu quyền xem thống kê, nếu không có quyền sẽ dừng thực thi
-requirePermission(PERMISSION_VIEW_STATISTICS);
-
-// Thiết lập header cho response là JSON
+// Thiết lập header của response để trình duyệt biết rằng nội dung trả về là định dạng JSON.
 header('Content-Type: application/json');
 
-// Khởi tạo các controller
+// Nạp các file cần thiết
+require_once '../../utils.php';             // Chứa hàm kiểm tra quyền `requirePermission`.
+require_once '../../studentController.php'; // Chứa logic lấy thống kê sinh viên.
+require_once '../../scoreController.php';   // Chứa logic lấy thống kê điểm.
+
+// Yêu cầu người dùng phải có quyền `PERMISSION_VIEW_STATISTICS` để truy cập API này.
+// Nếu không có quyền, hàm `requirePermission` sẽ dừng script và chuyển hướng.
+// Điều này ngăn chặn việc truy cập dữ liệu thống kê trái phép.
+requirePermission(PERMISSION_VIEW_STATISTICS);
+
+
+// --- DATA FETCHING & PROCESSING ---
+
+// Khởi tạo các đối tượng controller.
 $studentController = new StudentController();
 $scoreController = new ScoreController();
 
-// Lấy dữ liệu thống kê từ các controller
-$studentStats = $studentController->getStatistics();
-$scoreStats = $scoreController->getScoreStatistics();
+// Gọi các phương thức `getStatistics()` từ cả hai controller để lấy dữ liệu thống kê thô từ CSDL.
+$studentStats = $studentController->getStatistics(); // Lấy tổng SV, SV theo giới tính, SV theo tháng.
+$scoreStats = $scoreController->getScoreStatistics();   // Lấy điểm TB theo môn, phân bố xếp loại.
 
-// Chuẩn bị mảng dữ liệu để trả về cho client
+
+// --- DATA TRANSFORMATION & AGGREGATION ---
+
+// Khởi tạo cấu trúc dữ liệu JSON cuối cùng sẽ được trả về cho client.
 $data = [
-    'total_students' => $studentStats['total_students'], // Tổng số sinh viên
-    'male_students' => 0, // Số sinh viên nam, mặc định là 0
-    'female_students' => 0, // Số sinh viên nữ, mặc định là 0
-    'other_students' => 0, // Số sinh viên giới tính khác, mặc định là 0
-    'avg_score' => 0, // Điểm trung bình, mặc định là 0
-    'monthly_labels' => [], // Nhãn cho biểu đồ (các tháng)
-    'monthly_data' => [] // Dữ liệu cho biểu đồ (số lượng sinh viên theo tháng)
+    'total_students'  => (int)($studentStats['total_students'] ?? 0), // Lấy tổng số sinh viên.
+    'male_students'   => 0, // Khởi tạo số lượng sinh viên nam.
+    'female_students' => 0, // Khởi tạo số lượng sinh viên nữ.
+    'other_students'  => 0, // Khởi tạo số lượng sinh viên giới tính khác.
+    'avg_score'       => 0.0, // Khởi tạo điểm trung bình chung.
+    'monthly_labels'  => [],  // Mảng chứa nhãn các tháng cho biểu đồ (trục X).
+    'monthly_data'    => []   // Mảng chứa số lượng sinh viên mới theo tháng (trục Y).
 ];
 
-// Xử lý dữ liệu thống kê theo giới tính
-foreach ($studentStats['by_gender'] as $gender) {
-    switch ($gender['gender']) {
-        case 'male':
-            $data['male_students'] = $gender['count']; // Gán số lượng sinh viên nam
-            break;
-        case 'female':
-            $data['female_students'] = $gender['count']; // Gán số lượng sinh viên nữ
-            break;
-        default:
-            $data['other_students'] = $gender['count']; // Gán số lượng sinh viên giới tính khác
-            break;
+// Xử lý dữ liệu thống kê theo giới tính từ `$studentStats`.
+if (!empty($studentStats['by_gender'])) {
+    foreach ($studentStats['by_gender'] as $gender) {
+        switch ($gender['gender']) {
+            case 'male':
+                $data['male_students'] = (int)$gender['count'];
+                break;
+            case 'female':
+                $data['female_students'] = (int)$gender['count'];
+                break;
+            default:
+                $data['other_students'] += (int)$gender['count']; // Cộng dồn cho các giới tính 'other'.
+                break;
+        }
     }
 }
 
-// Xử lý dữ liệu thống kê sinh viên mới theo tháng
-foreach ($studentStats['by_month'] as $month) {
-    $data['monthly_labels'][] = $month['month']; // Thêm nhãn tháng
-    $data['monthly_data'][] = $month['count']; // Thêm dữ liệu số lượng
+// Xử lý dữ liệu thống kê sinh viên mới theo tháng từ `$studentStats`.
+if (!empty($studentStats['by_month'])) {
+    foreach ($studentStats['by_month'] as $month) {
+        // Thêm tháng (ví dụ: '2025-12') vào mảng nhãn.
+        $data['monthly_labels'][] = $month['month'];
+        // Thêm số lượng sinh viên của tháng đó vào mảng dữ liệu.
+        $data['monthly_data'][] = (int)$month['count'];
+    }
 }
 
-// Tính toán điểm trung bình chung
-$totalScore = 0; // Tổng điểm
-$scoreCount = 0; // Tổng số lượng điểm
-foreach ($scoreStats['by_subject'] as $subject) {
-    // Tổng điểm = tổng của (điểm trung bình môn * số lượng điểm của môn đó)
-    $totalScore += $subject['avg_score'] * $subject['count'];
-    $scoreCount += $subject['count']; // Cộng dồn số lượng điểm
+// Tính toán điểm trung bình chung có trọng số từ `$scoreStats`.
+$totalScore = 0;
+$scoreCount = 0;
+if (!empty($scoreStats['by_subject'])) {
+    foreach ($scoreStats['by_subject'] as $subject) {
+        // Tổng điểm = tổng của (điểm trung bình của môn * số lượng điểm của môn đó).
+        $totalScore += $subject['avg_score'] * $subject['count'];
+        // Cộng dồn tổng số lượng điểm.
+        $scoreCount += $subject['count'];
+    }
 }
-// Điểm trung bình chung, làm tròn đến 1 chữ số thập phân
-$data['avg_score'] = $scoreCount > 0 ? round($totalScore / $scoreCount, 1) : 0;
 
-// Trả về dữ liệu dưới dạng JSON
+// Tính điểm trung bình chung và làm tròn đến 1 chữ số thập phân.
+// Tránh chia cho 0 nếu không có điểm nào trong hệ thống.
+$data['avg_score'] = $scoreCount > 0 ? round($totalScore / $scoreCount, 1) : 0.0;
+
+
+// --- OUTPUT ---
+
+// Mã hóa mảng `$data` thành chuỗi JSON và gửi về cho client.
 echo json_encode($data);
 ?>

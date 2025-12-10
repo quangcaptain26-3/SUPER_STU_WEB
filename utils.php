@@ -1,358 +1,348 @@
 <?php
-// File này chứa các hàm tiện ích được sử dụng trong toàn bộ ứng dụng.
+// File `utils.php` (utilities) chứa các hàm và hằng số tiện ích, được sử dụng lặp đi lặp lại trong toàn bộ ứng dụng.
+// Việc gom chúng vào một file giúp tái sử dụng code, dễ bảo trì và làm cho code ở các file khác gọn gàng hơn.
+
+// --- CÁC HÀM BẢO MẬT VÀ TIỆN ÍCH CHUNG ---
 
 /**
- * Làm sạch dữ liệu để ngăn chặn tấn công XSS.
- * @param mixed $data Dữ liệu cần làm sạch.
- * @return string Dữ liệu đã được làm sạch.
+ * Làm sạch dữ liệu đầu vào để ngăn chặn tấn công XSS (Cross-Site Scripting).
+ * @param mixed $data Dữ liệu thô từ người dùng (ví dụ: $_POST['username']).
+ * @return string Dữ liệu đã được làm sạch và an toàn để hiển thị trên HTML.
  */
 function sanitize($data)
 {
-    // Loại bỏ khoảng trắng đầu và cuối, sau đó loại bỏ các thẻ HTML và chuyển đổi ký tự đặc biệt thành HTML entities
+    // 1. `trim($data)`: Loại bỏ các khoảng trắng thừa ở đầu và cuối chuỗi.
+    // 2. `strip_tags(...)`: Loại bỏ tất cả các thẻ HTML và PHP khỏi chuỗi.
+    // 3. `htmlspecialchars(...)`: Chuyển đổi các ký tự đặc biệt thành các thực thể HTML. Ví dụ: `<` thành `&lt;`.
     return htmlspecialchars(strip_tags(trim($data)));
 }
 
 /**
- * Tạo token ngẫu nhiên.
- * @param int $length Độ dài của token (mặc định 32).
- * @return string Token đã được tạo.
+ * Tạo một chuỗi token ngẫu nhiên, an toàn, thường dùng cho việc reset mật khẩu hoặc CSRF.
+ * @param int $length Độ dài của chuỗi byte ngẫu nhiên (mặc định là 32).
+ * @return string Một chuỗi hex ngẫu nhiên có độ dài gấp đôi $length (ví dụ: 64 ký tự).
  */
 function generateToken($length = 32)
 {
-    // Tạo bytes ngẫu nhiên và chuyển đổi sang dạng hex (mỗi byte = 2 ký tự hex)
+    // `random_bytes($length)`: Tạo ra một chuỗi byte ngẫu nhiên, an toàn về mặt mật mã học.
+    // `bin2hex(...)`: Chuyển đổi chuỗi byte đó sang dạng biểu diễn thập lục phân (hexadecimal).
     return bin2hex(random_bytes($length));
 }
 
 /**
- * Băm mật khẩu bằng thuật toán SHA256.
- * @param string $password Mật khẩu cần băm.
- * @return string Mật khẩu đã được băm (SHA256 hash).
+ * Băm mật khẩu bằng thuật toán SHA256. Đây là một hàm băm nhanh, một chiều.
+ * @param string $password Mật khẩu dạng văn bản thô.
+ * @return string Chuỗi hash SHA256 có độ dài 64 ký tự.
  */
 function hashPassword($password)
 {
-    // Sử dụng SHA256 để băm mật khẩu (64 ký tự hex)
+    // `hash('sha256', $password)`: Áp dụng thuật toán băm SHA256 cho mật khẩu.
+    // LƯU Ý: SHA256 nhanh, nhưng trong các ứng dụng hiện đại, `password_hash()` với BCRYPT/Argon2 được khuyến khích hơn.
     return hash('sha256', $password);
 }
 
+// --- CÁC HÀM QUẢN LÝ PHIÊN ĐĂNG NHẬP ---
+
 /**
- * Kiểm tra xem người dùng đã đăng nhập chưa.
- * @return bool True nếu người dùng đã đăng nhập, false nếu chưa.
+ * Kiểm tra xem người dùng đã đăng nhập và có một phiên làm việc hợp lệ hay chưa.
+ * @return bool Trả về `true` nếu đã đăng nhập, ngược lại `false`.
  */
 function isLoggedIn()
 {
-    // Kiểm tra xem session có chứa user_id hay không
+    // `isset($_SESSION['user_id'])`: Kiểm tra sự tồn tại của biến 'user_id' trong session.
+    // Đây là biến được gán sau khi người dùng đăng nhập thành công.
     return isset($_SESSION['user_id']);
 }
 
 /**
- * Yêu cầu người dùng phải đăng nhập. Nếu chưa, chuyển hướng đến trang đăng nhập.
+ * Một hàm "guard", yêu cầu người dùng phải đăng nhập để tiếp tục.
+ * Nếu chưa đăng nhập, sẽ bị chuyển hướng ngay lập tức.
  */
 function requireLogin()
 {
-    // Nếu người dùng chưa đăng nhập
+    // Nếu `isLoggedIn()` trả về false (chưa đăng nhập).
     if (!isLoggedIn()) {
-        // Chuyển hướng đến trang đăng nhập
+        // `header('Location: login.php')`: Gửi một HTTP header để chuyển hướng trình duyệt đến trang đăng nhập.
         header('Location: login.php');
-        // Dừng thực thi script
+        // `exit()`: Dừng ngay lập tức việc thực thi script để ngăn chặn code phía sau chạy.
         exit();
     }
 }
 
-// Định nghĩa các cấp độ vai trò người dùng
-define('ROLE_STUDENT', 1);      // Vai trò sinh viên (cấp độ 1)
-define('ROLE_TEACHER', 2);      // Vai trò giảng viên (cấp độ 2)
-define('ROLE_ADMIN', 3);        // Vai trò quản trị viên (cấp độ 3)
-define('ROLE_SUPERADMIN', 4);   // Vai trò siêu quản trị (cấp độ 4)
+// --- ĐỊNH NGHĨA VAI TRÒ VÀ QUYỀN HẠN (HỆ THỐNG RBAC) ---
 
-// Định nghĩa các quyền hạn trong hệ thống
-define('PERMISSION_VIEW_STUDENTS', 'view_students');        // Quyền xem danh sách sinh viên
-define('PERMISSION_ADD_STUDENTS', 'add_students');          // Quyền thêm sinh viên
-define('PERMISSION_EDIT_STUDENTS', 'edit_students');        // Quyền chỉnh sửa sinh viên
-define('PERMISSION_DELETE_STUDENTS', 'delete_students');    // Quyền xóa sinh viên
-define('PERMISSION_VIEW_SCORES', 'view_scores');             // Quyền xem điểm
-define('PERMISSION_ADD_SCORES', 'add_scores');               // Quyền thêm điểm
-define('PERMISSION_EDIT_SCORES', 'edit_scores');             // Quyền chỉnh sửa điểm
-define('PERMISSION_DELETE_SCORES', 'delete_scores');         // Quyền xóa điểm
-define('PERMISSION_VIEW_STATISTICS', 'view_statistics');     // Quyền xem thống kê
-define('PERMISSION_MANAGE_USERS', 'manage_users');            // Quyền quản lý người dùng
-define('PERMISSION_EXPORT_DATA', 'export_data');             // Quyền xuất dữ liệu
+// Định nghĩa các hằng số cho vai trò. Dùng số để có thể so sánh cấp bậc.
+define('ROLE_STUDENT', 1);      // Vai trò sinh viên, cấp thấp nhất.
+define('ROLE_TEACHER', 2);      // Vai trò giảng viên.
+define('ROLE_ADMIN', 3);        // Vai trò quản trị viên.
+define('ROLE_SUPERADMIN', 4);   // Vai trò siêu quản trị, cấp cao nhất.
+
+// Định nghĩa các hằng số cho quyền hạn. Dùng chuỗi để dễ đọc và dễ quản lý.
+define('PERMISSION_VIEW_STUDENTS', 'view_students');
+define('PERMISSION_ADD_STUDENTS', 'add_students');
+define('PERMISSION_EDIT_STUDENTS', 'edit_students');
+define('PERMISSION_DELETE_STUDENTS', 'delete_students');
+define('PERMISSION_VIEW_SCORES', 'view_scores');
+define('PERMISSION_ADD_SCORES', 'add_scores');
+define('PERMISSION_EDIT_SCORES', 'edit_scores');
+define('PERMISSION_DELETE_SCORES', 'delete_scores');
+define('PERMISSION_VIEW_STATISTICS', 'view_statistics');
+define('PERMISSION_MANAGE_USERS', 'manage_users'); // Quyền đặc biệt chỉ Super Admin có.
+define('PERMISSION_EXPORT_DATA', 'export_data');
 
 /**
- * Lấy danh sách quyền hạn cho một vai trò cụ thể.
- * @param string $role Vai trò cần lấy quyền hạn.
- * @return array Mảng chứa các quyền hạn.
+ * Trái tim của hệ thống RBAC. Ánh xạ mỗi vai trò tới một danh sách các quyền hạn cụ thể.
+ * @param string $role Tên vai trò (ví dụ: 'teacher').
+ * @return array Mảng chứa các chuỗi quyền hạn của vai trò đó.
  */
 function getRolePermissions($role)
 {
-    // Định nghĩa quyền hạn cho từng vai trò
+    // Mảng kết hợp (associative array) định nghĩa cấu trúc phân quyền.
     $permissions = [
-        // Quyền hạn của sinh viên
         'student' => [
-            PERMISSION_VIEW_STUDENTS,  // Chỉ được xem danh sách sinh viên
-            PERMISSION_VIEW_SCORES      // Chỉ được xem điểm
+            PERMISSION_VIEW_STUDENTS,
+            PERMISSION_VIEW_SCORES
         ],
-        // Quyền hạn của giảng viên
         'teacher' => [
-            PERMISSION_VIEW_STUDENTS,      // Xem danh sách sinh viên
-            PERMISSION_ADD_STUDENTS,       // Thêm sinh viên
-            PERMISSION_EDIT_STUDENTS,      // Chỉnh sửa sinh viên
-            PERMISSION_VIEW_SCORES,        // Xem điểm
-            PERMISSION_ADD_SCORES,         // Thêm điểm
-            PERMISSION_EDIT_SCORES,        // Chỉnh sửa điểm
-            PERMISSION_VIEW_STATISTICS,    // Xem thống kê
-            PERMISSION_EXPORT_DATA         // Xuất dữ liệu
+            PERMISSION_VIEW_STUDENTS,
+            PERMISSION_ADD_STUDENTS,
+            PERMISSION_EDIT_STUDENTS,
+            PERMISSION_VIEW_SCORES,
+            PERMISSION_ADD_SCORES,
+            PERMISSION_EDIT_SCORES,
+            PERMISSION_VIEW_STATISTICS,
+            PERMISSION_EXPORT_DATA
         ],
-        // Quyền hạn của quản trị viên
         'admin' => [
-            PERMISSION_VIEW_STUDENTS,      // Xem danh sách sinh viên
-            PERMISSION_ADD_STUDENTS,       // Thêm sinh viên
-            PERMISSION_EDIT_STUDENTS,      // Chỉnh sửa sinh viên
-            PERMISSION_DELETE_STUDENTS,    // Xóa sinh viên
-            PERMISSION_VIEW_SCORES,        // Xem điểm
-            PERMISSION_ADD_SCORES,         // Thêm điểm
-            PERMISSION_EDIT_SCORES,        // Chỉnh sửa điểm
-            PERMISSION_DELETE_SCORES,      // Xóa điểm
-            PERMISSION_VIEW_STATISTICS,    // Xem thống kê
-            PERMISSION_EXPORT_DATA         // Xuất dữ liệu
+            PERMISSION_VIEW_STUDENTS,
+            PERMISSION_ADD_STUDENTS,
+            PERMISSION_EDIT_STUDENTS,
+            PERMISSION_DELETE_STUDENTS,
+            PERMISSION_VIEW_SCORES,
+            PERMISSION_ADD_SCORES,
+            PERMISSION_EDIT_SCORES,
+            PERMISSION_DELETE_SCORES,
+            PERMISSION_VIEW_STATISTICS,
+            PERMISSION_EXPORT_DATA
         ],
-        // Quyền hạn của siêu quản trị (có tất cả quyền)
         'superadmin' => [
-            PERMISSION_VIEW_STUDENTS,      // Xem danh sách sinh viên
-            PERMISSION_ADD_STUDENTS,       // Thêm sinh viên
-            PERMISSION_EDIT_STUDENTS,      // Chỉnh sửa sinh viên
-            PERMISSION_DELETE_STUDENTS,    // Xóa sinh viên
-            PERMISSION_VIEW_SCORES,        // Xem điểm
-            PERMISSION_ADD_SCORES,         // Thêm điểm
-            PERMISSION_EDIT_SCORES,        // Chỉnh sửa điểm
-            PERMISSION_DELETE_SCORES,      // Xóa điểm
-            PERMISSION_VIEW_STATISTICS,    // Xem thống kê
-            PERMISSION_MANAGE_USERS,       // Quản lý người dùng (chỉ superadmin có)
-            PERMISSION_EXPORT_DATA         // Xuất dữ liệu
+            PERMISSION_VIEW_STUDENTS,
+            PERMISSION_ADD_STUDENTS,
+            PERMISSION_EDIT_STUDENTS,
+            PERMISSION_DELETE_STUDENTS,
+            PERMISSION_VIEW_SCORES,
+            PERMISSION_ADD_SCORES,
+            PERMISSION_EDIT_SCORES,
+            PERMISSION_DELETE_SCORES,
+            PERMISSION_VIEW_STATISTICS,
+            PERMISSION_MANAGE_USERS, // Quyền quản lý người dùng.
+            PERMISSION_EXPORT_DATA
         ]
     ];
 
-    // Trả về mảng quyền hạn của vai trò, nếu không tìm thấy thì trả về mảng rỗng
+    // `?? []`: Toán tử Null Coalescing. Nếu vai trò không tồn tại trong mảng, trả về một mảng rỗng để tránh lỗi.
     return $permissions[$role] ?? [];
 }
 
+// --- CÁC HÀM KIỂM TRA QUYỀN ---
+
 /**
- * Kiểm tra xem người dùng hiện tại có ít nhất vai trò yêu cầu hay không.
- * @param string $requiredRole Vai trò yêu cầu.
- * @return bool True nếu người dùng có vai trò yêu cầu, false nếu không.
+ * Kiểm tra xem người dùng hiện tại có vai trò từ một cấp bậc nào đó trở lên hay không.
+ * @param string $requiredRole Vai trò tối thiểu yêu cầu.
+ * @return bool True nếu người dùng có vai trò bằng hoặc cao hơn, ngược lại false.
  */
 function hasRole($requiredRole)
 {
-    // Nếu chưa đăng nhập thì không có quyền
     if (!isLoggedIn()) return false;
 
-    // Định nghĩa hệ thống phân cấp vai trò (số càng lớn quyền càng cao)
+    // Mảng ánh xạ vai trò (chuỗi) sang cấp bậc (số).
     $roleHierarchy = [
-        'student' => ROLE_STUDENT,        // Cấp độ 1
-        'teacher' => ROLE_TEACHER,        // Cấp độ 2
-        'admin' => ROLE_ADMIN,            // Cấp độ 3
-        'superadmin' => ROLE_SUPERADMIN   // Cấp độ 4
+        'student' => ROLE_STUDENT,
+        'teacher' => ROLE_TEACHER,
+        'admin' => ROLE_ADMIN,
+        'superadmin' => ROLE_SUPERADMIN
     ];
 
-    // Lấy vai trò hiện tại của người dùng từ session
     $userRole = $_SESSION['role'];
-    // Lấy cấp độ của người dùng hiện tại (nếu không tìm thấy thì mặc định là 0)
     $userLevel = $roleHierarchy[$userRole] ?? 0;
-    // Lấy cấp độ yêu cầu (nếu không tìm thấy thì mặc định là 0)
     $requiredLevel = $roleHierarchy[$requiredRole] ?? 0;
 
-    // Kiểm tra xem cấp độ người dùng có >= cấp độ yêu cầu không
+    // So sánh cấp bậc số, cho phép phân cấp quyền. Ví dụ: Admin (3) có quyền của Teacher (2).
     return $userLevel >= $requiredLevel;
 }
 
 /**
- * Kiểm tra xem người dùng hiện tại có quyền cụ thể hay không.
- * @param string $permission Quyền cần kiểm tra.
- * @return bool True nếu người dùng có quyền, false nếu không.
+ * Kiểm tra xem người dùng hiện tại có một quyền hạn cụ thể hay không.
+ * @param string $permission Chuỗi quyền hạn cần kiểm tra (ví dụ: 'delete_students').
+ * @return bool True nếu người dùng có quyền, ngược lại false.
  */
 function hasPermission($permission)
 {
-    // Nếu chưa đăng nhập thì không có quyền
     if (!isLoggedIn()) return false;
 
-    // Lấy vai trò của người dùng từ session
+    // Lấy vai trò của người dùng từ phiên làm việc hiện tại.
     $userRole = $_SESSION['role'];
-    // Lấy danh sách quyền hạn của vai trò đó
+    // Dùng hàm getRolePermissions để lấy danh sách các quyền của vai trò đó.
     $userPermissions = getRolePermissions($userRole);
 
-    // Kiểm tra xem quyền yêu cầu có trong danh sách quyền của người dùng không
+    // `in_array()`: Kiểm tra xem quyền hạn yêu cầu có nằm trong mảng quyền của người dùng không.
     return in_array($permission, $userPermissions);
 }
 
 /**
- * Yêu cầu người dùng phải có vai trò cụ thể. Nếu không, chuyển hướng với thông báo lỗi.
+ * Hàm "guard" yêu cầu vai trò cụ thể. Chuyển hướng nếu không đáp ứng.
  * @param string $role Vai trò yêu cầu.
  */
 function requireRole($role)
 {
-    // Đảm bảo người dùng đã đăng nhập
     requireLogin();
-    // Nếu người dùng không có vai trò yêu cầu
     if (!hasRole($role)) {
-        // Lưu thông báo lỗi vào session
         $_SESSION['error'] = 'Bạn không có quyền truy cập trang này';
-        // Chuyển hướng đến trang chủ với thông báo lỗi
         header('Location: ../public/index.php?error=access_denied');
-        // Dừng thực thi script
         exit();
     }
 }
 
 /**
- * Yêu cầu người dùng phải có quyền cụ thể. Nếu không, chuyển hướng với thông báo lỗi.
- * @param string $permission Quyền yêu cầu.
+ * Hàm "guard" yêu cầu quyền hạn cụ thể. Chuyển hướng nếu không đáp ứng.
+ * Đây là hàm bảo vệ chính được dùng ở đầu các trang/file xử lý nghiệp vụ.
+ * @param string $permission Quyền hạn yêu cầu.
  */
 function requirePermission($permission)
 {
-    // Đảm bảo người dùng đã đăng nhập
     requireLogin();
-    // Nếu người dùng không có quyền yêu cầu
     if (!hasPermission($permission)) {
-        // Lưu thông báo lỗi vào session
         $_SESSION['error'] = 'Bạn không có quyền thực hiện hành động này';
-        // Chuyển hướng đến trang chủ với thông báo lỗi
         header('Location: ../public/index.php?error=permission_denied');
-        // Dừng thực thi script
         exit();
     }
 }
 
 /**
- * Bí danh của hàm hasPermission, kiểm tra xem người dùng có thể truy cập tính năng hay không.
+ * Một tên gọi khác (alias) cho `hasPermission`, thường dùng trong template để code dễ đọc hơn.
  * @param string $permission Quyền cần kiểm tra.
- * @return bool True nếu người dùng có quyền, false nếu không.
+ * @return bool
  */
 function canAccess($permission)
 {
-    // Gọi hàm hasPermission để kiểm tra quyền
     return hasPermission($permission);
 }
 
+// --- CÁC HÀM TIỆN ÍCH CHO GIAO DIỆN (UI HELPERS) ---
+
 /**
- * Lấy tên hiển thị cho một vai trò.
- * @param string $role Vai trò.
- * @return string Tên hiển thị.
+ * Lấy tên hiển thị tiếng Việt cho một vai trò.
+ * @param string $role Tên vai trò (VD: 'superadmin').
+ * @return string Tên hiển thị (VD: 'Siêu quản trị').
  */
 function getRoleDisplayName($role)
 {
-    // Định nghĩa tên hiển thị cho từng vai trò bằng tiếng Việt
     $roleNames = [
-        'student' => 'Sinh viên',        // Hiển thị "Sinh viên"
-        'teacher' => 'Giảng viên',       // Hiển thị "Giảng viên"
-        'admin' => 'Quản trị viên',      // Hiển thị "Quản trị viên"
-        'superadmin' => 'Siêu quản trị'  // Hiển thị "Siêu quản trị"
+        'student' => 'Sinh viên',
+        'teacher' => 'Giảng viên',
+        'admin' => 'Quản trị viên',
+        'superadmin' => 'Siêu quản trị'
     ];
-
-    // Trả về tên hiển thị, nếu không tìm thấy thì trả về "Không xác định"
     return $roleNames[$role] ?? 'Không xác định';
 }
 
 /**
- * Lấy class CSS badge cho một vai trò.
- * @param string $role Vai trò.
- * @return string Class CSS.
+ * Lấy class CSS của Bootstrap để hiển thị badge màu cho vai trò.
+ * @param string $role Tên vai trò.
+ * @return string Class CSS (VD: 'bg-danger').
  */
 function getRoleBadgeClass($role)
 {
-    // Định nghĩa class CSS badge cho từng vai trò (dùng cho Bootstrap)
     $badgeClasses = [
-        'student' => 'bg-primary',      // Màu xanh dương cho sinh viên
-        'teacher' => 'bg-success',      // Màu xanh lá cho giảng viên
-        'admin' => 'bg-warning',        // Màu vàng cho quản trị viên
-        'superadmin' => 'bg-danger'     // Màu đỏ cho siêu quản trị
+        'student' => 'bg-primary',
+        'teacher' => 'bg-success',
+        'admin' => 'bg-warning',
+        'superadmin' => 'bg-danger'
     ];
-
-    // Trả về class CSS, nếu không tìm thấy thì trả về 'bg-secondary' (màu xám)
     return $badgeClasses[$role] ?? 'bg-secondary';
 }
 
 /**
- * Định dạng chuỗi ngày tháng.
- * @param string $date Ngày cần định dạng.
+ * Định dạng một chuỗi ngày tháng (VD: '2025-12-10') sang định dạng thân thiện hơn (VD: '10/12/2025').
+ * @param string $date Chuỗi ngày tháng đầu vào.
  * @return string Ngày đã được định dạng.
  */
 function formatDate($date)
 {
-    // Chuyển đổi chuỗi ngày thành timestamp rồi định dạng theo định dạng dd/mm/yyyy
+    // `strtotime($date)`: Chuyển đổi chuỗi ngày tháng sang một Unix timestamp (số giây).
+    // `date('d/m/Y', ...)`: Định dạng lại timestamp đó theo cấu trúc Ngày/Tháng/Năm.
     return date('d/m/Y', strtotime($date));
 }
 
+// --- CÁC HÀM XỬ LÝ FILE ---
+
 /**
- * Xử lý upload file.
- * @param array $file File từ mảng $_FILES.
- * @param string $uploadDir Thư mục để upload file (mặc định 'uploads/avatars/').
- * @return array Mảng chứa thông tin thành công/thất bại và thông báo/tên file.
+ * Xử lý việc tải file lên một cách an toàn.
+ * @param array $file Dữ liệu file từ biến toàn cục `$_FILES`.
+ * @param string $uploadDir Thư mục đích để lưu file.
+ * @return array Mảng kết quả chứa `success` (true/false) và `message` hoặc `filename`.
  */
 function uploadFile($file, $uploadDir = 'uploads/avatars/')
 {
-    // Kiểm tra xem thư mục upload có tồn tại không
+    // Nếu thư mục đích không tồn tại.
     if (!file_exists($uploadDir)) {
-        // Nếu không tồn tại thì tạo thư mục với quyền 777 (đọc, ghi, thực thi cho tất cả)
+        // Tạo thư mục đó. `0777` là quyền truy cập (rất rộng, cần cẩn trọng trên server production). `true` cho phép tạo lồng nhau.
         mkdir($uploadDir, 0777, true);
     }
 
-    // Định nghĩa các loại file được phép upload (chỉ ảnh)
-    $allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
-    // Định nghĩa kích thước tối đa là 5MB (5 * 1024 * 1024 bytes)
-    $maxSize = 5 * 1024 * 1024; // 5MB
+    $allowedTypes = ['image/jpeg', 'image/png', 'image/gif']; // Chỉ cho phép các loại file ảnh phổ biến.
+    $maxSize = 5 * 1024 * 1024; // Giới hạn kích thước tối đa là 5MB.
 
-    // Kiểm tra loại file có nằm trong danh sách cho phép không
+    // Kiểm tra xem kiểu MIME của file có nằm trong danh sách cho phép không.
     if (!in_array($file['type'], $allowedTypes)) {
-        // Nếu không đúng loại thì trả về lỗi
         return ['success' => false, 'message' => 'Chỉ cho phép file ảnh JPG, PNG, GIF'];
     }
 
-    // Kiểm tra kích thước file có vượt quá giới hạn không
+    // Kiểm tra kích thước file (tính bằng byte).
     if ($file['size'] > $maxSize) {
-        // Nếu quá lớn thì trả về lỗi
         return ['success' => false, 'message' => 'File quá lớn (tối đa 5MB)'];
     }
 
-    // Lấy phần mở rộng của file (ví dụ: jpg, png, gif)
+    // Lấy phần mở rộng của file gốc (VD: 'png').
     $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
-    // Tạo tên file mới bằng cách kết hợp ID duy nhất với phần mở rộng
+    // Tạo một tên file mới hoàn toàn duy nhất bằng `uniqid()` để tránh ghi đè lên file đã có.
     $filename = uniqid() . '.' . $extension;
-    // Tạo đường dẫn đầy đủ đến file
+    // Tạo đường dẫn đầy đủ đến file mới.
     $filepath = $uploadDir . $filename;
 
-    // Di chuyển file từ thư mục tạm lên thư mục đích
+    // Di chuyển file đã tải lên từ thư mục tạm của server đến thư mục đích.
     if (move_uploaded_file($file['tmp_name'], $filepath)) {
-        // Nếu thành công, trả về thông tin thành công và tên file
-        return ['success' => true, 'filename' => $filename];
+        return ['success' => true, 'filename' => $filename]; // Trả về tên file mới để lưu vào CSDL.
     } else {
-        // Nếu thất bại, trả về thông báo lỗi
-        return ['success' => false, 'message' => 'Lỗi upload file'];
+        return ['success' => false, 'message' => 'Lỗi khi di chuyển file'];
     }
 }
 
 /**
- * Xóa một file.
- * @param string $filepath Đường dẫn đến file cần xóa.
+ * Xóa một file khỏi hệ thống.
+ * @param string $filepath Đường dẫn đầy đủ đến file cần xóa.
  */
 function deleteFile($filepath)
 {
-    // Kiểm tra xem file có tồn tại không
+    // `file_exists()`: Kiểm tra xem file có thực sự tồn tại không để tránh lỗi.
     if (file_exists($filepath)) {
-        // Nếu tồn tại thì xóa file
+        // `unlink()`: Xóa file.
         unlink($filepath);
     }
 }
 
+// --- CÁC HÀM TIỆN ÍCH KHÁC ---
+
 /**
- * Kiểm tra xem có phải môi trường development không.
- * @return bool True nếu là development mode (localhost), false nếu không.
+ * Kiểm tra xem ứng dụng đang chạy ở môi trường phát triển (localhost) hay không.
+ * @return bool True nếu là môi trường phát triển.
  */
 function isDevelopmentMode()
 {
-    // Kiểm tra xem có phải localhost hoặc 127.0.0.1 không
     $host = $_SERVER['HTTP_HOST'] ?? '';
     $serverName = $_SERVER['SERVER_NAME'] ?? '';
     
-    // Nếu là localhost, 127.0.0.1, hoặc chứa từ "localhost" thì là dev mode
+    // Kiểm tra nếu host/server name là 'localhost' hoặc địa chỉ IP loopback '127.0.0.1'.
     return (
         strpos($host, 'localhost') !== false ||
         strpos($host, '127.0.0.1') !== false ||
@@ -364,81 +354,76 @@ function isDevelopmentMode()
 }
 
 /**
- * Gửi email.
+ * Gửi email (dạng đơn giản).
  * @param string $to Địa chỉ email người nhận.
  * @param string $subject Tiêu đề email.
- * @param string $message Nội dung email.
- * @return bool True nếu email được gửi thành công, false nếu không.
+ * @param string $message Nội dung email (có thể chứa HTML).
+ * @return bool True nếu hàm `mail()` được gọi thành công.
  */
 function sendEmail($to, $subject, $message)
 {
-    // Nếu là development mode, không gửi email thật (trả về true để bypass)
+    // Trong môi trường dev, giả lập việc gửi email thành công để không cần cấu hình mail server.
     if (isDevelopmentMode()) {
-        return true; // Trả về true để code tiếp tục chạy, nhưng không gửi email thật
+        return true; 
     }
     
-    // Lưu ý: Đây là hàm gửi email đơn giản. Trong môi trường production, nên sử dụng thư viện như PHPMailer.
-    // Thiết lập header email - địa chỉ người gửi
+    // Thiết lập các header cần thiết cho email.
     $headers = "From: noreply@studentmanagement.com\r\n";
-    // Thiết lập header - định dạng HTML và bảng mã UTF-8
-    $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
+    $headers .= "Content-Type: text/html; charset=UTF-8\r\n"; // Cho phép gửi nội dung dạng HTML và hỗ trợ UTF-8.
 
-    // Gửi email và trả về kết quả (true/false)
+    // Sử dụng hàm `mail()` có sẵn của PHP.
     return mail($to, $subject, $message, $headers);
 }
 
 /**
- * Kiểm tra xem một sinh viên có thể xem dữ liệu của chính mình hay không.
- * @param int $studentId ID của sinh viên.
- * @return bool True nếu người dùng có thể xem dữ liệu, false nếu không.
+ * Kiểm tra quyền sở hữu tài nguyên (chưa được triển khai đầy đủ).
+ * @param int $studentId ID của sinh viên (tài nguyên).
+ * @return bool
  */
 function canViewStudent($studentId)
 {
-    // Nếu chưa đăng nhập thì không có quyền
     if (!isLoggedIn()) return false;
-
-    // Lấy vai trò của người dùng từ session
     $userRole = $_SESSION['role'];
 
-    // Quản trị viên, giảng viên và siêu quản trị có thể xem tất cả dữ liệu sinh viên
+    // Admin, Teacher, Superadmin có thể xem mọi thứ.
     if (in_array($userRole, ['superadmin', 'admin', 'teacher'])) {
         return true;
     }
 
-    // Một sinh viên chỉ có thể xem dữ liệu của chính mình.
-    // Điều này giả định rằng tài khoản sinh viên được liên kết với student_id trong bảng users.
-    // Để điều này hoạt động, cần thêm cột 'student_id' vào bảng 'users'.
-    // Tạm thời cho phép sinh viên xem tất cả dữ liệu.
+    // Logic cho sinh viên chỉ xem của chính mình cần được phát triển thêm.
+    // Hiện tại đang cho phép xem tất cả để đơn giản hóa.
     return true;
 }
 
+// --- CÁC HÀM BẢO MẬT CSRF ---
+
 /**
- * Tạo token CSRF (Cross-Site Request Forgery).
+ * Tạo và lưu một token CSRF vào session nếu nó chưa tồn tại.
  * @return string Token CSRF.
  */
 function generateCSRFToken()
 {
-    // Kiểm tra xem session đã có token CSRF chưa
+    // Nếu trong session chưa có token.
     if (!isset($_SESSION['csrf_token'])) {
-        // Nếu chưa có thì tạo token mới bằng cách tạo 32 bytes ngẫu nhiên và chuyển sang hex
+        // Tạo một token ngẫu nhiên và lưu vào session. Token này sẽ tồn tại suốt phiên làm việc.
         $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
     }
-    // Trả về token CSRF (tạo mới hoặc đã có sẵn)
+    // Trả về token đã lưu.
     return $_SESSION['csrf_token'];
 }
 
 /**
- * Xác minh token CSRF.
- * @param string $token Token cần xác minh.
- * @return bool True nếu token hợp lệ, false nếu không.
+ * Xác minh một token được gửi từ form có khớp với token trong session hay không.
+ * @param string $token Token từ `$_POST` hoặc `$_GET`.
+ * @return bool True nếu token hợp lệ, ngược lại false.
  */
 function verifyCSRFToken($token)
 {
-    // Kiểm tra xem session có token CSRF không
+    // Nếu trong session không có token để so sánh thì chắc chắn là không hợp lệ.
     if (!isset($_SESSION['csrf_token'])) {
-        // Nếu không có thì token không hợp lệ
         return false;
     }
-    // So sánh token trong session với token được truyền vào bằng hàm hash_equals (an toàn hơn ==)
+    // `hash_equals()`: Hàm so sánh chuỗi an toàn, chống lại timing attack.
+    // Nó luôn mất một khoảng thời gian như nhau để so sánh, dù các chuỗi khác nhau ở vị trí nào.
     return hash_equals($_SESSION['csrf_token'], $token);
 }

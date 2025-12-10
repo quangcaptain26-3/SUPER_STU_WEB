@@ -1,30 +1,44 @@
 <?php
-// Bắt đầu session để lưu trữ thông tin người dùng
+// --- KHỞI TẠO VÀ BẢO VỆ ---
+// Bắt đầu hoặc tiếp tục phiên làm việc để truy cập `$_SESSION`.
 session_start();
-// Nạp file chứa các hàm tiện ích
+// Nạp các file cần thiết.
 require_once '../utils.php';
-// Nạp file chứa class StudentController
 require_once '../studentController.php';
 
-// Yêu cầu người dùng phải có quyền xem sinh viên
+// --- KIỂM TRA QUYỀN TRUY CẬP ---
+// Đây là "cổng" bảo mật của trang. Nếu người dùng không có quyền `PERMISSION_VIEW_STUDENTS`,
+// hàm `requirePermission` sẽ tự động chuyển hướng họ và dừng script.
 requirePermission(PERMISSION_VIEW_STUDENTS);
 
-// Tạo đối tượng StudentController
+// --- XỬ LÝ DỮ LIỆU ĐẦU VÀO (INPUT) ---
+// Khởi tạo đối tượng StudentController để tương tác với CSDL.
 $studentController = new StudentController();
-// Lấy từ khóa tìm kiếm từ tham số GET, mặc định là chuỗi rỗng
+
+// Lấy từ khóa tìm kiếm từ tham số `search` trên URL.
+// `?? ''` là toán tử Null Coalescing, nếu `$_GET['search']` không tồn tại, `$search` sẽ là chuỗi rỗng.
 $search = $_GET['search'] ?? '';
-// Lấy số trang từ tham số GET, đảm bảo >= 1
+
+// Lấy số trang hiện tại từ tham số `page` trên URL.
+// `intval()` chuyển đổi giá trị sang số nguyên. `max(1, ...)` đảm bảo số trang luôn >= 1.
 $page = max(1, intval($_GET['page'] ?? 1));
-// Số lượng sinh viên hiển thị trên mỗi trang
+
+// Thiết lập số lượng sinh viên hiển thị trên mỗi trang.
 $limit = 10;
-// Tính offset để phân trang (số bản ghi bỏ qua)
+
+// Tính toán giá trị `OFFSET` cho câu lệnh SQL, dựa trên trang hiện tại.
+// Ví dụ: Trang 1 -> offset 0. Trang 2 -> offset 10.
 $offset = ($page - 1) * $limit;
 
-// Lấy danh sách sinh viên với tìm kiếm và phân trang
+// --- TRUY VẤN DỮ LIỆU TỪ CONTROLLER ---
+// Gọi controller để lấy danh sách sinh viên cho trang hiện tại, có áp dụng tìm kiếm và phân trang.
 $students = $studentController->getAllStudents($search, $limit, $offset);
-// Lấy tổng số sinh viên (có tìm kiếm)
+
+// Gọi controller để lấy tổng số sinh viên (có áp dụng tìm kiếm) để tính toán phân trang.
 $totalStudents = $studentController->getTotalStudents($search);
-// Tính tổng số trang
+
+// Tính tổng số trang cần thiết. `ceil()` làm tròn lên.
+// Ví dụ: 25 sinh viên, limit 10 -> 2.5 -> 3 trang.
 $totalPages = ceil($totalStudents / $limit);
 ?>
 <!DOCTYPE html>
@@ -110,7 +124,7 @@ $totalPages = ceil($totalStudents / $limit);
 <body>
     <div class="container-fluid">
         <div class="row">
-            <!-- Sidebar -->
+            <!-- Sidebar tĩnh, được copy/paste qua các trang. -->
             <div class="col-md-3 col-lg-2 sidebar p-0">
                 <div class="p-3">
                     <h4 class="text-white mb-4">
@@ -148,6 +162,7 @@ $totalPages = ceil($totalStudents / $limit);
                 <div class="p-4">
                     <div class="d-flex justify-content-between align-items-center mb-4">
                         <h2><i class="fas fa-users me-2"></i>Quản lý sinh viên</h2>
+                        <?php // Kiểm tra quyền trước khi hiển thị nút "Thêm sinh viên" ?>
                         <?php if (hasPermission(PERMISSION_ADD_STUDENTS)): ?>
                             <a href="add.php" class="btn btn-primary">
                                 <i class="fas fa-plus me-2"></i>Thêm sinh viên
@@ -155,7 +170,7 @@ $totalPages = ceil($totalStudents / $limit);
                         <?php endif; ?>
                     </div>
 
-                    <!-- Search and Filter -->
+                    <!-- Form tìm kiếm -->
                     <div class="card mb-4">
                         <div class="card-body">
                             <form method="GET" class="row g-3">
@@ -165,7 +180,7 @@ $totalPages = ceil($totalStudents / $limit);
                                             <i class="fas fa-search"></i>
                                         </span>
                                         <input type="text" class="form-control search-box" name="search"
-                                            value="<?php echo htmlspecialchars($search); ?>"
+                                            value="<?php echo htmlspecialchars($search); // Hiển thị lại từ khóa đã tìm kiếm ?>"
                                             placeholder="Tìm kiếm theo tên, mã SV, email...">
                                     </div>
                                 </div>
@@ -181,14 +196,15 @@ $totalPages = ceil($totalStudents / $limit);
                         </div>
                     </div>
 
-                    <!-- Students Table -->
+                    <!-- Bảng danh sách sinh viên -->
                     <div class="card">
                         <div class="card-header d-flex justify-content-between align-items-center">
                             <h5 class="mb-0">
                                 <i class="fas fa-list me-2"></i>Danh sách sinh viên
-                                <span class="badge bg-primary ms-2"><?php echo $totalStudents; ?></span>
+                                <span class="badge bg-primary ms-2"><?php echo $totalStudents; // Hiển thị tổng số sinh viên tìm thấy ?></span>
                             </h5>
                             <div>
+                                <?php // Kiểm tra quyền trước khi hiển thị các nút xuất file ?>
                                 <?php if (hasPermission(PERMISSION_EXPORT_DATA)): ?>
                                     <a href="../exports/export_pdf.php?type=students" class="btn btn-outline-danger btn-sm me-2">
                                         <i class="fas fa-file-pdf me-1"></i>Xuất PDF
@@ -216,22 +232,26 @@ $totalPages = ceil($totalStudents / $limit);
                                         </tr>
                                     </thead>
                                     <tbody>
+                                        <?php // Nếu không có sinh viên nào, hiển thị thông báo ?>
                                         <?php if (empty($students)): ?>
                                             <tr>
                                                 <td colspan="9" class="text-center py-4">
                                                     <i class="fas fa-users fa-3x text-muted mb-3"></i>
-                                                    <p class="text-muted">Không có sinh viên nào</p>
+                                                    <p class="text-muted">Không tìm thấy sinh viên nào.</p>
                                                 </td>
                                             </tr>
                                         <?php else: ?>
+                                            <?php // Lặp qua mảng sinh viên và hiển thị từng dòng ?>
                                             <?php foreach ($students as $index => $student): ?>
                                                 <tr>
+                                                    <?php // Tính số thứ tự dựa trên offset và index ?>
                                                     <td><?php echo $offset + $index + 1; ?></td>
                                                     <td>
+                                                        <?php // Nếu có avatar, hiển thị ảnh ?>
                                                         <?php if ($student['avatar']): ?>
                                                             <img src="../uploads/avatars/<?php echo htmlspecialchars($student['avatar']); ?>"
                                                                 class="avatar" alt="Avatar">
-                                                        <?php else: ?>
+                                                        <?php else: // Nếu không, hiển thị icon mặc định ?>
                                                             <div class="avatar bg-secondary d-flex align-items-center justify-content-center">
                                                                 <i class="fas fa-user text-white"></i>
                                                             </div>
@@ -241,32 +261,30 @@ $totalPages = ceil($totalStudents / $limit);
                                                         <strong><?php echo htmlspecialchars($student['msv']); ?></strong>
                                                     </td>
                                                     <td><?php echo htmlspecialchars($student['fullname']); ?></td>
-                                                    <td><?php echo formatDate($student['dob']); ?></td>
+                                                    <td><?php echo formatDate($student['dob']); // Dùng hàm tiện ích để định dạng ngày ?></td>
                                                     <td>
                                         <?php
-                                        // Mảng chuyển đổi giới tính từ tiếng Anh sang tiếng Việt
-                                        $genderText = [
-                                            'male' => 'Nam',
-                                            'female' => 'Nữ',
-                                            'other' => 'Khác'
-                                        ];
-                                        // Hiển thị giới tính, nếu không tìm thấy thì hiển thị 'N/A'
+                                        // Chuyển đổi giá trị giới tính từ CSDL sang dạng hiển thị tiếng Việt
+                                        $genderText = ['male' => 'Nam', 'female' => 'Nữ', 'other' => 'Khác'];
                                         echo $genderText[$student['gender']] ?? 'N/A';
                                         ?>
                                                     </td>
                                                     <td><?php echo htmlspecialchars($student['email']); ?></td>
                                                     <td><?php echo htmlspecialchars($student['phone']); ?></td>
                                                     <td>
+                                                        <?php // Nút Xem luôn hiển thị cho người có quyền xem ?>
                                                         <a href="view.php?id=<?php echo $student['id']; ?>"
                                                             class="btn btn-sm btn-outline-info btn-action" title="Xem">
                                                             <i class="fas fa-eye"></i>
                                                         </a>
+                                                        <?php // Kiểm tra quyền sửa ?>
                                                         <?php if (hasPermission(PERMISSION_EDIT_STUDENTS)): ?>
                                                             <a href="edit.php?id=<?php echo $student['id']; ?>"
                                                                 class="btn btn-sm btn-outline-primary btn-action" title="Sửa">
                                                                 <i class="fas fa-edit"></i>
                                                             </a>
                                                         <?php endif; ?>
+                                                        <?php // Kiểm tra quyền xóa ?>
                                                         <?php if (hasPermission(PERMISSION_DELETE_STUDENTS)): ?>
                                                             <button onclick="deleteStudent(<?php echo $student['id']; ?>)"
                                                                 class="btn btn-sm btn-outline-danger btn-action" title="Xóa">
@@ -282,11 +300,12 @@ $totalPages = ceil($totalStudents / $limit);
                             </div>
                         </div>
 
-                        <!-- Pagination -->
+                        <?php // Chỉ hiển thị phân trang nếu có nhiều hơn 1 trang ?>
                         <?php if ($totalPages > 1): ?>
                             <div class="card-footer">
                                 <nav aria-label="Page navigation">
                                     <ul class="pagination justify-content-center mb-0">
+                                        <?php // Nút "Trang trước" ?>
                                         <?php if ($page > 1): ?>
                                             <li class="page-item">
                                                 <a class="page-link" href="?page=<?php echo $page - 1; ?>&search=<?php echo urlencode($search); ?>">
@@ -296,17 +315,17 @@ $totalPages = ceil($totalStudents / $limit);
                                         <?php endif; ?>
 
                                         <?php 
-                                        // Hiển thị các nút phân trang (trang hiện tại ± 2 trang)
-                                        // Bắt đầu từ max(1, page-2) để không hiển thị số âm
-                                        // Kết thúc ở min(totalPages, page+2) để không vượt quá tổng số trang
+                                        // Vòng lặp để hiển thị các nút số trang.
+                                        // Logic này giúp chỉ hiển thị một vài trang xung quanh trang hiện tại.
                                         for ($i = max(1, $page - 2); $i <= min($totalPages, $page + 2); $i++): ?>
-                                            <li class="page-item <?php echo $i == $page ? 'active' : ''; ?>">
-                                                <a class="page-link" href="?page=<?php echo $i; ?>&search=<?php echo urlencode($search); ?>">
+                                            <li class="page-item <?php echo $i == $page ? 'active' : ''; // Thêm class 'active' cho trang hiện tại ?>">
+                                                <a class="page-link" href="?page=<?php echo $i; ?>&search=<?php echo urlencode($search); // Giữ lại từ khóa tìm kiếm khi chuyển trang ?>">
                                                     <?php echo $i; ?>
                                                 </a>
                                             </li>
                                         <?php endfor; ?>
 
+                                        <?php // Nút "Trang sau" ?>
                                         <?php if ($page < $totalPages): ?>
                                             <li class="page-item">
                                                 <a class="page-link" href="?page=<?php echo $page + 1; ?>&search=<?php echo urlencode($search); ?>">
@@ -327,77 +346,76 @@ $totalPages = ceil($totalStudents / $limit);
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="../assets/js/notifications.js"></script>
-    <!-- <script src="../assets/js/realtime.js"></script> -->
     <script>
-        // Hàm xóa sinh viên
+        /**
+         * Hàm xử lý sự kiện xóa sinh viên, được gọi khi người dùng nhấn nút xóa.
+         * @param {number} id - ID của sinh viên cần xóa.
+         */
         function deleteStudent(id) {
-            // Hiển thị hộp thoại xác nhận xóa
+            // Sử dụng thư viện SweetAlert2 để hiển thị hộp thoại xác nhận chuyên nghiệp.
             Swal.fire({
-                title: 'Xác nhận xóa sinh viên',
-                text: 'Bạn có chắc chắn muốn xóa sinh viên này? Hành động này không thể hoàn tác.',
+                title: 'Bạn chắc chắn chứ?',
+                text: "Hành động này sẽ xóa vĩnh viễn sinh viên và không thể hoàn tác!",
                 icon: 'warning',
-                showCancelButton: true, // Hiển thị nút hủy
-                confirmButtonColor: '#dc3545', // Màu đỏ cho nút xác nhận
-                cancelButtonColor: '#6c757d', // Màu xám cho nút hủy
-                confirmButtonText: 'Xóa',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Vâng, xóa nó!',
                 cancelButtonText: 'Hủy'
             }).then((result) => {
-                // Nếu người dùng xác nhận xóa
+                // `result.isConfirmed` là true nếu người dùng nhấn nút "Xóa".
                 if (result.isConfirmed) {
-                    // Hiển thị loading
+                    // Hiển thị một thông báo loading trong khi chờ request xử lý.
                     Swal.fire({
                         title: 'Đang xử lý...',
-                        text: 'Vui lòng chờ trong giây lát',
-                        icon: 'info',
-                        allowOutsideClick: false, // Không cho click bên ngoài
-                        allowEscapeKey: false, // Không cho phím ESC
-                        showConfirmButton: false, // Không hiển thị nút xác nhận
+                        text: 'Vui lòng chờ trong giây lát.',
+                        allowOutsideClick: false,
                         didOpen: () => {
-                            Swal.showLoading(); // Hiển thị spinner loading
+                            Swal.showLoading();
                         }
                     });
 
-                    // Gửi request xóa đến server
+                    // Sử dụng `fetch API` để gửi request đến server một cách bất đồng bộ.
                     fetch('delete.php', {
-                            method: 'POST', // Phương thức POST
-                            headers: {
-                                'Content-Type': 'application/x-www-form-urlencoded', // Header
-                            },
-                            body: 'id=' + id // Body chứa ID sinh viên cần xóa
-                        })
-                        .then(response => response.json()) // Chuyển response sang JSON
-                        .then(data => {
-                            Swal.close(); // Đóng loading
-                            // Nếu xóa thành công
-                            if (data.success) {
-                                Swal.fire({
-                                    title: 'Thành công!',
-                                    text: 'Sinh viên đã được xóa thành công',
-                                    icon: 'success',
-                                    confirmButtonText: 'OK'
-                                }).then(() => {
-                                    location.reload(); // Tải lại trang
-                                });
-                            } else {
-                                // Nếu xóa thất bại, hiển thị lỗi
-                                Swal.fire({
-                                    title: 'Lỗi!',
-                                    text: data.message,
-                                    icon: 'error',
-                                    confirmButtonText: 'OK'
-                                });
-                            }
-                        })
-                        .catch(error => {
-                            Swal.close(); // Đóng loading
-                            // Nếu có lỗi xảy ra
+                        method: 'POST', // Sử dụng phương thức POST.
+                        headers: {
+                            // Header này cần thiết cho việc gửi dữ liệu dạng form-encoded.
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                        // Body của request, chứa ID của sinh viên cần xóa.
+                        // Cần thêm CSRF token ở đây trong môi trường production.
+                        body: 'id=' + id
+                    })
+                    .then(response => response.json()) // Chuyển đổi response từ server (dạng chuỗi JSON) thành đối tượng JavaScript.
+                    .then(data => {
+                        // `data` là đối tượng JS, ví dụ: { success: true, message: "..." }
+                        if (data.success) {
+                            // Nếu server trả về thành công.
+                            Swal.fire({
+                                title: 'Đã xóa!',
+                                text: data.message, // Hiển thị thông báo từ server.
+                                icon: 'success'
+                            }).then(() => {
+                                // Sau khi người dùng nhấn OK, tải lại trang để cập nhật danh sách.
+                                location.reload();
+                            });
+                        } else {
+                            // Nếu server trả về lỗi.
                             Swal.fire({
                                 title: 'Lỗi!',
-                                text: 'Có lỗi xảy ra: ' + error,
-                                icon: 'error',
-                                confirmButtonText: 'OK'
+                                text: data.message, // Hiển thị thông báo lỗi từ server.
+                                icon: 'error'
                             });
+                        }
+                    })
+                    .catch(error => {
+                        // Xử lý các lỗi mạng hoặc lỗi không mong muốn khác.
+                        Swal.fire({
+                            title: 'Lỗi!',
+                            text: 'Đã có lỗi xảy ra khi gửi yêu cầu. ' + error,
+                            icon: 'error'
                         });
+                    });
                 }
             });
         }

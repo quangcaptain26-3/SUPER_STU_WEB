@@ -1,224 +1,197 @@
 <?php
 /**
- * Middleware cho hệ thống phân quyền.
- * Được sử dụng để kiểm tra quyền truy cập trước khi thực hiện các hành động.
+ * File này chứa lớp "Middleware" cho hệ thống phân quyền.
+ * LƯU Ý: Tên gọi "Middleware" ở đây mang tính khái niệm, không giống với middleware trong các framework hiện đại (như Laravel hay Express.js)
+ * vốn hoạt động bằng cách "bọc" quanh một request.
+ *
+ * Thay vào đó, đây là một lớp Helper tĩnh (`PermissionMiddleware`), cung cấp một tập hợp các phương thức tiện ích
+ * để kiểm tra quyền hạn một cách có tổ chức và tái sử dụng trong toàn bộ ứng dụng.
  */
 
+// Nạp file utils.php vì các hàm middleware này phụ thuộc vào các hàm kiểm tra quyền cơ bản như `hasPermission`.
 require_once 'utils.php';
 
 /**
  * Class PermissionMiddleware
- * Cung cấp các phương thức tĩnh để xử lý kiểm tra quyền trong toàn bộ ứng dụng.
+ * Cung cấp các phương thức tĩnh để kiểm tra quyền truy cập và quyền thực hiện hành động.
+ * Việc sử dụng phương thức tĩnh cho phép gọi trực tiếp mà không cần tạo đối tượng: `PermissionMiddleware::checkPageAccess(...)`.
  */
 class PermissionMiddleware {
     
     /**
-     * Kiểm tra xem người dùng hiện tại có quyền truy cập trang cụ thể hay không.
-     * Nếu không có quyền, chuyển hướng về trang chính với thông báo lỗi.
-     * @param string $permission Quyền cần thiết.
+     * Hàm "guard" chính cho các trang. Kiểm tra quyền truy cập một trang.
+     * Nếu không có quyền, người dùng sẽ bị chuyển hướng và script sẽ dừng lại.
+     * @param string $permission Quyền hạn cần có để truy cập trang (VD: PERMISSION_VIEW_STUDENTS).
      */
     public static function checkPageAccess($permission) {
+        // Sử dụng hàm `hasPermission` từ `utils.php` để kiểm tra.
         if (!hasPermission($permission)) {
-            // Đặt thông báo lỗi vào session
-            $_SESSION['error'] = 'Bạn không có quyền truy cập trang này';
-            // Chuyển hướng về trang chính với mã lỗi
+            // Nếu không có quyền, đặt một thông báo lỗi vào session để có thể hiển thị ở trang chủ.
+            $_SESSION['error'] = 'Bạn không có quyền truy cập trang này.';
+            // Gửi header chuyển hướng người dùng về trang chủ.
             header('Location: ../public/index.php?error=access_denied');
+            // Dừng script ngay lập tức.
             exit();
         }
     }
     
     /**
-     * Kiểm tra xem người dùng hiện tại có quyền thực hiện hành động cụ thể hay không.
-     * @param string $permission Quyền cần thiết.
-     * @return array Mảng kết quả gồm trạng thái thành công hoặc thất bại và thông điệp.
+     * Kiểm tra xem người dùng có quyền thực hiện một hành động cụ thể hay không (thường dùng cho API hoặc xử lý form).
+     * @param string $permission Quyền cần có để thực hiện hành động.
+     * @return array Mảng kết quả `['success' => bool, 'message' => string]`.
      */
     public static function checkActionPermission($permission) {
         if (!hasPermission($permission)) {
-            // Trả về kết quả lỗi khi không có quyền
+            // Nếu không có quyền, trả về kết quả thất bại cùng thông báo.
             return [
                 'success' => false,
-                'message' => 'Bạn không có quyền thực hiện hành động này'
+                'message' => 'Bạn không có quyền thực hiện hành động này.'
             ];
         }
-        // Trả về thành công nếu có quyền
+        // Nếu có quyền, trả về thành công.
         return ['success' => true];
     }
     
     /**
-     * Kiểm tra xem người dùng hiện tại có vai trò cụ thể hay không.
-     * Nếu không, chuyển hướng về trang chính với thông báo lỗi.
-     * @param string $requiredRole Vai trò yêu cầu.
+     * Hàm "guard" kiểm tra vai trò của người dùng.
+     * @param string $requiredRole Vai trò yêu cầu (VD: 'admin').
      */
     public static function checkRoleAccess($requiredRole) {
+        // Sử dụng hàm `hasRole` từ `utils.php`.
         if (!hasRole($requiredRole)) {
-            // Đặt thông báo lỗi vào session
-            $_SESSION['error'] = 'Bạn không có quyền truy cập với vai trò hiện tại';
-            // Chuyển hướng về trang chính với mã lỗi vai trò
+            $_SESSION['error'] = 'Vai trò của bạn không đủ để truy cập trang này.';
             header('Location: ../public/index.php?error=role_denied');
             exit();
         }
     }
     
     /**
-     * Kiểm tra xem người dùng hiện tại có phải chủ sở hữu của một tài nguyên cụ thể hay không.
-     * Vai trò admin và superadmin có thể truy cập tất cả tài nguyên.
-     * @param int $resourceUserId ID người dùng liên quan đến tài nguyên.
-     * @return bool True nếu người dùng là chủ sở hữu hoặc là admin, ngược lại false.
+     * Kiểm tra xem người dùng hiện tại có phải là chủ sở hữu của một tài nguyên hay không.
+     * Rất hữu ích khi muốn giới hạn "student" chỉ xem được thông tin của chính mình.
+     * @param int $resourceUserId ID của người dùng sở hữu tài nguyên (VD: `student.user_id`).
+     * @return bool True nếu là chủ sở hữu hoặc là admin/superadmin, ngược lại false.
      */
     public static function checkResourceOwnership($resourceUserId) {
-        // Lấy ID người dùng hiện tại từ session, mặc định 0 nếu chưa đăng nhập
+        // Lấy thông tin người dùng đang đăng nhập từ session.
         $currentUserId = $_SESSION['user_id'] ?? 0;
-        // Lấy vai trò người dùng hiện tại
         $userRole = $_SESSION['role'] ?? 'student';
         
-        // Vai trò superadmin và admin có quyền truy cập tất cả tài nguyên
+        // Superadmin và admin luôn có quyền truy cập tất cả tài nguyên.
         if (in_array($userRole, ['superadmin', 'admin'])) {
             return true;
         }
         
-        // Kiểm tra xem người dùng có phải chủ sở hữu tài nguyên hay không
+        // Người dùng thông thường chỉ có quyền nếu ID của họ khớp với ID chủ sở hữu tài nguyên.
         return $currentUserId == $resourceUserId;
     }
     
     /**
-     * Lấy danh sách các quyền của người dùng hiện tại.
+     * Lấy danh sách các chuỗi quyền của người dùng đang đăng nhập.
      * @return array Mảng các quyền.
      */
     public static function getCurrentUserPermissions() {
-        // Nếu chưa đăng nhập, trả về mảng rỗng
         if (!isLoggedIn()) {
             return [];
         }
-        
-        // Lấy vai trò hiện tại
         $userRole = $_SESSION['role'];
-        // Trả về các quyền tương ứng với vai trò
+        // Gọi hàm từ `utils.php` để lấy danh sách quyền dựa trên vai trò.
         return getRolePermissions($userRole);
     }
     
     /**
-     * Kiểm tra xem người dùng hiện tại có thể thực hiện một hành động cụ thể hay không.
-     * @param string $action Hành động cần kiểm tra.
-     * @return bool True nếu có quyền thực hiện hành động, false nếu không.
+     * Một cách gọi khác của `hasPermission`, dùng để kiểm tra một hành động cụ thể.
+     * @param string $action Chuỗi hành động (trùng với chuỗi quyền).
+     * @return bool True nếu có thể thực hiện, ngược lại false.
      */
     public static function canPerformAction($action) {
         $permissions = self::getCurrentUserPermissions();
-        // Kiểm tra xem hành động có nằm trong danh sách quyền hiện tại hay không
         return in_array($action, $permissions);
     }
     
-    /**
-     * Lấy thông tin về vai trò của người dùng hiện tại.
-     * @return array|null Mảng thông tin vai trò hoặc null nếu chưa đăng nhập.
-     */
-    public static function getCurrentUserRole() {
-        if (!isLoggedIn()) {
-            return null;
-        }
-        
-        return [
-            'role' => $_SESSION['role'],
-            'display_name' => getRoleDisplayName($_SESSION['role']),
-            'badge_class' => getRoleBadgeClass($_SESSION['role']),
-            'permissions' => self::getCurrentUserPermissions()
-        ];
-    }
+    // --- CÁC PHƯƠNG THỨC TIỆN ÍCH CHO VIỆC KIỂM TRA QUYỀN CỤ THỂ ---
+    // Các hàm này giúp code ở các nơi khác dễ đọc hơn.
+    // Ví dụ: `PermissionMiddleware::checkExportPermission()` thay vì `PermissionMiddleware::checkActionPermission(PERMISSION_EXPORT_DATA)`
     
-    /**
-     * Kiểm tra quyền xuất dữ liệu của người dùng.
-     * @return array Mảng kết quả kiểm tra quyền.
-     */
     public static function checkExportPermission() {
         return self::checkActionPermission(PERMISSION_EXPORT_DATA);
     }
     
-    /**
-     * Kiểm tra quyền quản lý người dùng.
-     * @return array Mảng kết quả kiểm tra quyền.
-     */
     public static function checkUserManagementPermission() {
         return self::checkActionPermission(PERMISSION_MANAGE_USERS);
     }
     
-    /**
-     * Kiểm tra quyền xem thống kê.
-     * @return array Mảng kết quả kiểm tra quyền.
-     */
     public static function checkStatisticsPermission() {
         return self::checkActionPermission(PERMISSION_VIEW_STATISTICS);
     }
     
     /**
-     * Kiểm tra quyền CRUD của người dùng với sinh viên.
-     * @param string $action Hành động cần kiểm tra ('view', 'add', 'edit', 'delete').
-     * @return array Mảng kết quả kiểm tra quyền.
+     * Kiểm tra quyền CRUD trên module Sinh viên.
+     * @param string $action Hành động: 'view', 'add', 'edit', 'delete'.
+     * @return array Kết quả từ `checkActionPermission`.
      */
     public static function checkStudentPermissions($action) {
-        // Định nghĩa các quyền tương ứng với hành động trên sinh viên
         $permissions = [
-            'view' => PERMISSION_VIEW_STUDENTS,
-            'add' => PERMISSION_ADD_STUDENTS,
-            'edit' => PERMISSION_EDIT_STUDENTS,
+            'view'   => PERMISSION_VIEW_STUDENTS,
+            'add'    => PERMISSION_ADD_STUDENTS,
+            'edit'   => PERMISSION_EDIT_STUDENTS,
             'delete' => PERMISSION_DELETE_STUDENTS
         ];
         
-        // Kiểm tra hành động có hợp lệ không
         if (!isset($permissions[$action])) {
-            return ['success' => false, 'message' => 'Hành động không hợp lệ'];
+            return ['success' => false, 'message' => 'Hành động không hợp lệ.'];
         }
         
-        // Kiểm tra quyền tương ứng
         return self::checkActionPermission($permissions[$action]);
     }
-    
+
     /**
-     * Kiểm tra quyền CRUD của người dùng với điểm số.
-     * @param string $action Hành động cần kiểm tra ('view', 'add', 'edit', 'delete').
-     * @return array Mảng kết quả kiểm tra quyền.
+     * Kiểm tra quyền CRUD trên module Điểm số.
+     * @param string $action Hành động: 'view', 'add', 'edit', 'delete'.
+     * @return array Kết quả từ `checkActionPermission`.
      */
     public static function checkScorePermissions($action) {
-        // Định nghĩa các quyền tương ứng với hành động trên điểm số
         $permissions = [
-            'view' => PERMISSION_VIEW_SCORES,
-            'add' => PERMISSION_ADD_SCORES,
-            'edit' => PERMISSION_EDIT_SCORES,
+            'view'   => PERMISSION_VIEW_SCORES,
+            'add'    => PERMISSION_ADD_SCORES,
+            'edit'   => PERMISSION_EDIT_SCORES,
             'delete' => PERMISSION_DELETE_SCORES
         ];
         
-        // Kiểm tra hành động có hợp lệ không
         if (!isset($permissions[$action])) {
-            return ['success' => false, 'message' => 'Hành động không hợp lệ'];
+            return ['success' => false, 'message' => 'Hành động không hợp lệ.'];
         }
         
-        // Kiểm tra quyền tương ứng
         return self::checkActionPermission($permissions[$action]);
     }
     
     /**
-     * Tạo phản hồi JSON cho các cuộc gọi API.
-     * @param bool $success Trạng thái thành công hoặc thất bại.
+     * Hàm tiện ích để tạo và trả về một response JSON chuẩn hóa.
+     * Thường được dùng trong các file API.
+     * @param bool $success Trạng thái thành công/thất bại.
      * @param string $message Thông điệp phản hồi.
      * @param array $data Dữ liệu tùy chọn gửi kèm.
      */
     public static function jsonResponse($success, $message, $data = []) {
-        // Đặt header là JSON
+        // Thiết lập header để trình duyệt hiểu đây là JSON.
         header('Content-Type: application/json');
-        // Trả về dữ liệu dưới dạng JSON
+        // Mã hóa mảng thành chuỗi JSON và in ra.
         echo json_encode([
             'success' => $success,
             'message' => $message,
             'data' => $data
         ]);
+        // Dừng script.
         exit();
     }
     
     /**
-     * Kiểm tra quyền bắt buộc và trả về lỗi dạng JSON nếu không đủ quyền.
-     * @param string $permission Quyền bắt buộc.
+     * Hàm "guard" cho API. Kiểm tra quyền, nếu không có thì trả về lỗi JSON và dừng script.
+     * @param string $permission Quyền hạn bắt buộc.
      */
     public static function requirePermissionOrFail($permission) {
         $result = self::checkActionPermission($permission);
         if (!$result['success']) {
+            // Gọi hàm `jsonResponse` để trả về lỗi 403 (Forbidden) một cách thân thiện.
             self::jsonResponse(false, $result['message']);
         }
     }

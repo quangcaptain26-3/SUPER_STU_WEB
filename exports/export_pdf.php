@@ -1,176 +1,184 @@
 <?php
-session_start(); // Bắt đầu phiên làm việc
-require_once '../utils.php'; // Nạp tệp utils.php chứa các hàm tiện ích
-require_once '../studentController.php'; // Nạp tệp studentController.php để quản lý sinh viên
-require_once '../scoreController.php'; // Nạp tệp scoreController.php để quản lý điểm
-require_once '../assets/libs/tcpdf/TCPDF-main/tcpdf.php'; // Nạp thư viện TCPDF
+// Bắt đầu phiên làm việc để truy cập thông tin người dùng và quyền hạn.
+session_start();
 
-requirePermission(PERMISSION_EXPORT_DATA); // Yêu cầu quyền xuất dữ liệu
+// Nạp các file cần thiết
+require_once '../utils.php'; // Chứa các hàm tiện ích và kiểm tra quyền.
+require_once '../studentController.php'; // Chứa logic nghiệp vụ liên quan đến sinh viên.
+require_once '../scoreController.php';   // Chứa logic nghiệp vụ liên quan đến điểm.
+// Nạp thư viện TCPDF để tạo file PDF.
+require_once '../assets/libs/tcpdf/TCPDF-main/tcpdf.php';
 
-$type = $_GET['type'] ?? 'students'; // Lấy loại xuất dữ liệu từ URL, mặc định là 'students'
-$search = $_GET['search'] ?? ''; // Lấy từ khóa tìm kiếm từ URL, mặc định là rỗng
-$studentId = $_GET['student_id'] ?? null; // Lấy ID sinh viên từ URL, mặc định là null
-$semester = $_GET['semester'] ?? null; // Lấy học kỳ từ URL, mặc định là null
+// --- BẢO VỆ & LẤY THAM SỐ ---
+// Yêu cầu người dùng phải có quyền `PERMISSION_EXPORT_DATA` để có thể sử dụng chức năng này.
+requirePermission(PERMISSION_EXPORT_DATA);
 
-// Custom TCPDF class for header and footer
-class MYPDF extends TCPDF { // Định nghĩa lớp MYPDF kế thừa từ TCPDF để tùy chỉnh header và footer
-    public function Header() { // Ghi đè phương thức Header
-        $this->SetFont('dejavusans', 'B', 12); // Đặt font chữ cho header
-        $this->Cell(0, 10, 'Hệ thống Quản lý Sinh viên', 0, false, 'C', 0, '', 0, false, 'M', 'M'); // Thêm nội dung header
+// Lấy các tham số từ URL để xác định nội dung và bộ lọc cho file PDF.
+$type = $_GET['type'] ?? 'students'; // Loại báo cáo: 'students' hoặc 'scores'. Mặc định là 'students'.
+$search = $_GET['search'] ?? ''; // Từ khóa tìm kiếm.
+$studentId = $_GET['student_id'] ?? null; // Lọc theo ID sinh viên (cho báo cáo điểm).
+$semester = $_GET['semester'] ?? null;   // Lọc theo học kỳ (cho báo cáo điểm).
+
+// --- TÙY CHỈNH LỚP PDF ---
+// Tạo một lớp `MYPDF` kế thừa từ lớp `TCPDF` gốc để tùy chỉnh Header và Footer của tài liệu.
+class MYPDF extends TCPDF {
+    // Ghi đè phương thức `Header()` để tạo header tùy chỉnh.
+    public function Header() {
+        // Đặt font cho header. 'dejavusans' hỗ trợ Unicode (tiếng Việt).
+        $this->SetFont('dejavusans', 'B', 12);
+        // Vẽ một ô (Cell) chứa tiêu đề, căn giữa.
+        $this->Cell(0, 10, 'Hệ thống Quản lý Sinh viên', 0, false, 'C', 0, '', 0, false, 'M', 'M');
     }
 
-    public function Footer() { // Ghi đè phương thức Footer
-        $this->SetY(-15); // Đặt vị trí con trỏ Y
-        $this->SetFont('dejavusans', 'I', 8); // Đặt font chữ cho footer
-        $this->Cell(0, 10, 'Trang '.$this->getAliasNumPage().'/'.$this->getAliasNbPages(), 0, false, 'C', 0, '', 0, false, 'T', 'M'); // Thêm số trang
+    // Ghi đè phương thức `Footer()` để tạo footer tùy chỉnh.
+    public function Footer() {
+        // Đặt vị trí con trỏ Y ở -15mm từ cuối trang.
+        $this->SetY(-15);
+        // Đặt font cho footer.
+        $this->SetFont('dejavusans', 'I', 8);
+        // Vẽ một ô chứa số trang hiện tại và tổng số trang.
+        $this->Cell(0, 10, 'Trang '.$this->getAliasNumPage().'/'.$this->getAliasNbPages(), 0, false, 'C', 0, '', 0, false, 'T', 'M');
     }
 }
 
-// Create new PDF document
-$pdf = new MYPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false); // Tạo một đối tượng MYPDF mới
+// --- KHỞI TẠO VÀ CẤU HÌNH TÀI LIỆU PDF ---
+// Tạo một đối tượng PDF mới từ lớp tùy chỉnh `MYPDF`.
+// P: khổ dọc, mm: đơn vị, A4: khổ giấy, true: bật Unicode, UTF-8: bảng mã.
+$pdf = new MYPDF('P', 'mm', 'A4', true, 'UTF-8', false);
 
-// Set document information
-$pdf->SetCreator('Student Management System'); // Đặt người tạo tài liệu
-$pdf->SetAuthor('Student Management System'); // Đặt tác giả tài liệu
-$pdf->SetTitle($type == 'students' ? 'Danh sách sinh viên' : 'Bảng điểm'); // Đặt tiêu đề tài liệu
-$pdf->SetSubject('Báo cáo từ Hệ thống Quản lý Sinh viên'); // Đặt chủ đề tài liệu
+// Đặt thông tin metadata cho tài liệu.
+$pdf->SetCreator('Student Management System');
+$pdf->SetAuthor('Super-Stu');
+$pdf->SetTitle($type == 'students' ? 'Danh sách sinh viên' : 'Bảng điểm');
+$pdf->SetSubject('Báo cáo được tạo từ Hệ thống Quản lý Sinh viên');
 
-// Set default header data
-$pdf->SetHeaderData(PDF_HEADER_LOGO, PDF_HEADER_LOGO_WIDTH, PDF_HEADER_TITLE, PDF_HEADER_STRING); // Đặt dữ liệu header mặc định
+// Cấu hình lề trang.
+$pdf->SetMargins(15, 15, 15);
+$pdf->SetHeaderMargin(5);
+$pdf->SetFooterMargin(10);
 
-// Set header and footer fonts
-$pdf->setHeaderFont(Array(PDF_FONT_NAME_MAIN, '', PDF_FONT_SIZE_MAIN)); // Đặt font chữ cho header
-$pdf->setFooterFont(Array(PDF_FONT_NAME_DATA, '', PDF_FONT_SIZE_DATA)); // Đặt font chữ cho footer
+// Bật chế độ tự động ngắt trang khi nội dung đầy.
+$pdf->SetAutoPageBreak(TRUE, 15);
 
-// Set default monospaced font
-$pdf->SetDefaultMonospacedFont(PDF_FONT_MONOSPACED); // Đặt font chữ monospaced mặc định
+// Đặt font chữ mặc định cho nội dung tài liệu.
+$pdf->SetFont('dejavusans', '', 10);
 
-// Set margins
-$pdf->SetMargins(PDF_MARGIN_LEFT, PDF_MARGIN_TOP, PDF_MARGIN_RIGHT); // Đặt lề trang
-$pdf->SetHeaderMargin(PDF_MARGIN_HEADER); // Đặt lề header
-$pdf->SetFooterMargin(PDF_MARGIN_FOOTER); // Đặt lề footer
+// Thêm một trang mới vào tài liệu.
+$pdf->AddPage();
 
-// Set auto page breaks
-$pdf->SetAutoPageBreak(TRUE, PDF_MARGIN_BOTTOM); // Bật chế độ tự động ngắt trang
-
-// Set image scale factor
-$pdf->setImageScale(PDF_IMAGE_SCALE_RATIO); // Đặt tỷ lệ co giãn hình ảnh
-
-// Set font
-$pdf->SetFont('dejavusans', '', 10); // Đặt font chữ cho nội dung
-
-// Add a page
-$pdf->AddPage(); // Thêm một trang mới
-
-// Build HTML content
+// --- XÂY DỰNG NỘI DUNG HTML ---
+// Bắt đầu xây dựng một chuỗi HTML sẽ được render thành PDF.
 $html = '<style>
-            body { font-family: "dejavusans", sans-serif; }
-            h1 { font-size: 16pt; text-align: center; }
             table { width: 100%; border-collapse: collapse; }
-            th, td { border: 1px solid #ccc; padding: 5px; }
-            th { background-color: #f2f2f2; font-weight: bold; }
-            .text-center { text-align: center; }
-        </style>'; // Chuỗi HTML chứa CSS để định dạng
+            th, td { border: 1px solid #ddd; padding: 8px; }
+            th { background-color: #f2f2f2; font-weight: bold; text-align: center; }
+            h1 { text-align: center; }
+        </style>';
 
-if ($type == 'students') { // Nếu loại xuất là 'students'
-    $studentController = new StudentController(); // Tạo một đối tượng StudentController
-    $students = $studentController->getAllStudents($search, 1000, 0); // Lấy danh sách tất cả sinh viên
+// --- LẤY DỮ LIỆU VÀ TẠO BẢNG TƯƠNG ỨNG VỚI LOẠI BÁO CÁO ---
+if ($type == 'students') {
+    $studentController = new StudentController();
+    // Lấy danh sách sinh viên (tối đa 1000) có áp dụng bộ lọc tìm kiếm.
+    $students = $studentController->getAllStudents($search, 1000, 0);
     
-    $html .= '<h1>DANH SÁCH SINH VIÊN</h1>'; // Thêm tiêu đề chính vào HTML
-    $html .= '<p>Ngày xuất: ' . date('d/m/Y H:i') . '</p>'; // Thêm ngày xuất vào HTML
+    $html .= '<h1>DANH SÁCH SINH VIÊN</h1>';
+    $html .= '<p>Ngày xuất: ' . date('d/m/Y H:i') . '</p>';
     $html .= '<table>
                 <thead>
                     <tr>
-                        <th width="14%">STT</th>
-                        <th width="14%">Mã SV</th>
-                        <th width="15%">Họ tên</th>
-                        <th width="14%">Ngày sinh</th>
-                        <th width="14%">Giới tính</th>
-                        <th width="15%">Email</th>
-                        <th width="14%">SĐT</th>
+                        <th width="10%">STT</th>
+                        <th width="15%">Mã SV</th>
+                        <th width="25%">Họ tên</th>
+                        <th width="15%">Ngày sinh</th>
+                        <th width="10%">Giới tính</th>
+                        <th width="25%">Email</th>
                     </tr>
                 </thead>
-                <tbody>'; // Thêm cấu trúc bảng và tiêu đề cột vào HTML
+                <tbody>';
     
-    foreach ($students as $index => $student) { // Lặp qua danh sách sinh viên
-        $genderText = $student['gender'] == 'male' ? 'Nam' : ($student['gender'] == 'female' ? 'Nữ' : 'Khác'); // Chuyển đổi giới tính sang tiếng Việt
+    foreach ($students as $index => $student) {
+        $genderText = ($student['gender'] == 'male') ? 'Nam' : (($student['gender'] == 'female') ? 'Nữ' : 'Khác');
         $html .= '<tr>
-                    <td class="text-center">' . ($index + 1) . '</td>
+                    <td align="center">' . ($index + 1) . '</td>
                     <td>' . htmlspecialchars($student['msv']) . '</td>
                     <td>' . htmlspecialchars($student['fullname']) . '</td>
-                    <td>' . formatDate($student['dob']) . '</td>
-                    <td class="text-center">' . $genderText . '</td>
+                    <td align="center">' . formatDate($student['dob']) . '</td>
+                    <td align="center">' . $genderText . '</td>
                     <td>' . htmlspecialchars($student['email']) . '</td>
-                    <td>' . htmlspecialchars($student['phone']) . '</td>
-                </tr>'; // Thêm một dòng dữ liệu sinh viên vào HTML
+                </tr>';
     }
     
-    $html .= '</tbody></table>'; // Đóng bảng
-    $html .= '<p><strong>Tổng số sinh viên:</strong> ' . count($students) . '</p>'; // Thêm tổng số sinh viên
+    $html .= '</tbody></table>';
+    $html .= '<p><strong>Tổng số sinh viên:</strong> ' . count($students) . '</p>';
     
-} else { // Nếu loại xuất không phải là 'students' (là 'scores')
-    $scoreController = new ScoreController(); // Tạo một đối tượng ScoreController
-    $scores = $scoreController->getAllScores($studentId, $semester); // Lấy danh sách điểm
+} else { // Xử lý cho loại báo cáo 'scores'
+    $scoreController = new ScoreController();
+    // Lấy danh sách điểm có áp dụng bộ lọc sinh viên và học kỳ.
+    $scores = $scoreController->getAllScores($studentId, $semester);
     
-    $html .= '<h1>BẢNG ĐIỂM</h1>'; // Thêm tiêu đề chính vào HTML
-    $html .= '<p>Ngày xuất: ' . date('d/m/Y H:i') . '</p>'; // Thêm ngày xuất vào HTML
-
-    if ($studentId || $semester) { // Nếu có ID sinh viên hoặc học kỳ
-        $html .= '<div><strong>Bộ lọc áp dụng:</strong><br>'; // Thêm thông tin bộ lọc
-        if ($studentId) { // Nếu có ID sinh viên
-            $studentController = new StudentController(); // Tạo đối tượng StudentController
-            $student = $studentController->getStudentById($studentId); // Lấy thông tin sinh viên
-            $html .= 'Sinh viên: ' . htmlspecialchars($student['fullname'] ?? 'N/A') . '<br>'; // Thêm tên sinh viên vào HTML
-        }
-        if ($semester) { // Nếu có học kỳ
-            $html .= 'Học kỳ: ' . htmlspecialchars($semester); // Thêm học kỳ vào HTML
-        }
-        $html .= '</div><br>'; // Đóng div bộ lọc
+    $html .= '<h1>BẢNG ĐIỂM</h1>';
+    $html .= '<p>Ngày xuất: ' . date('d/m/Y H:i') . '</p>';
+    // Hiển thị thông tin bộ lọc đã áp dụng
+    if ($studentId) {
+        $studentController = new StudentController();
+        $student = $studentController->getStudentById($studentId);
+        $html .= '<p><strong>Sinh viên:</strong> ' . htmlspecialchars($student['fullname'] ?? 'N/A') . '</p>';
+    }
+    if ($semester) {
+        $html .= '<p><strong>Học kỳ:</strong> ' . htmlspecialchars($semester) . '</p>';
     }
 
     $html .= '<table>
                 <thead>
                     <tr>
-                        <th width="14%">STT</th>
-                        <th width="14%">Mã SV</th>
-                        <th width="15%">Họ tên</th>
-                        <th width="15%">Môn học</th>
-                        <th width="14%">Điểm</th>
-                        <th width="14%">Học kỳ</th>
-                        <th width="14%">Xếp loại</th>
+                        <th width="8%">STT</th>
+                        <th width="15%">Mã SV</th>
+                        <th width="22%">Họ tên</th>
+                        <th width="20%">Môn học</th>
+                        <th width="10%">Điểm</th>
+                        <th width="15%">Học kỳ</th>
+                        <th width="10%">Xếp loại</th>
                     </tr>
                 </thead>
-                <tbody>'; // Thêm cấu trúc bảng và tiêu đề cột vào HTML
+                <tbody>';
 
-    foreach ($scores as $index => $score) { // Lặp qua danh sách điểm
-        $grade = $score['score'] >= 9 ? 'A+' : // Xếp loại học lực dựa trên điểm
-                ($score['score'] >= 8 ? 'A' : 
-                ($score['score'] >= 7 ? 'B+' : 
-                ($score['score'] >= 6 ? 'B' : 
-                ($score['score'] >= 5 ? 'C' : 'D'))));
+    foreach ($scores as $index => $score) {
+        // Logic xếp loại
+        $grade = 'N/A';
+        if ($score['score'] >= 9) $grade = 'A+';
+        elseif ($score['score'] >= 8) $grade = 'A';
+        elseif ($score['score'] >= 7) $grade = 'B+';
+        elseif ($score['score'] >= 6) $grade = 'B';
+        elseif ($score['score'] >= 5) $grade = 'C';
+        else $grade = 'D';
         
         $html .= '<tr>
-                    <td class="text-center">' . ($index + 1) . '</td>
+                    <td align="center">' . ($index + 1) . '</td>
                     <td>' . htmlspecialchars($score['msv']) . '</td>
                     <td>' . htmlspecialchars($score['fullname']) . '</td>
                     <td>' . htmlspecialchars($score['subject']) . '</td>
-                    <td class="text-center">' . $score['score'] . '</td>
-                    <td class="text-center">' . htmlspecialchars($score['semester']) . '</td>
-                    <td class="text-center">' . $grade . '</td>
-                </tr>'; // Thêm một dòng dữ liệu điểm vào HTML
+                    <td align="center">' . $score['score'] . '</td>
+                    <td align="center">' . htmlspecialchars($score['semester']) . '</td>
+                    <td align="center">' . $grade . '</td>
+                </tr>';
     }
 
-    $html .= '</tbody></table>'; // Đóng bảng
-    $totalScores = count($scores); // Tính tổng số điểm
-    $avgScore = $totalScores > 0 ? array_sum(array_column($scores, 'score')) / $totalScores : 0; // Tính điểm trung bình
-    $html .= '<p><strong>Tổng số điểm:</strong> ' . $totalScores . '</p>'; // Thêm tổng số điểm
-    $html .= '<p><strong>Điểm trung bình:</strong> ' . number_format($avgScore, 2) . '</p>'; // Thêm điểm trung bình
+    $html .= '</tbody></table>';
+    $totalScores = count($scores);
+    $avgScore = $totalScores > 0 ? array_sum(array_column($scores, 'score')) / $totalScores : 0;
+    $html .= '<p><strong>Tổng số môn:</strong> ' . $totalScores . '</p>';
+    $html .= '<p><strong>Điểm trung bình:</strong> ' . number_format($avgScore, 2) . '</p>';
 }
 
-// Write HTML content
-$pdf->writeHTML($html, true, false, true, false, ''); // Ghi nội dung HTML vào PDF
+// --- GHI VÀ XUẤT PDF ---
+// Ghi nội dung HTML đã tạo vào tài liệu PDF.
+$pdf->writeHTML($html, true, false, true, false, '');
 
-// Close and output PDF document
-$filename = $type . '_' . date('Y-m-d_H-i-s') . '.pdf'; // Tạo tên tệp tin
-$pdf->Output($filename, 'I'); // Xuất tệp PDF ra trình duyệt
+// Tạo tên file động.
+$filename = 'bao_cao_' . $type . '_' . date('Ymd_His') . '.pdf';
+
+// `Output()`: Gửi tài liệu PDF đến trình duyệt.
+// 'I' (Inline): Hiển thị PDF trong trình duyệt.
+// 'D' (Download): Bắt buộc tải file về.
+$pdf->Output($filename, 'I');
 ?>

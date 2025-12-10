@@ -1,219 +1,201 @@
 <?php
-// Lấy các file cấu hình cơ sở dữ liệu và các hàm tiện ích
-require_once 'config/db.php';
-require_once 'utils.php';
+// Nạp các file cần thiết.
+require_once 'config/db.php'; // Chứa lớp `Database` để kết nối CSDL.
+require_once 'utils.php';     // Chứa các hàm tiện ích.
 
 /**
  * Class ScoreController
- * Xử lý tất cả các thao tác liên quan đến điểm sinh viên
+ * Chịu trách nhiệm xử lý tất cả các nghiệp vụ logic liên quan đến điểm số của sinh viên.
  */
 class ScoreController
 {
-    // Khai báo biến private để lưu trữ kết nối cơ sở dữ liệu
+    // Thuộc tính private để lưu trữ đối tượng kết nối CSDL (PDO).
     private $conn;
 
     /**
-     * Hàm khởi tạo ScoreController
-     * Khởi tạo kết nối cơ sở dữ liệu
+     * Hàm khởi tạo của lớp ScoreController.
      */
     public function __construct()
     {
-        // Tạo đối tượng Database mới
+        // Khởi tạo đối tượng Database.
         $database = new Database();
-        // Gán kết nối cơ sở dữ liệu vào biến $conn
+        // Lấy kết nối PDO và gán vào thuộc tính của controller.
         $this->conn = $database->getConnection();
     }
 
     /**
-     * Lấy tất cả điểm với bộ lọc tùy chọn theo ID sinh viên và học kỳ
-     * @param int|null $studentId ID sinh viên để lọc
-     * @param string|null $semester Học kỳ để lọc
-     * @return array Mảng chứa danh sách điểm
+     * Lấy danh sách điểm, có hỗ trợ lọc theo sinh viên và học kỳ.
+     * @param int|null $studentId ID của sinh viên cần lọc (nếu có).
+     * @param string|null $semester Chuỗi học kỳ cần lọc (ví dụ: '2025-1').
+     * @return array Mảng chứa danh sách các bản ghi điểm.
      */
     public function getAllScores($studentId = null, $semester = null)
     {
-        // Khai báo câu query SELECT để lấy điểm kèm thông tin sinh viên
+        // Câu lệnh SQL cơ bản, sử dụng LEFT JOIN để lấy thêm thông tin `fullname` và `msv` từ bảng `students`.
         $query = "SELECT s.*, st.fullname, st.msv 
                   FROM scores s 
                   LEFT JOIN students st ON s.student_id = st.id";
-        // Khởi tạo mảng trống để lưu trữ các tham số bind
+        
+        // Mảng lưu các tham số và mảng lưu các điều kiện WHERE.
         $params = [];
-
-        // Khởi tạo mảng để lưu trữ các điều kiện WHERE
         $conditions = [];
-        // Nếu có ID sinh viên, thêm điều kiện lọc theo sinh viên
+
+        // Nếu có cung cấp `studentId` để lọc.
         if ($studentId) {
+            // Thêm điều kiện vào mảng `conditions`.
             $conditions[] = "s.student_id = :student_id";
+            // Thêm giá trị vào mảng tham số.
             $params[':student_id'] = $studentId;
         }
-        // Nếu có học kỳ, thêm điều kiện lọc theo học kỳ
+        // Nếu có cung cấp `semester` để lọc.
         if ($semester) {
             $conditions[] = "s.semester = :semester";
             $params[':semester'] = $semester;
         }
 
-        // Nếu có điều kiện, thêm WHERE vào câu query
+        // Nếu mảng `conditions` không rỗng, tức là có ít nhất một bộ lọc được áp dụng.
         if (!empty($conditions)) {
+            // Nối các điều kiện lại với nhau bằng " AND " và thêm vào câu lệnh SQL.
             $query .= " WHERE " . implode(" AND ", $conditions);
         }
 
-        // Thêm sắp xếp theo học kỳ (mới nhất trước) và tên sinh viên
+        // Sắp xếp kết quả: học kỳ mới nhất lên đầu, sau đó sắp xếp theo tên sinh viên.
         $query .= " ORDER BY s.semester DESC, st.fullname";
 
-        // Chuẩn bị câu lệnh SQL
+        // Chuẩn bị và thực thi câu lệnh.
         $stmt = $this->conn->prepare($query);
-        // Bind các tham số lọc nếu có
         foreach ($params as $key => $value) {
             $stmt->bindValue($key, $value);
         }
-        // Thực thi câu lệnh
         $stmt->execute();
 
-        // Trả về tất cả kết quả dưới dạng mảng kết hợp
+        // Trả về tất cả các dòng kết quả.
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     /**
-     * Lấy thông tin một điểm theo ID
-     * @param int $id ID của điểm
-     * @return array|false Dữ liệu điểm hoặc false nếu không tìm thấy
+     * Lấy thông tin chi tiết của một bản ghi điểm dựa vào ID.
+     * @param int $id ID của bản ghi điểm.
+     * @return array|false Mảng thông tin điểm hoặc `false` nếu không tìm thấy.
      */
     public function getScoreById($id)
     {
-        // Khai báo câu query SQL để lấy điểm kèm thông tin sinh viên
+        // Tương tự `getAllScores`, câu lệnh này cũng JOIN với bảng students.
         $query = "SELECT s.*, st.fullname, st.msv 
                   FROM scores s 
                   LEFT JOIN students st ON s.student_id = st.id 
                   WHERE s.id = :id";
-        // Chuẩn bị câu lệnh SQL
         $stmt = $this->conn->prepare($query);
-        // Bind tham số ID
         $stmt->bindParam(':id', $id);
-        // Thực thi câu lệnh
         $stmt->execute();
 
-        // Trả về một dòng kết quả hoặc false
+        // Trả về một bản ghi duy nhất.
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
     /**
-     * Thêm điểm mới vào cơ sở dữ liệu
-     * @param array $data Dữ liệu điểm mới
-     * @return array Mảng chỉ ra thành công/thất bại và thông điệp
+     * Thêm một bản ghi điểm mới vào CSDL.
+     * @param array $data Dữ liệu điểm từ form.
+     * @return array Mảng kết quả.
      */
     public function addScore($data)
     {
-        // Khai báo câu query INSERT để thêm điểm mới
+        // Câu lệnh INSERT đơn giản.
         $query = "INSERT INTO scores (student_id, subject, score, semester) 
                   VALUES (:student_id, :subject, :score, :semester)";
 
-        // Chuẩn bị câu lệnh
         $stmt = $this->conn->prepare($query);
-        // Bind tất cả các tham số từ dữ liệu đầu vào
+        
+        // Gắn các giá trị vào tham số.
         $stmt->bindParam(':student_id', $data['student_id']);
         $stmt->bindParam(':subject', $data['subject']);
         $stmt->bindParam(':score', $data['score']);
         $stmt->bindParam(':semester', $data['semester']);
 
-        // Thực thi câu lệnh và kiểm tra kết quả
         if ($stmt->execute()) {
-            // Nếu thành công, trả về thông báo cùng ID điểm vừa được thêm
-            return ['success' => true, 'message' => 'Thêm điểm thành công', 'id' => $this->conn->lastInsertId()];
+            // Trả về ID của bản ghi điểm vừa được thêm vào.
+            return ['success' => true, 'message' => 'Thêm điểm thành công.', 'id' => $this->conn->lastInsertId()];
         } else {
-            // Nếu thất bại, trả về thông báo lỗi
-            return ['success' => false, 'message' => 'Lỗi thêm điểm'];
+            return ['success' => false, 'message' => 'Đã xảy ra lỗi khi thêm điểm.'];
         }
     }
 
     /**
-     * Cập nhật thông tin điểm hiện có
-     * @param int $id ID của điểm cần cập nhật
-     * @param array $data Dữ liệu mới cho điểm
-     * @return array Mảng chỉ ra thành công/thất bại và thông điệp
+     * Cập nhật một bản ghi điểm đã có.
+     * @param int $id ID của bản ghi điểm cần cập nhật.
+     * @param array $data Dữ liệu mới.
+     * @return array Mảng kết quả.
      */
     public function updateScore($id, $data)
     {
-        // Khai báo câu query UPDATE để cập nhật thông tin điểm
+        // Câu lệnh UPDATE, xác định bản ghi cần cập nhật qua `WHERE id = :id`.
         $query = "UPDATE scores SET student_id = :student_id, subject = :subject, 
                   score = :score, semester = :semester WHERE id = :id";
 
-        // Chuẩn bị câu lệnh
         $stmt = $this->conn->prepare($query);
-        // Bind tất cả các tham số từ dữ liệu đầu vào
+        
+        // Gắn các giá trị mới.
         $stmt->bindParam(':student_id', $data['student_id']);
         $stmt->bindParam(':subject', $data['subject']);
         $stmt->bindParam(':score', $data['score']);
         $stmt->bindParam(':semester', $data['semester']);
-        // Bind ID điểm để xác định bản ghi nào cần cập nhật
-        $stmt->bindParam(':id', $id);
+        $stmt->bindParam(':id', $id); // Gắn ID của bản ghi cần cập nhật.
 
-        // Thực thi câu lệnh và kiểm tra kết quả
         if ($stmt->execute()) {
-            // Nếu thành công, trả về thông báo
-            return ['success' => true, 'message' => 'Cập nhật điểm thành công'];
+            return ['success' => true, 'message' => 'Cập nhật điểm thành công.'];
         } else {
-            // Nếu thất bại, trả về thông báo lỗi
-            return ['success' => false, 'message' => 'Lỗi cập nhật điểm'];
+            return ['success' => false, 'message' => 'Đã xảy ra lỗi khi cập nhật điểm.'];
         }
     }
 
     /**
-     * Xóa điểm khỏi cơ sở dữ liệu
-     * @param int $id ID của điểm cần xóa
-     * @return array Mảng chỉ ra thành công/thất bại và thông điệp
+     * Xóa một bản ghi điểm khỏi CSDL.
+     * @param int $id ID của bản ghi điểm cần xóa.
+     * @return array Mảng kết quả.
      */
     public function deleteScore($id)
     {
-        // Khai báo câu query DELETE để xóa điểm
+        // Câu lệnh DELETE đơn giản.
         $query = "DELETE FROM scores WHERE id = :id";
-        // Chuẩn bị câu lệnh
         $stmt = $this->conn->prepare($query);
-        // Bind ID điểm cần xóa
         $stmt->bindParam(':id', $id);
 
-        // Thực thi câu lệnh và kiểm tra kết quả
         if ($stmt->execute()) {
-            // Nếu thành công, trả về thông báo
-            return ['success' => true, 'message' => 'Xóa điểm thành công'];
+            return ['success' => true, 'message' => 'Xóa điểm thành công.'];
         } else {
-            // Nếu thất bại, trả về thông báo lỗi
-            return ['success' => false, 'message' => 'Lỗi xóa điểm'];
+            return ['success' => false, 'message' => 'Đã xảy ra lỗi khi xóa điểm.'];
         }
     }
 
     /**
-     * Lấy thống kê về điểm
-     * @return array Mảng chứa các thống kê điểm
+     * Lấy các dữ liệu thống kê liên quan đến điểm số.
+     * @return array Mảng chứa các thông tin thống kê.
      */
     public function getScoreStatistics()
     {
-        // Khởi tạo mảng để lưu trữ các thống kê
         $stats = [];
 
-        // Tính điểm trung bình theo môn học
-        $query = "SELECT subject, AVG(score) as avg_score, COUNT(*) as count 
-                  FROM scores 
-                  GROUP BY subject 
-                  ORDER BY avg_score DESC";
-        // Chuẩn bị và thực thi câu lệnh
-        $stmt = $this->conn->prepare($query);
-        $stmt->execute();
-        // Lưu kết quả vào mảng stats
-        $stats['by_subject'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        // 1. Thống kê điểm trung bình và số lượng bài thi theo từng môn học.
+        $query1 = "SELECT subject, AVG(score) as avg_score, COUNT(*) as count 
+                   FROM scores 
+                   GROUP BY subject 
+                   ORDER BY avg_score DESC";
+        $stmt1 = $this->conn->prepare($query1);
+        $stmt1->execute();
+        $stats['by_subject'] = $stmt1->fetchAll(PDO::FETCH_ASSOC);
 
-        // Tính điểm trung bình theo học kỳ
-        $query = "SELECT semester, AVG(score) as avg_score, COUNT(*) as count 
-                  FROM scores 
-                  GROUP BY semester 
-                  ORDER BY semester DESC";
-        // Chuẩn bị và thực thi câu lệnh
-        $stmt = $this->conn->prepare($query);
-        $stmt->execute();
-        // Lưu kết quả vào mảng stats
-        $stats['by_semester'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        // 2. Thống kê điểm trung bình và số lượng bài thi theo từng học kỳ.
+        $query2 = "SELECT semester, AVG(score) as avg_score, COUNT(*) as count 
+                   FROM scores 
+                   GROUP BY semester 
+                   ORDER BY semester DESC";
+        $stmt2 = $this->conn->prepare($query2);
+        $stmt2->execute();
+        $stats['by_semester'] = $stmt2->fetchAll(PDO::FETCH_ASSOC);
 
-        // Lấy phân bố điểm theo loại bảng xếp (A+, A, B+, B, C, D)
-        $query = "SELECT 
+        // 3. Thống kê phân bố điểm theo xếp loại (A+, A, B+, ...).
+        // `CASE` là một cấu trúc điều kiện trong SQL, hoạt động như switch...case hoặc if...else if.
+        $query3 = "SELECT 
                     CASE 
                         WHEN score >= 9 THEN 'A+'
                         WHEN score >= 8 THEN 'A'
@@ -226,54 +208,43 @@ class ScoreController
                   FROM scores 
                   GROUP BY grade 
                   ORDER BY grade";
-        // Chuẩn bị và thực thi câu lệnh
-        $stmt = $this->conn->prepare($query);
-        $stmt->execute();
-        // Lưu kết quả vào mảng stats
-        $stats['grade_distribution'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $stmt3 = $this->conn->prepare($query3);
+        $stmt3->execute();
+        $stats['grade_distribution'] = $stmt3->fetchAll(PDO::FETCH_ASSOC);
 
-        // Trả về mảng thống kê
+        // Trả về mảng lớn chứa tất cả các kết quả thống kê.
         return $stats;
     }
 
     /**
-     * Lấy tất cả điểm của một sinh viên cụ thể
-     * @param int $studentId ID của sinh viên
-     * @return array Mảng chứa tất cả điểm của sinh viên
+     * Lấy tất cả các điểm của một sinh viên cụ thể.
+     * @param int $studentId ID của sinh viên.
+     * @return array Mảng chứa các bản ghi điểm của sinh viên đó.
      */
     public function getStudentScores($studentId)
     {
-        // Khai báo câu query để lấy tất cả điểm của sinh viên
         $query = "SELECT * FROM scores WHERE student_id = :student_id ORDER BY semester DESC, subject";
-        // Chuẩn bị câu lệnh
         $stmt = $this->conn->prepare($query);
-        // Bind ID sinh viên
         $stmt->bindParam(':student_id', $studentId);
-        // Thực thi câu lệnh
         $stmt->execute();
-
-        // Trả về tất cả kết quả
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     /**
-     * Lấy điểm trung bình của một sinh viên cụ thể
-     * @param int $studentId ID của sinh viên
-     * @return float Điểm trung bình của sinh viên
+     * Tính điểm trung bình chung của một sinh viên cụ thể.
+     * @param int $studentId ID của sinh viên.
+     * @return float Điểm trung bình đã được làm tròn.
      */
     public function getStudentAverageScore($studentId)
     {
-        // Khai báo câu query để tính điểm trung bình
+        // Sử dụng hàm tổng hợp `AVG()` của SQL để tính trung bình.
         $query = "SELECT AVG(score) as avg_score FROM scores WHERE student_id = :student_id";
-        // Chuẩn bị câu lệnh
         $stmt = $this->conn->prepare($query);
-        // Bind ID sinh viên
         $stmt->bindParam(':student_id', $studentId);
-        // Thực thi câu lệnh
         $stmt->execute();
-
-        // Lấy kết quả và trả về giá trị avg_score làm tròn 2 chữ số thập phân
+        
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
-        return round($result['avg_score'], 2);
+        // `round()`: Làm tròn kết quả đến 2 chữ số thập phân.
+        return round($result['avg_score'] ?? 0, 2);
     }
 }

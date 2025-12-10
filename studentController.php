@@ -1,118 +1,122 @@
 <?php
-// Lấy các file cấu hình cơ sở dữ liệu và các hàm tiện ích
-require_once 'config/db.php';
-require_once 'utils.php';
+// Nạp các file cần thiết.
+require_once 'config/db.php'; // Chứa lớp `Database` để kết nối CSDL.
+require_once 'utils.php';     // Chứa các hàm tiện ích.
 
 /**
  * Class StudentController
- * Xử lý tất cả các thao tác liên quan đến sinh viên
+ * Chịu trách nhiệm xử lý tất cả các nghiệp vụ logic liên quan đến đối tượng Sinh viên.
+ * Bao gồm các thao tác CRUD (Create, Read, Update, Delete) và các nghiệp vụ thống kê.
  */
 class StudentController
 {
-    // Khai báo biến private để lưu trữ kết nối cơ sở dữ liệu
+    // Thuộc tính private để lưu trữ đối tượng kết nối CSDL (PDO).
     private $conn;
 
     /**
-     * Hàm khởi tạo StudentController
-     * Khởi tạo kết nối cơ sở dữ liệu
+     * Hàm khởi tạo của lớp StudentController.
      */
     public function __construct()
     {
-        // Tạo đối tượng Database mới
+        // Khởi tạo một đối tượng từ lớp Database.
         $database = new Database();
-        // Gán kết nối cơ sở dữ liệu vào biến $conn
+        // Lấy đối tượng kết nối PDO và gán vào thuộc tính của controller.
         $this->conn = $database->getConnection();
     }
 
     /**
-     * Lấy tất cả sinh viên với hỗ trợ tìm kiếm, giới hạn và phân trang
-     * @param string $search Từ khóa tìm kiếm
-     * @param int $limit Số lượng sinh viên tối đa cần trả về
-     * @param int $offset Vị trí bắt đầu lấy dữ liệu
-     * @return array Mảng chứa danh sách sinh viên
+     * Lấy danh sách sinh viên, hỗ trợ tìm kiếm và phân trang.
+     * @param string $search Chuỗi tìm kiếm (có thể rỗng).
+     * @param int $limit Số lượng bản ghi tối đa trên một trang.
+     * @param int $offset Vị trí bắt đầu lấy bản ghi (dùng cho phân trang).
+     * @return array Mảng các sinh viên, mỗi sinh viên là một mảng kết hợp.
      */
     public function getAllStudents($search = '', $limit = 50, $offset = 0)
     {
-        // Khai báo câu query SQL cơ bản để lấy tất cả dữ liệu từ bảng students
+        // Bắt đầu xây dựng câu lệnh SQL.
         $query = "SELECT * FROM students";
-        // Khởi tạo mảng trống để lưu trữ các tham số bind
+        // Khởi tạo mảng để chứa các tham số cho câu lệnh prepared statement.
         $params = [];
 
-        // Nếu có từ khóa tìm kiếm, thêm điều kiện WHERE vào câu query
+        // Nếu người dùng có nhập từ khóa tìm kiếm.
         if (!empty($search)) {
-            // Thêm điều kiện tìm kiếm theo fullname, msv hoặc email
+            // Nối thêm điều kiện WHERE vào câu query.
+            // Tìm kiếm trên các cột: fullname, msv, email. `LIKE` được dùng để tìm kiếm một phần của chuỗi.
             $query .= " WHERE fullname LIKE :search OR msv LIKE :search OR email LIKE :search";
-            // Gán giá trị tìm kiếm với ký tự % ở hai bên để tìm kiếm bất kỳ vị trí nào
+            // Gán giá trị cho tham số `:search`. Dấu `%` đại diện cho bất kỳ chuỗi ký tự nào.
             $params[':search'] = "%$search%";
         }
 
-        // Thêm sắp xếp theo ngày tạo (mới nhất trước) và giới hạn số lượng bản ghi
+        // Nối thêm phần sắp xếp và phân trang.
+        // `ORDER BY created_at DESC`: Sắp xếp các sinh viên mới nhất lên đầu.
+        // `LIMIT :limit OFFSET :offset`: Giới hạn số lượng kết quả và chỉ định điểm bắt đầu.
         $query .= " ORDER BY created_at DESC LIMIT :limit OFFSET :offset";
 
-        // Chuẩn bị câu lệnh SQL
+        // Chuẩn bị câu lệnh SQL để thực thi.
         $stmt = $this->conn->prepare($query);
-        // Bind các tham số tìm kiếm nếu có
+        
+        // Gắn các giá trị từ mảng `$params` vào câu lệnh.
         foreach ($params as $key => $value) {
             $stmt->bindValue($key, $value);
         }
-        // Bind tham số limit và offset với kiểu dữ liệu là số nguyên
+        
+        // Gắn các giá trị cho limit và offset, chỉ định rõ kiểu dữ liệu là số nguyên (INT).
         $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
         $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
-        // Thực thi câu lệnh
+        
+        // Thực thi câu lệnh.
         $stmt->execute();
 
-        // Trả về tất cả kết quả dưới dạng mảng kết hợp (column_name => value)
+        // Lấy tất cả các dòng kết quả và trả về dưới dạng một mảng các mảng kết hợp.
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     /**
-     * Lấy thông tin một sinh viên theo ID
-     * @param int $id ID của sinh viên
-     * @return array|false Dữ liệu sinh viên hoặc false nếu không tìm thấy
+     * Lấy thông tin chi tiết của một sinh viên dựa vào ID.
+     * @param int $id ID của sinh viên.
+     * @return array|false Mảng chứa thông tin sinh viên, hoặc `false` nếu không tìm thấy.
      */
     public function getStudentById($id)
     {
-        // Khai báo câu query SQL để lấy sinh viên có ID cụ thể
+        // Câu lệnh SQL để chọn một sinh viên có ID cụ thể.
         $query = "SELECT * FROM students WHERE id = :id";
-        // Chuẩn bị câu lệnh SQL
+        // Chuẩn bị câu lệnh.
         $stmt = $this->conn->prepare($query);
-        // Bind tham số ID vào câu query
+        // Gắn ID vào tham số `:id`.
         $stmt->bindParam(':id', $id);
-        // Thực thi câu lệnh
+        // Thực thi.
         $stmt->execute();
 
-        // Trả về một dòng kết quả dưới dạng mảng kết hợp hoặc false
+        // `fetch()`: Lấy một bản ghi duy nhất và trả về.
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
     /**
-     * Thêm sinh viên mới vào cơ sở dữ liệu
-     * @param array $data Dữ liệu sinh viên mới
-     * @return array Mảng chỉ ra thành công/thất bại và thông điệp
+     * Thêm một sinh viên mới vào cơ sở dữ liệu.
+     * @param array $data Dữ liệu của sinh viên từ form.
+     * @return array Mảng kết quả chứa `success`, `message`, và `id` của sinh viên mới.
      */
     public function addStudent($data)
     {
-        // Khai báo câu query để kiểm tra xem mã sinh viên đã tồn tại hay chưa
+        // Quy tắc nghiệp vụ: Mã sinh viên (msv) phải là duy nhất.
+        // Trước khi thêm, kiểm tra xem MSV đã tồn tại chưa.
         $query = "SELECT id FROM students WHERE msv = :msv";
-        // Chuẩn bị câu lệnh
         $stmt = $this->conn->prepare($query);
-        // Bind mã sinh viên từ dữ liệu đầu vào
         $stmt->bindParam(':msv', $data['msv']);
-        // Thực thi câu lệnh
         $stmt->execute();
 
-        // Nếu mã sinh viên đã tồn tại (rowCount > 0), trả về lỗi
+        // Nếu `rowCount` > 0, nghĩa là đã tìm thấy sinh viên có cùng MSV.
         if ($stmt->rowCount() > 0) {
-            return ['success' => false, 'message' => 'Mã sinh viên đã tồn tại'];
+            return ['success' => false, 'message' => 'Mã sinh viên này đã tồn tại trong hệ thống.'];
         }
 
-        // Khai báo câu query INSERT để thêm sinh viên mới
+        // Nếu MSV hợp lệ, chuẩn bị câu lệnh INSERT.
         $query = "INSERT INTO students (msv, fullname, dob, gender, address, phone, email, avatar) 
                   VALUES (:msv, :fullname, :dob, :gender, :address, :phone, :email, :avatar)";
 
-        // Chuẩn bị câu lệnh
         $stmt = $this->conn->prepare($query);
-        // Bind tất cả các tham số từ dữ liệu đầu vào
+        
+        // Gắn tất cả các giá trị từ mảng `$data` vào các tham số tương ứng.
         $stmt->bindParam(':msv', $data['msv']);
         $stmt->bindParam(':fullname', $data['fullname']);
         $stmt->bindParam(':dob', $data['dob']);
@@ -120,51 +124,44 @@ class StudentController
         $stmt->bindParam(':address', $data['address']);
         $stmt->bindParam(':phone', $data['phone']);
         $stmt->bindParam(':email', $data['email']);
-        $stmt->bindParam(':avatar', $data['avatar']);
+        $stmt->bindParam(':avatar', $data['avatar']); // Tên file avatar đã được xử lý ở bước trước.
 
-        // Thực thi câu lệnh và kiểm tra kết quả
+        // Thực thi câu lệnh INSERT và kiểm tra kết quả.
         if ($stmt->execute()) {
-            // Nếu thành công, trả về thông báo cùng ID sinh viên vừa được thêm
-            return ['success' => true, 'message' => 'Thêm sinh viên thành công', 'id' => $this->conn->lastInsertId()];
+            // `lastInsertId()`: Lấy ID của bản ghi vừa được chèn vào.
+            return ['success' => true, 'message' => 'Thêm sinh viên thành công!', 'id' => $this->conn->lastInsertId()];
         } else {
-            // Nếu thất bại, trả về thông báo lỗi
-            return ['success' => false, 'message' => 'Lỗi thêm sinh viên'];
+            return ['success' => false, 'message' => 'Đã xảy ra lỗi khi thêm sinh viên.'];
         }
     }
 
-
     /**
-     * Cập nhật thông tin sinh viên hiện có
-     * @param int $id ID của sinh viên cần cập nhật
-     * @param array $data Dữ liệu mới cho sinh viên
-     * @return array Mảng chỉ ra thành công/thất bại và thông điệp
+     * Cập nhật thông tin của một sinh viên đã có.
+     * @param int $id ID của sinh viên cần cập nhật.
+     * @param array $data Dữ liệu mới của sinh viên.
+     * @return array Mảng kết quả.
      */
     public function updateStudent($id, $data)
     {
-        // Khai báo câu query để kiểm tra xem mã sinh viên có bị trùng với sinh viên khác không
+        // Quy tắc nghiệp vụ: Khi cập nhật, MSV mới không được trùng với MSV của một sinh viên *khác*.
         $query = "SELECT id FROM students WHERE msv = :msv AND id != :id";
-        // Chuẩn bị câu lệnh
         $stmt = $this->conn->prepare($query);
-        // Bind mã sinh viên từ dữ liệu đầu vào
         $stmt->bindParam(':msv', $data['msv']);
-        // Bind ID sinh viên hiện tại để loại trừ nó khỏi kiểm tra
-        $stmt->bindParam(':id', $id);
-        // Thực thi câu lệnh
+        $stmt->bindParam(':id', $id); // Loại trừ chính sinh viên đang được sửa.
         $stmt->execute();
 
-        // Nếu có sinh viên khác có mã sinh viên này, trả về lỗi
         if ($stmt->rowCount() > 0) {
-            return ['success' => false, 'message' => 'Mã sinh viên đã tồn tại'];
+            return ['success' => false, 'message' => 'Mã sinh viên này đã tồn tại trong hệ thống.'];
         }
 
-        // Khai báo câu query UPDATE để cập nhật thông tin sinh viên
+        // Chuẩn bị câu lệnh UPDATE.
         $query = "UPDATE students SET msv = :msv, fullname = :fullname, dob = :dob, 
                   gender = :gender, address = :address, phone = :phone, email = :email, 
                   avatar = :avatar WHERE id = :id";
 
-        // Chuẩn bị câu lệnh
         $stmt = $this->conn->prepare($query);
-        // Bind tất cả các tham số từ dữ liệu đầu vào
+        
+        // Gắn các giá trị mới.
         $stmt->bindParam(':msv', $data['msv']);
         $stmt->bindParam(':fullname', $data['fullname']);
         $stmt->bindParam(':dob', $data['dob']);
@@ -173,123 +170,104 @@ class StudentController
         $stmt->bindParam(':phone', $data['phone']);
         $stmt->bindParam(':email', $data['email']);
         $stmt->bindParam(':avatar', $data['avatar']);
-        // Bind ID sinh viên để xác định bản ghi nào cần cập nhật
-        $stmt->bindParam(':id', $id);
+        $stmt->bindParam(':id', $id); // Gắn ID để xác định bản ghi cần cập nhật.
 
-        // Thực thi câu lệnh và kiểm tra kết quả
         if ($stmt->execute()) {
-            // Nếu thành công, trả về thông báo
-            return ['success' => true, 'message' => 'Cập nhật sinh viên thành công'];
+            return ['success' => true, 'message' => 'Cập nhật thông tin sinh viên thành công.'];
         } else {
-            // Nếu thất bại, trả về thông báo lỗi
-            return ['success' => false, 'message' => 'Lỗi cập nhật sinh viên'];
+            return ['success' => false, 'message' => 'Đã xảy ra lỗi khi cập nhật.'];
         }
     }
 
     /**
-     * Xóa sinh viên khỏi cơ sở dữ liệu
-     * @param int $id ID của sinh viên cần xóa
-     * @return array Mảng chỉ ra thành công/thất bại và thông điệp
+     * Xóa một sinh viên khỏi cơ sở dữ liệu và xóa file avatar liên quan.
+     * @param int $id ID của sinh viên cần xóa.
+     * @return array Mảng kết quả.
      */
     public function deleteStudent($id)
     {
-        // Lấy thông tin sinh viên trước khi xóa để có thể xóa file avatar
+        // Lấy thông tin sinh viên để biết tên file avatar cần xóa.
         $student = $this->getStudentById($id);
-        // Nếu sinh viên tồn tại và có avatar, xóa file avatar
-        if ($student && $student['avatar']) {
+        
+        // Nếu sinh viên tồn tại và có thông tin avatar.
+        if ($student && !empty($student['avatar'])) {
+            // Gọi hàm tiện ích để xóa file vật lý trên server.
             deleteFile('uploads/avatars/' . $student['avatar']);
         }
 
-        // Khai báo câu query DELETE để xóa sinh viên
+        // Chuẩn bị câu lệnh DELETE.
         $query = "DELETE FROM students WHERE id = :id";
-        // Chuẩn bị câu lệnh
         $stmt = $this->conn->prepare($query);
-        // Bind ID sinh viên cần xóa
         $stmt->bindParam(':id', $id);
 
-        // Thực thi câu lệnh và kiểm tra kết quả
         if ($stmt->execute()) {
-            // Nếu thành công, trả về thông báo
-            return ['success' => true, 'message' => 'Xóa sinh viên thành công'];
+            return ['success' => true, 'message' => 'Xóa sinh viên thành công.'];
         } else {
-            // Nếu thất bại, trả về thông báo lỗi
-            return ['success' => false, 'message' => 'Lỗi xóa sinh viên'];
+            return ['success' => false, 'message' => 'Đã xảy ra lỗi khi xóa sinh viên.'];
         }
     }
 
-
     /**
-     * Lấy tổng số sinh viên với bộ lọc tìm kiếm tùy chọn
-     * @param string $search Từ khóa tìm kiếm
-     * @return int Tổng số sinh viên
+     * Đếm tổng số sinh viên, có áp dụng bộ lọc tìm kiếm.
+     * Dùng cho việc tính toán phân trang.
+     * @param string $search Từ khóa tìm kiếm.
+     * @return int Tổng số sinh viên tìm thấy.
      */
     public function getTotalStudents($search = '')
     {
-        // Khai báo câu query để đếm tổng số sinh viên
+        // Bắt đầu câu lệnh đếm.
         $query = "SELECT COUNT(*) as total FROM students";
-        // Khởi tạo mảng trống để lưu trữ các tham số bind
         $params = [];
 
-        // Nếu có từ khóa tìm kiếm, thêm điều kiện WHERE vào câu query
+        // Nếu có tìm kiếm, thêm điều kiện WHERE tương tự như `getAllStudents`.
         if (!empty($search)) {
-            // Thêm điều kiện tìm kiếm theo fullname, msv hoặc email
             $query .= " WHERE fullname LIKE :search OR msv LIKE :search OR email LIKE :search";
-            // Gán giá trị tìm kiếm với ký tự % ở hai bên
             $params[':search'] = "%$search%";
         }
 
-        // Chuẩn bị câu lệnh
         $stmt = $this->conn->prepare($query);
-        // Bind các tham số tìm kiếm nếu có
         foreach ($params as $key => $value) {
             $stmt->bindValue($key, $value);
         }
-        // Thực thi câu lệnh
         $stmt->execute();
 
-        // Lấy kết quả và trả về giá trị total
+        // Lấy kết quả đếm từ cột 'total'.
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
-        return $result['total'];
+        return (int)$result['total']; // Ép kiểu về số nguyên.
     }
 
     /**
-     * Lấy thống kê về sinh viên
-     * @return array Mảng chứa các thống kê sinh viên
+     * Lấy các dữ liệu thống kê liên quan đến sinh viên.
+     * Được sử dụng bởi API cho dashboard.
+     * @return array Mảng chứa các thông tin thống kê.
      */
     public function getStatistics()
     {
-        // Khởi tạo mảng để lưu trữ các thống kê
         $stats = [];
 
-        // Lấy tổng số sinh viên
-        $query = "SELECT COUNT(*) as total FROM students";
-        // Chuẩn bị và thực thi câu lệnh
-        $stmt = $this->conn->prepare($query);
-        $stmt->execute();
-        // Lưu kết quả vào mảng stats
-        $stats['total_students'] = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
+        // 1. Đếm tổng số sinh viên.
+        $query1 = "SELECT COUNT(*) as total FROM students";
+        $stmt1 = $this->conn->prepare($query1);
+        $stmt1->execute();
+        $stats['total_students'] = $stmt1->fetch(PDO::FETCH_ASSOC)['total'];
 
-        // Lấy số sinh viên theo giới tính
-        $query = "SELECT gender, COUNT(*) as count FROM students GROUP BY gender";
-        // Chuẩn bị và thực thi câu lệnh
-        $stmt = $this->conn->prepare($query);
-        $stmt->execute();
-        // Lưu kết quả vào mảng stats
-        $stats['by_gender'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        // 2. Đếm số sinh viên theo từng giới tính.
+        $query2 = "SELECT gender, COUNT(*) as count FROM students GROUP BY gender";
+        $stmt2 = $this->conn->prepare($query2);
+        $stmt2->execute();
+        $stats['by_gender'] = $stmt2->fetchAll(PDO::FETCH_ASSOC);
 
-        // Lấy số sinh viên mới được thêm theo tháng trong 12 tháng gần đây
-        $query = "SELECT DATE_FORMAT(created_at, '%Y-%m') as month, COUNT(*) as count 
-                  FROM students 
-                  WHERE created_at >= DATE_SUB(NOW(), INTERVAL 12 MONTH)
-                  GROUP BY month 
-                  ORDER BY month";
-        // Chuẩn bị và thực thi câu lệnh
-        $stmt = $this->conn->prepare($query);
-        $stmt->execute();
-        // Lưu kết quả vào mảng stats
-        $stats['by_month'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        // 3. Đếm số sinh viên mới được tạo trong 12 tháng gần nhất, nhóm theo tháng.
+        $query3 = "SELECT DATE_FORMAT(created_at, '%Y-%m') as month, COUNT(*) as count 
+                   FROM students 
+                   WHERE created_at >= DATE_SUB(NOW(), INTERVAL 12 MONTH)
+                   GROUP BY month 
+                   ORDER BY month";
+        $stmt3 = $this->conn->prepare($query3);
+        $stmt3->execute();
+        $stats['by_month'] = $stmt3->fetchAll(PDO::FETCH_ASSOC);
 
-        // Trả về mảng thống kê
+        // Trả về mảng chứa tất cả các kết quả thống kê.
         return $stats;
     }
 }

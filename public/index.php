@@ -1,21 +1,22 @@
 <?php
-// Bắt đầu session để lưu trữ thông tin người dùng
+// Bắt đầu hoặc tiếp tục phiên làm việc để truy cập dữ liệu session.
 session_start();
-// Nạp file chứa các hàm tiện ích
+// Nạp file tiện ích chứa các hàm kiểm tra đăng nhập và phân quyền.
 require_once '../utils.php';
 
-// Kiểm tra xem người dùng đã đăng nhập chưa
-// Nếu chưa đăng nhập thì chuyển hướng về trang đăng nhập
+// --- BẢO VỆ TRANG: YÊU CẦU ĐĂNG NHẬP ---
+// Kiểm tra xem người dùng đã đăng nhập hay chưa bằng cách kiểm tra sự tồn tại của `$_SESSION['user_id']`.
 if (!isLoggedIn()) {
-    // Chuyển hướng về trang đăng nhập
+    // Nếu chưa đăng nhập, chuyển hướng người dùng về trang login.
     header('Location: login.php');
-    // Dừng thực thi script
+    // Dừng thực thi script ngay lập tức.
     exit();
 }
 
-// Lấy vai trò của người dùng từ session
+// --- LẤY THÔNG TIN NGƯỜI DÙNG TỪ SESSION ---
+// Lấy vai trò của người dùng đã được lưu trong session khi đăng nhập.
 $userRole = $_SESSION['role'];
-// Lấy tên đăng nhập của người dùng từ session
+// Lấy tên đăng nhập của người dùng.
 $username = $_SESSION['username'];
 ?>
 <!DOCTYPE html>
@@ -81,9 +82,9 @@ $username = $_SESSION['username'];
                     </h4>
                     <div class="text-white-50 mb-3">
                         <i class="fas fa-user me-2"></i>
-                        <?php echo htmlspecialchars($username); ?>
+                        <?php echo htmlspecialchars($username); // Hiển thị tên người dùng (đã được làm sạch) ?>
                         <span class="badge <?php echo getRoleBadgeClass($userRole); ?> ms-2">
-                            <?php echo getRoleDisplayName($userRole); ?>
+                            <?php echo getRoleDisplayName($userRole); // Hiển thị tên vai trò và badge màu tương ứng ?>
                         </span>
                     </div>
                     <div id="mini-clock"></div>
@@ -94,13 +95,17 @@ $username = $_SESSION['username'];
                         <i class="fas fa-home me-2"></i>Trang chủ
                     </a>
                     
+                    <?php // --- RENDER SIDEBAR ĐỘNG DỰA TRÊN QUYỀN --- ?>
+                    <?php // Kiểm tra xem người dùng có quyền xem sinh viên không. ?>
                     <?php if (canAccess(PERMISSION_VIEW_STUDENTS)): ?>
                     <a class="nav-link" href="../students/list.php">
                         <i class="fas fa-users me-2"></i>
+                        <?php // Thay đổi text dựa trên việc người dùng có quyền thêm mới hay chỉ xem. ?>
                         <?php echo canAccess(PERMISSION_ADD_STUDENTS) ? 'Quản lý sinh viên' : 'Danh sách sinh viên'; ?>
                     </a>
                     <?php endif; ?>
                     
+                    <?php // Kiểm tra quyền xem điểm. ?>
                     <?php if (canAccess(PERMISSION_VIEW_SCORES)): ?>
                     <a class="nav-link" href="../scores/list.php">
                         <i class="fas fa-chart-line me-2"></i>
@@ -108,6 +113,7 @@ $username = $_SESSION['username'];
                     </a>
                     <?php endif; ?>
                     
+                    <?php // Kiểm tra quyền xem thống kê. ?>
                     <?php if (canAccess(PERMISSION_VIEW_STATISTICS)): ?>
                     <a class="nav-link" href="../charts/statistics.php">
                         <i class="fas fa-chart-bar me-2"></i>Thống kê
@@ -115,6 +121,7 @@ $username = $_SESSION['username'];
                     <?php endif; ?>
                     
                     
+                    <?php // Chỉ Super Admin mới có quyền quản lý người dùng. ?>
                     <?php if (canAccess(PERMISSION_MANAGE_USERS)): ?>
                     <a class="nav-link" href="users.php">
                         <i class="fas fa-user-cog me-2"></i>Quản lý người dùng
@@ -138,12 +145,12 @@ $username = $_SESSION['username'];
                         <h2><i class="fas fa-tachometer-alt me-2"></i>Dashboard</h2>
                         <div class="text-muted">
                             <i class="fas fa-calendar me-1"></i>
-                            <span class="realtime-datetime"><?php echo date('d/m/Y H:i'); ?></span>
+                            <span class="realtime-datetime"><?php echo date('d/m/Y H:i'); // Hiển thị thời gian lúc tải trang ?></span>
                             <span class="live-indicator"></span>
                         </div>
                     </div>
                     
-                    <!-- Statistics Cards -->
+                    <!-- Các thẻ thống kê nhanh, dữ liệu sẽ được điền bởi JavaScript -->
                     <div class="row mb-4">
                         <div class="col-md-3 mb-3">
                             <div class="card stat-card">
@@ -183,7 +190,7 @@ $username = $_SESSION['username'];
                         </div>
                     </div>
                     
-                    <!-- Charts -->
+                    <!-- Vùng chứa các biểu đồ, sẽ được vẽ bởi Chart.js -->
                     <div class="row">
                         <div class="col-md-6 mb-4">
                             <div class="card">
@@ -207,7 +214,7 @@ $username = $_SESSION['username'];
                         </div>
                     </div>
                     
-                    <!-- Recent Activities -->
+                    <!-- Hoạt động gần đây (hiện tại là dữ liệu tĩnh) -->
                     <div class="row">
                         <div class="col-12">
                             <div class="card">
@@ -247,83 +254,79 @@ $username = $_SESSION['username'];
         </div>
     </div>
 
-    <!-- Nạp Bootstrap JS từ CDN -->
+    <!-- Nạp các thư viện JavaScript từ CDN -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- Nạp Chart.js để vẽ biểu đồ -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- Nạp file realtime.js để cập nhật thời gian realtime -->
+    <!-- Nạp các file JS tùy chỉnh của dự án -->
     <script src="../assets/js/realtime.js"></script>
-    <!-- Nạp file clock-widget.js để hiển thị đồng hồ -->
     <script src="../assets/js/clock-widget.js"></script>
     <script>
-        // Khởi tạo đồng hồ mini trong sidebar
-        // Hiển thị thời gian realtime trong phần sidebar
+        // Khởi tạo tiện ích đồng hồ mini trong sidebar.
         new MiniClockWidget('mini-clock');
         
-        // Tải dữ liệu thống kê từ API
-        // Gọi API để lấy các số liệu thống kê về sinh viên và điểm số
+        // --- TẢI DỮ LIỆU BẤT ĐỒNG BỘ VÀ VẼ BIỂU ĐỒ ---
+        // Sử dụng `fetch API` của trình duyệt để gửi một request GET đến API thống kê.
+        // Đây là cách tiếp cận hiện đại để lấy dữ liệu mà không cần tải lại trang.
         fetch('../charts/api/statistics.php')
-            .then(response => response.json()) // Chuyển response sang JSON
-            .then(data => {
-                // Cập nhật số liệu thống kê vào các phần tử HTML
-                // Tổng số sinh viên
+            .then(response => response.json()) // Sau khi nhận được response, chuyển đổi nó từ chuỗi JSON thành đối tượng JavaScript.
+            .then(data => { // `data` lúc này là một đối tượng JS chứa toàn bộ thông tin thống kê.
+                // 1. Cập nhật các thẻ thống kê nhanh.
+                // `|| 0` để đảm bảo nếu dữ liệu không tồn tại thì sẽ hiển thị số 0.
                 document.getElementById('totalStudents').textContent = data.total_students || 0;
-                // Số sinh viên nam
                 document.getElementById('maleStudents').textContent = data.male_students || 0;
-                // Số sinh viên nữ
                 document.getElementById('femaleStudents').textContent = data.female_students || 0;
-                // Điểm trung bình
-                document.getElementById('avgScore').textContent = data.avg_score || '0.0';
+                document.getElementById('avgScore').textContent = data.avg_score || 'N/A';
                 
-                // Vẽ biểu đồ phân bố giới tính (dạng doughnut)
+                // 2. Vẽ biểu đồ phân bố giới tính.
+                // Lấy context 2D của thẻ canvas.
                 const genderCtx = document.getElementById('genderChart').getContext('2d');
                 new Chart(genderCtx, {
-                    type: 'doughnut', // Loại biểu đồ: doughnut (bánh rán)
+                    type: 'doughnut', // Chọn loại biểu đồ là doughnut (bánh vòng).
                     data: {
-                        labels: ['Nam', 'Nữ', 'Khác'], // Nhãn các phần
+                        labels: ['Nam', 'Nữ', 'Khác'], // Nhãn cho mỗi phần của biểu đồ.
                         datasets: [{
-                            // Dữ liệu: số lượng nam, nữ, khác
+                            // Dữ liệu tương ứng với các nhãn.
                             data: [data.male_students || 0, data.female_students || 0, data.other_students || 0],
-                            // Màu sắc cho từng phần: xanh dương, hồng, vàng
+                            // Màu nền cho mỗi phần.
                             backgroundColor: ['#36A2EB', '#FF6384', '#FFCE56']
                         }]
                     },
                     options: {
-                        responsive: true, // Tự động điều chỉnh kích thước
-                        maintainAspectRatio: false // Không giữ tỷ lệ khung hình
+                        responsive: true, // Cho phép biểu đồ tự điều chỉnh kích thước theo container.
+                        maintainAspectRatio: false // Không giữ tỷ lệ khung hình cố định, giúp biểu đồ lấp đầy container.
                     }
                 });
                 
-                // Vẽ biểu đồ xu hướng đăng ký (dạng line)
+                // 3. Vẽ biểu đồ xu hướng đăng ký sinh viên mới.
                 const trendCtx = document.getElementById('trendChart').getContext('2d');
                 new Chart(trendCtx, {
-                    type: 'line', // Loại biểu đồ: line (đường)
+                    type: 'line', // Chọn loại biểu đồ đường.
                     data: {
-                        // Nhãn trục X: các tháng
-                        labels: data.monthly_labels || [],
+                        labels: data.monthly_labels || [], // Nhãn cho trục X (các tháng).
                         datasets: [{
-                            label: 'Sinh viên mới', // Tên của dataset
-                            // Dữ liệu: số sinh viên mới theo từng tháng
-                            data: data.monthly_data || [],
-                            borderColor: '#36A2EB', // Màu đường viền
-                            backgroundColor: 'rgba(54, 162, 235, 0.1)', // Màu nền với độ trong suốt
-                            tension: 0.4 // Độ cong của đường (0.4 = cong vừa phải)
+                            label: 'Sinh viên mới', // Chú thích cho đường line.
+                            data: data.monthly_data || [], // Dữ liệu cho trục Y (số lượng sinh viên).
+                            borderColor: '#36A2EB', // Màu của đường line.
+                            backgroundColor: 'rgba(54, 162, 235, 0.1)', // Màu nền dưới đường line.
+                            tension: 0.4, // Làm cho đường line cong mềm mại.
+                            fill: true // Tô màu khu vực dưới đường line.
                         }]
                     },
                     options: {
-                        responsive: true, // Tự động điều chỉnh kích thước
-                        maintainAspectRatio: false, // Không giữ tỷ lệ khung hình
+                        responsive: true,
+                        maintainAspectRatio: false,
                         scales: {
                             y: {
-                                beginAtZero: true // Bắt đầu trục Y từ 0
+                                beginAtZero: true // Bắt đầu trục Y từ 0.
                             }
                         }
                     }
                 });
             })
             .catch(error => {
-                // Xử lý lỗi nếu không tải được dữ liệu
-                console.error('Error loading statistics:', error);
+                // Nếu có lỗi xảy ra trong quá trình `fetch` (ví dụ: mất mạng, API lỗi 500).
+                console.error('Lỗi khi tải dữ liệu thống kê:', error);
+                // Có thể hiển thị một thông báo lỗi trên UI cho người dùng ở đây.
             });
     </script>
 </body>
