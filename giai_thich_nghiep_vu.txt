@@ -5,9 +5,23 @@ Tài liệu này mô tả chi tiết các quy trình nghiệp vụ, luồng sự
 ---
 ### MỤC LỤC
 1. [Nghiệp vụ Quản lý Truy cập và Tài khoản](#1-nghiệp-vụ-quản-lý-truy-cập-và-tài-khoản)
+    - [1.1. Đăng nhập (Authentication)](#11-đăng-nhập-authentication)
+    - [1.2. Phân quyền (Authorization - RBAC)](#12-phân-quyền-authorization---rbac)
+    - [1.3. Quên mật khẩu](#13-quên-mật-khẩu)
+    - [1.4. Đăng ký tài khoản](#14-đăng-ký-tài-khoản)
 2. [Nghiệp vụ Quản lý Hồ sơ Sinh viên](#2-nghiệp-vụ-quản-lý-hồ-sơ-sinh-viên)
+    - [2.1. Thêm mới sinh viên](#21-thêm-mới-sinh-viên)
+    - [2.2. Xóa sinh viên](#22-xóa-sinh-viên)
+    - [2.3. Chỉnh sửa thông tin sinh viên](#23-chỉnh-sửa-thông-tin-sinh-viên)
 3. [Nghiệp vụ Quản lý Điểm số](#3-nghiệp-vụ-quản-lý-điểm-số)
+    - [3.1. Thêm/Sửa điểm](#31-thêmsửa-điểm)
+    - [3.2. Xếp loại tự động](#32-xếp-loại-tự-động)
+    - [3.3. Xóa điểm](#33-xóa-điểm)
 4. [Nghiệp vụ Thống kê và Báo cáo](#4-nghiệp-vụ-thống-kê-và-báo-cáo)
+    - [4.1. Xem Dashboard Thống kê](#41-xem-dashboard-thống-kê)
+    - [4.2. Xuất Báo cáo PDF](#42-xuất-báo-cáo-pdf)
+    - [4.3. Xuất Báo cáo Word (DOCX)](#43-xuất-báo-cáo-word-docx)
+5. [Sơ đồ Luồng nghiệp vụ (Mermaid)](#5-sơ-đồ-luồng-nghiệp-vụ-mermaid)
 
 ---
 
@@ -18,172 +32,349 @@ Tài liệu này mô tả chi tiết các quy trình nghiệp vụ, luồng sự
 #### 1.1. Đăng nhập (Authentication)
 - **Mục đích:** Xác thực người dùng và cấp cho họ một phiên làm việc (session) với các quyền hạn tương ứng.
 - **Đối tượng tham gia:** Bất kỳ ai có tài khoản (Super Admin, Admin, Teacher, Student).
-- **Điều kiện tiên quyết:** Người dùng phải có tài khoản đã được tạo trong hệ thống.
 - **Luồng sự kiện chi tiết:**
     1. Người dùng mở trang `public/login.php`.
-    2. **[Luồng phụ]** Hệ thống kiểm tra nếu người dùng đã có phiên làm việc hợp lệ (thông qua `isLoggedIn()`). Nếu có, hệ thống tự động chuyển hướng đến trang `public/index.php` (Dashboard) mà không yêu cầu đăng nhập lại.
-    3. Người dùng nhập "Tên đăng nhập" và "Mật khẩu" vào biểu mẫu và nhấn nút "Đăng nhập".
-    4. Dữ liệu được gửi qua phương thức `POST` đến chính file `login.php`.
-    5. Hệ thống gọi đến `authController->login()` để xử lý.
-    6. Controller truy vấn bảng `users` trong CSDL để tìm bản ghi có `username` khớp.
-    7. **[Luồng lỗi]** Nếu không tìm thấy `username`, quá trình xác thực thất bại.
-    8. Nếu tìm thấy, controller sẽ băm mật khẩu người dùng nhập vào bằng thuật toán `SHA-256` và so sánh với mật khẩu đã băm trong CSDL bằng hàm `hash_equals()` để chống tấn công timing-attack.
-    9. **[Luồng lỗi]** Nếu mật khẩu không khớp, quá trình xác thực thất bại.
-    10. Nếu mật khẩu khớp, xác thực thành công.
-- **Kết quả sau khi thực hiện (Thành công):**
-    - Một phiên làm việc (session) được tạo cho người dùng.
-    - Các biến session quan trọng được thiết lập: `$_SESSION['user_id']`, `$_SESSION['username']`, `$_SESSION['role']`.
-    - Người dùng được chuyển hướng đến trang Dashboard.
-- **Kết quả sau khi thực hiện (Thất bại):**
-    - Người dùng ở lại trang Đăng nhập.
-    - Một thông báo lỗi "Tên đăng nhập hoặc mật khẩu không đúng" được hiển thị.
+    2. Hệ thống kiểm tra nếu người dùng đã có phiên làm việc hợp lệ. Nếu có, tự động chuyển hướng đến Dashboard.
+    3. Người dùng nhập "Tên đăng nhập" và "Mật khẩu" và gửi form.
+    4. `authController->login()` được gọi.
+    5. Controller truy vấn bảng `users` để tìm `username`.
+    6. Nếu tìm thấy, controller băm mật khẩu nhập vào và so sánh với mật khẩu trong CSDL.
+- **Kết quả (Thành công):** Tạo session, lưu `user_id`, `username`, `role` và chuyển hướng đến Dashboard.
+- **Kết quả (Thất bại):** Hiển thị lỗi "Tên đăng nhập hoặc mật khẩu không đúng".
 
 #### 1.2. Phân quyền (Authorization - RBAC)
 - **Mục đích:** Đảm bảo người dùng chỉ có thể truy cập các tài nguyên và thực hiện các hành động mà vai trò của họ cho phép.
-- **Luồng sự kiện chi tiết (Ví dụ: Teacher truy cập trang Quản lý Người dùng):**
-    1. Một người dùng với vai trò "Teacher" sau khi đăng nhập, cố gắng truy cập trực tiếp vào URL `public/users.php`.
-    2. Ở đầu file `users.php`, có lệnh `requirePermission(PERMISSION_MANAGE_USERS);`.
-    3. Hàm `requirePermission` (trong `utils.php`) được thực thi.
-    4. Hàm lấy vai trò của người dùng từ session: `$_SESSION['role']` (giá trị là 'teacher').
-    5. Hàm gọi `getRolePermissions('teacher')` để lấy danh sách tất cả các quyền mà một Teacher có.
-    6. Hàm kiểm tra xem quyền `PERMISSION_MANAGE_USERS` có tồn tại trong danh sách quyền của Teacher hay không.
-    7. **Kết quả:** Không có. Hệ thống xác định Teacher không có quyền này.
-    8. Hàm `requirePermission` sẽ thực hiện chuyển hướng (`header()`) người dùng về trang `public/index.php` và đính kèm một tham số lỗi trên URL.
-    9. Đồng thời, giao diện (ví dụ: sidebar) cũng sử dụng hàm `canAccess(PERMISSION_MANAGE_USERS)` để kiểm tra. Vì kết quả là `false`, nên liên kết đến trang "Quản lý người dùng" sẽ không được hiển thị cho Teacher.
-- **Luật nghiệp vụ:**
-    - Quyền hạn được định nghĩa cứng trong hàm `getRolePermissions` trong file `utils.php`.
-    - Việc kiểm tra quyền được thực hiện ở **backend** (bắt buộc) và **frontend** (để cải thiện trải nghiệm người dùng).
+- **Luồng sự kiện chi tiết (Ví dụ: Teacher truy cập `public/users.php`):**
+    1. `requirePermission(PERMISSION_MANAGE_USERS)` được gọi ở đầu file.
+    2. Hàm lấy vai trò của người dùng từ session ('teacher').
+    3. Hàm `getRolePermissions('teacher')` được gọi để lấy danh sách quyền.
+    4. Hàm kiểm tra quyền `PERMISSION_MANAGE_USERS` không có trong danh sách.
+    5. Hệ thống chuyển hướng người dùng về trang chủ.
 
 #### 1.3. Quên mật khẩu
-- **Mục đích:** Cung cấp quy trình an toàn để người dùng tự đặt lại mật khẩu của mình.
+- **Mục đích:** Cung cấp quy trình an toàn để người dùng tự đặt lại mật khẩu.
 - **Luồng sự kiện chi tiết:**
-    1. Người dùng vào trang `public/forgot_password.php`, nhập email và gửi form.
-    2. `authController->forgotPassword()` được gọi.
-    3. **[Luồng lỗi]** Nếu email không tồn tại trong bảng `users`, hệ thống báo lỗi "Email không tồn tại...".
-    4. Nếu email hợp lệ, hệ thống tạo một token ngẫu nhiên, an toàn (`generateToken()`).
-    5. Hệ thống ghi một bản ghi mới vào bảng `reset_tokens` bao gồm `user_id`, `token` và `expires_at` (thời gian hết hạn, ví dụ: 1 giờ sau).
-    6. Hệ thống tạo một URL đặt lại mật khẩu (ví dụ: `.../reset_password.php?token=...`) và gửi đến email của người dùng.
-    7. Người dùng nhận email và nhấp vào URL.
-    8. Trang `public/reset_password.php` được tải, đọc `token` từ URL.
-    9. Người dùng nhập mật khẩu mới 2 lần và gửi form.
-    10. `authController->resetPassword()` được gọi.
-    11. Controller truy vấn bảng `reset_tokens` để tìm `token`.
-    12. **[Luồng lỗi]** Nếu không tìm thấy token hoặc token đã hết hạn (so sánh `expires_at` với thời gian hiện tại), hệ thống báo lỗi và yêu cầu người dùng thực hiện lại từ đầu.
-    13. Nếu token hợp lệ, controller băm mật khẩu mới (`SHA-256`).
-    14. Cập nhật mật khẩu mới đã băm vào bảng `users` cho `user_id` tương ứng.
-    15. Xóa token đã sử dụng khỏi bảng `reset_tokens` để ngăn việc tái sử dụng.
-- **Kết quả sau khi thực hiện:** Mật khẩu của người dùng được cập nhật. Người dùng có thể đăng nhập với mật khẩu mới.
+    1. Người dùng vào `public/forgot_password.php`, nhập email.
+    2. `authController->forgotPassword()` được gọi. Nếu email hợp lệ, hệ thống tạo token và lưu vào bảng `reset_tokens`.
+    3. Hệ thống gửi email chứa link đặt lại mật khẩu (có chứa token) cho người dùng.
+    4. Người dùng nhấp vào link, vào trang `public/reset_password.php`.
+    5. Người dùng nhập mật khẩu mới và gửi form.
+    6. `authController->resetPassword()` được gọi.
+    7. Controller xác thực token. Nếu hợp lệ, băm mật khẩu mới và cập nhật vào bảng `users`, sau đó xóa token đã sử dụng.
+
+#### 1.4. Đăng ký tài khoản
+- **Mục đích:** Cho phép người dùng mới tự tạo một tài khoản trong hệ thống.
+- **File liên quan:** `public/register.php`
+- **Luồng sự kiện chi tiết:**
+    1. Người dùng truy cập trang `public/register.php`.
+    2. Người dùng điền các thông tin: Tên đăng nhập, Email, Mật khẩu, Xác nhận mật khẩu và gửi form.
+    3. Dữ liệu được POST đến `authController->register()`.
+    4. Controller xác thực dữ liệu đầu vào (ví dụ: mật khẩu và xác nhận mật khẩu phải trùng khớp).
+    5. **[Luồng lỗi]** Nếu dữ liệu không hợp lệ, trả về lỗi.
+    6. Controller truy vấn CSDL để kiểm tra xem `username` hoặc `email` đã tồn tại chưa.
+    7. **[Luồng lỗi]** Nếu đã tồn tại, trả về lỗi "Tên đăng nhập hoặc email đã được sử dụng".
+    8. Nếu hợp lệ, controller băm mật khẩu bằng `SHA-256`.
+    9. Thực hiện lệnh `INSERT` để tạo một người dùng mới trong bảng `users` với một vai trò mặc định (ví dụ: 'student').
+- **Kết quả sau khi thực hiện:**
+    - Một bản ghi mới được tạo trong bảng `users`.
+    - Người dùng được chuyển hướng đến trang Đăng nhập (`login.php`) với một thông báo đăng ký thành công.
 
 ---
 
 ### 2. NGHIỆP VỤ QUẢN LÝ HỒ SƠ SINH VIÊN
 
 #### 2.1. Thêm mới sinh viên
-- **Điều kiện tiên quyết:** Người dùng phải đăng nhập với vai trò có quyền `PERMISSION_ADD_STUDENTS` (Teacher, Admin, Super Admin).
+- **Điều kiện tiên quyết:** Người dùng có quyền `PERMISSION_ADD_STUDENTS`.
 - **Luồng sự kiện chi tiết:**
-    1. Người dùng điều hướng đến trang `students/add.php`.
-    2. Biểu mẫu thêm mới được hiển thị với các trường: Mã SV, Họ tên, Ngày sinh, Giới tính, Địa chỉ, SĐT, Email, Ảnh đại diện.
-    3. Người dùng điền thông tin và chọn một file ảnh (tùy chọn).
-    4. Khi gửi form, dữ liệu được POST đến chính file `add.php`.
-    5. `studentController->addStudent()` được gọi.
-    6. Controller thực hiện một truy vấn `SELECT` để kiểm tra xem `msv` (Mã Sinh viên) đã tồn tại hay chưa.
-    7. **[Luồng lỗi]** Nếu MSV đã tồn tại, trả về lỗi "Mã sinh viên đã tồn tại".
-    8. Nếu có file ảnh được tải lên (`$_FILES['avatar']`), hệ thống gọi hàm `uploadFile()` (từ `utils.php`).
-        a. Hàm `uploadFile` kiểm tra định dạng file (chỉ cho phép `image/jpeg`, `image/png`, `image/gif`) và kích thước (tối đa 5MB).
-        b. **[Luồng lỗi]** Nếu file không hợp lệ, trả về lỗi tương ứng.
-        c. Nếu file hợp lệ, hàm tạo một tên file mới duy nhất bằng `uniqid()` để tránh trùng lặp và di chuyển file vào thư mục `uploads/avatars/`. Tên file mới này được lưu lại.
-    9. Controller thực hiện câu lệnh `INSERT` vào bảng `students` với tất cả dữ liệu đã được làm sạch (`sanitize()`), bao gồm cả tên file avatar mới (hoặc `NULL` nếu không có ảnh).
-- **Kết quả sau khi thực hiện:**
-    - Một bản ghi mới được tạo trong bảng `students`.
-    - Một file ảnh mới có thể được lưu trong thư mục `uploads/avatars/`.
-    - Người dùng được chuyển hướng về trang danh sách sinh viên với một thông báo thành công.
+    1. Người dùng vào `students/add.php`, điền thông tin và gửi form.
+    2. `studentController->addStudent()` được gọi.
+    3. Controller kiểm tra `msv` (Mã Sinh viên) đã tồn tại hay chưa.
+    4. Nếu có ảnh đại diện được tải lên, `uploadFile()` được gọi để xác thực và lưu file.
+    5. Lệnh `INSERT` được thực thi để lưu sinh viên mới vào CSDL.
+- **Kết quả:** Một sinh viên mới được tạo, người dùng được chuyển hướng về trang danh sách.
 
 #### 2.2. Xóa sinh viên
-- **Điều kiện tiên quyết:** Người dùng phải đăng nhập với vai trò có quyền `PERMISSION_DELETE_STUDENTS` (Admin, Super Admin).
+- **Điều kiện tiên quyết:** Người dùng có quyền `PERMISSION_DELETE_STUDENTS`.
 - **Luồng sự kiện chi tiết (kết hợp AJAX):**
-    1. Tại trang `students/list.php`, người dùng nhấn nút "Xóa" trên dòng của một sinh viên.
-    2. JavaScript kích hoạt, hiển thị một hộp thoại xác nhận (sử dụng `SweetAlert2`) hỏi "Bạn có chắc chắn muốn xóa?".
-    3. **[Luồng phụ]** Nếu người dùng chọn "Hủy", không có hành động nào xảy ra.
-    4. Nếu người dùng chọn "Xóa", JavaScript sử dụng `fetch API` để gửi một request `POST` đến `students/delete.php`. Body của request chứa `id` của sinh viên cần xóa.
-    5. File `delete.php` nhận request.
-    6. `requirePermission(PERMISSION_DELETE_STUDENTS)` được gọi để xác thực quyền.
-    7. `studentController->deleteStudent($id)` được gọi.
-    8. **Bên trong `deleteStudent`:**
-        a. Controller đầu tiên thực hiện `SELECT` để lấy thông tin sinh viên, nhằm tìm ra tên file avatar (`avatar` column).
-        b. Nếu có tên file avatar, hệ thống sẽ gọi `deleteFile()` (từ `utils.php`) để xóa file ảnh vật lý khỏi thư mục `uploads/avatars/`.
-        c. Controller thực hiện câu lệnh `DELETE FROM students WHERE id = :id`.
-    9. `delete.php` trả về một response `JSON` cho client, ví dụ `{"success": true, "message": "Xóa sinh viên thành công"}`.
-    10. JavaScript phía client nhận được response. Nếu `success` là `true`, nó sẽ hiển thị một thông báo thành công nữa và tự động tải lại trang (`location.reload()`) để cập nhật danh sách.
-- **Kết quả sau khi thực hiện:** Bản ghi sinh viên bị xóa khỏi CSDL. File avatar liên quan (nếu có) bị xóa khỏi hệ thống file.
+    1. Tại trang `students/list.php`, người dùng nhấn "Xóa".
+    2. JavaScript hiển thị hộp thoại xác nhận.
+    3. Nếu xác nhận, `fetch API` gửi request `POST` đến `students/delete.php` chứa `id` của sinh viên.
+    4. `studentController->deleteStudent($id)` được gọi.
+    5. Controller lấy thông tin sinh viên để tìm file avatar, sau đó gọi `deleteFile()` để xóa file vật lý (nếu có).
+    6. Lệnh `DELETE` được thực thi trên bảng `students`.
+    7. `delete.php` trả về response `JSON` báo thành công.
+- **Kết quả:** Bản ghi sinh viên và file avatar liên quan bị xóa.
+
+#### 2.3. Chỉnh sửa thông tin sinh viên
+- **Mục đích:** Cập nhật thông tin chi tiết cho một sinh viên đã tồn tại.
+- **File liên quan:** `students/edit.php`
+- **Điều kiện tiên quyết:** Người dùng có quyền `PERMISSION_EDIT_STUDENTS`.
+- **Luồng sự kiện chi tiết:**
+    1. Người dùng điều hướng đến `students/edit.php?id={student_id}`.
+    2. `studentController->getStudentById()` được gọi để lấy thông tin hiện tại của sinh viên từ CSDL.
+    3. Dữ liệu sinh viên được điền sẵn vào biểu mẫu chỉnh sửa.
+    4. Người dùng thay đổi thông tin và gửi form.
+    5. `studentController->updateStudent()` được gọi.
+    6. Controller xác thực dữ liệu (ví dụ: không được thay đổi MSV thành một MSV đã tồn tại của sinh viên khác).
+    7. **[Luồng phụ - Cập nhật ảnh đại diện]**
+        a. Nếu có file ảnh mới được tải lên, hệ thống sẽ lấy tên file ảnh cũ (nếu có) của sinh viên.
+        b. Gọi `deleteFile()` để xóa file ảnh cũ khỏi server.
+        c. Gọi `uploadFile()` để lưu file ảnh mới và lấy tên file mới.
+    8. Controller thực hiện câu lệnh `UPDATE` trên bảng `students` với dữ liệu mới.
+- **Kết quả sau khi thực hiện:**
+    - Dữ liệu của sinh viên trong bảng `students` được cập nhật.
+    - Ảnh đại diện có thể bị thay thế.
+    - Người dùng được chuyển hướng về trang danh sách sinh viên với thông báo thành công.
 
 ---
 
 ### 3. NGHIỆP VỤ QUẢN LÝ ĐIỂM SỐ
 
 #### 3.1. Thêm/Sửa điểm
-- **Điều kiện tiên quyết:** Người dùng có quyền `PERMISSION_ADD_SCORES` hoặc `PERMISSION_EDIT_SCORES`. Form thêm điểm cần tải danh sách sinh viên để người dùng lựa chọn.
+- **Điều kiện tiên quyết:** Người dùng có quyền `PERMISSION_ADD_SCORES` hoặc `PERMISSION_EDIT_SCORES`.
 - **Luồng sự kiện:**
-    1. Người dùng vào trang `scores/add.php` hoặc `scores/edit.php`.
-    2. Form hiển thị các trường: Sinh viên (dạng dropdown), Môn học, Điểm, Học kỳ.
-    3. Người dùng nhập dữ liệu.
-    4. `scoreController->addScore()` hoặc `scoreController->updateScore()` được gọi.
-    5. Dữ liệu được xác thực.
-    6. Lệnh `INSERT` hoặc `UPDATE` được thực thi trên bảng `scores`.
-- **Các quy tắc xác thực dữ liệu:**
-    - `student_id` phải tương ứng với một sinh viên có thật trong bảng `students`.
-    - `score` phải là một giá trị số. Giao diện và logic nên giới hạn trong khoảng từ 0 đến 10.
-    - `subject` và `semester` là các trường văn bản, không được để trống.
+    1. Người dùng vào `scores/add.php` hoặc `scores/edit.php`.
+    2. Form hiển thị các trường: Sinh viên, Môn học, Điểm, Học kỳ.
+    3. `scoreController->addScore()` hoặc `scoreController->updateScore()` được gọi khi gửi form.
+    4. Lệnh `INSERT` hoặc `UPDATE` được thực thi trên bảng `scores`.
+- **Quy tắc xác thực:** `student_id` phải tồn tại, `score` phải là số từ 0-10.
 
 #### 3.2. Xếp loại tự động
-- **Mục đích:** Cung cấp một cách đánh giá nhanh năng lực của sinh viên dựa trên điểm số.
-- **Luồng nghiệp vụ:**
-    - Đây không phải là một quy trình người dùng tương tác, mà là một luật nghiệp vụ được áp dụng khi hiển thị dữ liệu.
-    - Bất cứ khi nào điểm số được hiển thị (trong danh sách điểm, trong báo cáo PDF), một logic sẽ được áp dụng để chuyển đổi điểm số thành điểm chữ.
-- **Luật nghiệp vụ (Áp dụng tại `exports/export_pdf.php` và các view khác):**
-    - Điểm >= 9.0: **A+**
-    - Điểm >= 8.0: **A**
-    - Điểm >= 7.0: **B+**
-    - Điểm >= 6.0: **B**
-    - Điểm >= 5.0: **C**
-    - Điểm < 5.0: **D**
-    - Giá trị xếp loại này không được lưu vào CSDL mà được tính toán tức thời (on-the-fly).
+- **Mục đích:** Đánh giá nhanh năng lực của sinh viên.
+- **Luồng nghiệp vụ:** Đây là một luật nghiệp vụ được áp dụng khi hiển thị dữ liệu, không phải quy trình tương tác.
+- **Luật nghiệp vụ:**
+    - Điểm >= 9.0: **A+**; >= 8.0: **A**; >= 7.0: **B+**; >= 6.0: **B**; >= 5.0: **C**; < 5.0: **D**.
+    - Giá trị này được tính toán tức thời (on-the-fly), không lưu vào CSDL.
+
+#### 3.3. Xóa điểm
+- **Mục đích:** Xóa một bản ghi điểm đã nhập sai hoặc không còn hợp lệ.
+- **File liên quan:** `scores/delete.php`
+- **Điều kiện tiên quyết:** Người dùng có quyền `PERMISSION_DELETE_SCORES`.
+- **Luồng sự kiện chi tiết (kết hợp AJAX):**
+    1. Tại trang danh sách điểm (`scores/list.php`), người dùng nhấn nút "Xóa" trên một dòng điểm.
+    2. JavaScript kích hoạt, hiển thị hộp thoại xác nhận.
+    3. Nếu người dùng xác nhận, `fetch API` gửi một request `POST` đến `scores/delete.php` chứa `id` của điểm cần xóa.
+    4. File `delete.php` gọi `requirePermission(PERMISSION_DELETE_SCORES)`.
+    5. `scoreController->deleteScore($id)` được gọi.
+    6. Controller thực hiện câu lệnh `DELETE FROM scores WHERE id = :id`.
+    7. `delete.php` trả về một response `JSON` cho client, ví dụ `{"success": true}`.
+    8. JavaScript phía client nhận response và xóa dòng tương ứng khỏi bảng hiển thị hoặc tải lại trang.
+- **Kết quả:** Bản ghi điểm bị xóa vĩnh viễn khỏi CSDL.
 
 ---
 
 ### 4. NGHIỆP VỤ THỐNG KÊ VÀ BÁO CÁO
 
 #### 4.1. Xem Dashboard Thống kê
-- **Mục đích:** Cung cấp một cái nhìn tổng quan, trực quan về tình hình sinh viên và học tập.
-- **Luồng sự kiện chi tiết (Hybrid Server-Client):**
-    1. Người dùng truy cập `public/index.php`. Trang web được server render với layout cơ bản, nhưng các vùng dữ liệu thống kê thì trống (hoặc có placeholder "Loading...").
-    2. Ngay khi trang tải xong, JavaScript phía client thực hiện một `fetch` request đến API endpoint tại `charts/api/statistics.php`.
-    3. **Tại API `statistics.php`:**
-        a. Script kiểm tra quyền `PERMISSION_VIEW_STATISTICS`.
-        b. Script gọi `studentController->getStatistics()` và `scoreController->getScoreStatistics()` để lấy dữ liệu thô từ CSDL.
-        c. Script xử lý và tổng hợp dữ liệu:
-            - Đếm tổng số sinh viên, số lượng nam/nữ/khác.
-            - Tính toán điểm trung bình chung có trọng số.
-            - Chuẩn bị dữ liệu cho biểu đồ (tạo các mảng `labels` và `data` cho Chart.js).
-        d. Script trả về một response `JSON` duy nhất chứa tất cả dữ liệu đã được định dạng.
-    4. **Trở lại phía Client:**
-        a. JavaScript nhận được response JSON.
-        b. Dùng `document.getElementById()` để điền các con số vào các thẻ thống kê (Tổng sinh viên, Điểm TB...).
-        c. Khởi tạo các đối tượng `Chart` (từ thư viện Chart.js), truyền dữ liệu từ JSON vào để vẽ biểu đồ phân bố giới tính và biểu đồ xu hướng đăng ký.
-- **Lợi ích của luồng này:** Trang web tải nhanh hơn vì không phải chờ xử lý các truy vấn thống kê phức tạp ở server. Trải nghiệm người dùng mượt mà hơn.
+- **Mục đích:** Cung cấp một cái nhìn tổng quan, trực quan về tình hình học tập.
+- **Luồng sự kiện chi tiết (Hybrid):**
+    1. Người dùng truy cập `public/index.php`. Server trả về layout HTML cơ bản.
+    2. JavaScript phía client thực hiện `fetch` request đến API `charts/api/statistics.php`.
+    3. API lấy dữ liệu từ CSDL, xử lý và trả về một response `JSON` chứa tất cả dữ liệu thống kê.
+    4. JavaScript phía client nhận JSON, điền các con số vào các thẻ và dùng Chart.js để vẽ biểu đồ.
 
 #### 4.2. Xuất Báo cáo PDF
 - **Điều kiện tiên quyết:** Người dùng có quyền `PERMISSION_EXPORT_DATA`.
 - **Luồng sự kiện chi tiết:**
-    1. Tại trang danh sách (ví dụ `students/list.php`), người dùng nhấn vào liên kết "Xuất PDF". Liên kết này chứa các tham số trên URL, ví dụ: `../exports/export_pdf.php?type=students&search=keyword`.
-    2. Trình duyệt gửi request `GET` đến `export_pdf.php`.
-    3. Script kiểm tra quyền.
-    4. Script đọc các tham số `type` và `search` từ `$_GET`.
-    5. Dựa vào `type`, script khởi tạo controller tương ứng (`StudentController` hoặc `ScoreController`).
-    6. Script gọi phương thức lấy dữ liệu từ controller (ví dụ: `getAllStudents($search, 1000, 0)`), áp dụng các bộ lọc. Giới hạn 1000 bản ghi để tránh quá tải.
-    7. Script khởi tạo một đối tượng từ lớp `MYPDF` (kế thừa từ `TCPDF`).
-    8. Script xây dựng một chuỗi HTML lớn, chứa toàn bộ cấu trúc bảng và dữ liệu cần xuất. Dữ liệu được lặp và điền vào các hàng `<tr>`.
-    9. Chuỗi HTML này được truyền vào phương thức `$pdf->writeHTML()`. Thư viện TCPDF sẽ phân tích HTML và vẽ thành các đối tượng PDF.
-    10. Cuối cùng, `$pdf->Output('filename.pdf', 'I')` được gọi. Lệnh này tạo ra file PDF trong bộ nhớ và gửi tín hiệu cho trình duyệt để hiển thị file PDF đó ngay trên tab hiện tại (cờ 'I' nghĩa là inline).
-- **Luật nghiệp vụ:**
-    - Báo cáo sẽ phản ánh chính xác các bộ lọc đang được áp dụng trên trang danh sách.
-    - Báo cáo có header và footer tùy chỉnh (tên hệ thống, số trang) để tăng tính chuyên nghiệp.
+    1. Người dùng nhấn liên kết "Xuất PDF" (có thể chứa tham số lọc).
+    2. `export_pdf.php` được gọi. Script lấy dữ liệu từ Controller dựa trên tham số.
+    3. Script khởi tạo đối tượng `MYPDF` (kế thừa từ `TCPDF`).
+    4. Script xây dựng một chuỗi HTML lớn chứa cấu trúc bảng và dữ liệu.
+    5. Chuỗi HTML được truyền vào `$pdf->writeHTML()`.
+    6. `$pdf->Output('filename.pdf', 'I')` được gọi để gửi PDF về trình duyệt và hiển thị inline.
+
+#### 4.3. Xuất Báo cáo Word (DOCX)
+- **Mục đích:** Cho phép người dùng xuất dữ liệu danh sách ra file văn bản Microsoft Word để lưu trữ hoặc chỉnh sửa.
+- **File liên quan:** `exports/export_docx.php`, `assets/libs/phpword`
+- **Điều kiện tiên quyết:** Người dùng có quyền `PERMISSION_EXPORT_DATA`.
+- **Luồng sự kiện chi tiết:**
+    1. Tại trang danh sách, người dùng nhấn liên kết "Xuất DOCX". Link chứa các tham số lọc tương tự như xuất PDF.
+    2. Trình duyệt gửi request `GET` đến `export_docx.php`.
+    3. Script kiểm tra quyền và lấy dữ liệu từ controller tương ứng.
+    4. Script khởi tạo một đối tượng `\PhpOffice\PhpWord\PhpWord()`.
+    5. Script thêm một Section mới vào tài liệu: `$section = $phpWord->addSection()`.
+    6. Script thêm các thành phần như tiêu đề (`$section->addTitle(...)`) và bảng (`$table = $section->addTable(...)`).
+    7. Script lặp qua mảng dữ liệu đã lấy từ CSDL. Với mỗi dòng dữ liệu, một hàng mới được thêm vào bảng (`$table->addRow()`) và các ô (`$table->addCell(...)`) được điền dữ liệu tương ứng.
+    8. Sau khi xây dựng xong nội dung, script thiết lập các HTTP Header cần thiết để trình duyệt nhận diện đây là một file Word.
+        - `Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document`
+        - `Content-Disposition: attachment;filename="report.docx"`
+    9. Script sử dụng `\PhpOffice\PhpWord\IOFactory::createWriter(...)` để tạo một đối tượng writer và gọi phương thức `save('php://output')` để gửi thẳng nội dung file về trình duyệt.
+- **Kết quả:** Trình duyệt sẽ tự động tải về một file `.docx` chứa dữ liệu đã được lọc.
+
+---
+
+### 5. SƠ ĐỒ LUỒNG NGHIỆP VỤ (MERMAID)
+
+```mermaid
+---
+title: Sơ đồ Luồng Nghiệp vụ Hệ thống Quản lý Sinh viên
+---
+
+%% 1.1. NGHIỆP VỤ ĐĂNG NHẬP (AUTHENTICATION)
+graph TD
+    subgraph "1.1. Nghiệp vụ Đăng nhập"
+        A1[Người dùng mở trang login.php] --> B1{Đã có session hợp lệ?};
+        B1 -- Có --> C1[Chuyển hướng đến Dashboard];
+        B1 -- Không --> D1[Hiển thị form Đăng nhập];
+        D1 --> E1[Người dùng nhập thông tin & gửi form];
+        E1 --> F1[authController->login()];
+        F1 --> G1[Truy vấn user trong CSDL];
+        G1 --> H1{Username có tồn tại?};
+        H1 -- Không --> I1[Hiển thị lỗi];
+        H1 -- Có --> J1[So sánh mật khẩu đã băm];
+        J1 --> K1{Mật khẩu khớp?};
+        K1 -- Không --> I1;
+        K1 -- Có --> L1[Tạo session];
+        L1 --> C1;
+    end
+
+%% 1.2. NGHIỆP VỤ PHÂN QUYỀN (AUTHORIZATION)
+graph TD
+    subgraph "1.2. Nghiệp vụ Phân quyền (Ví dụ: Teacher truy cập trang User)"
+        A2[Teacher truy cập users.php] --> B2[requirePermission(PERMISSION_MANAGE_USERS)];
+        B2 --> C2[Lấy vai trò 'teacher' từ session];
+        C2 --> D2[getRolePermissions('teacher')];
+        D2 --> E2{Có quyền PERMISSION_MANAGE_USERS không?};
+        E2 -- Không --> F2[Chuyển hướng về trang chủ];
+        E2 -- Có --> G2[Hiển thị trang users.php];
+    end
+
+%% 1.3. NGHIỆP VỤ QUÊN MẬT KHẨU
+graph TD
+    subgraph "1.3. Nghiệp vụ Quên Mật khẩu"
+        A3[Người dùng vào forgot_password.php & nhập email] --> B3[authController->forgotPassword()];
+        B3 --> C3{Email có tồn tại trong CSDL?};
+        C3 -- Không --> D3[Báo lỗi "Email không tồn tại"];
+        C3 -- Có --> E3[Tạo reset token & lưu vào CSDL];
+        E3 --> F3[Gửi email chứa link reset cho người dùng];
+        F3 --> G3[Người dùng nhấp vào link];
+        G3 --> H3[Mở trang reset_password.php];
+        H3 --> I3[Người dùng nhập mật khẩu mới & gửi form];
+        I3 --> J3[authController->resetPassword()];
+        J3 --> K3[Kiểm tra token trong CSDL];
+        K3 --> L3{Token hợp lệ và chưa hết hạn?};
+        L3 -- Không --> M3[Báo lỗi & yêu cầu làm lại];
+        L3 -- Có --> N3[Băm mật khẩu mới];
+        N3 --> O3[Cập nhật mật khẩu mới trong bảng users];
+        O3 --> P3[Xóa token đã sử dụng];
+        P3 --> Q3[Thông báo thành công & chuyển đến trang đăng nhập];
+    end
+
+%% 1.4. NGHIỆP VỤ ĐĂNG KÝ TÀI KHOẢN
+graph TD
+    subgraph "1.4. Nghiệp vụ Đăng ký tài khoản"
+        A1_4[Người dùng vào register.php] --> B1_4[Điền form (user, email, pass) & gửi];
+        B1_4 --> C1_4[authController->register()];
+        C1_4 --> D1_4{Dữ liệu hợp lệ? (pass trùng khớp,...)};
+        D1_4 -- Không --> E1_4[Báo lỗi];
+        D1_4 -- Có --> F1_4{Username hoặc Email đã tồn tại?};
+        F1_4 -- Có --> G1_4[Báo lỗi "Tài khoản đã tồn tại"];
+        F1_4 -- Không --> H1_4[Băm mật khẩu];
+        H1_4 --> I1_4[INSERT user mới vào CSDL với vai trò mặc định];
+        I1_4 --> J1_4[Chuyển hướng đến trang đăng nhập với thông báo thành công];
+    end
+
+%% 2.1. NGHIỆP VỤ THÊM MỚI SINH VIÊN
+graph TD
+    subgraph "2.1. Nghiệp vụ Thêm mới Sinh viên"
+        A4[User (có quyền) vào students/add.php] --> B4[Điền form & gửi];
+        B4 --> C4[studentController->addStudent()];
+        C4 --> D4{Mã sinh viên đã tồn tại?};
+        D4 -- Có --> E4[Báo lỗi "MSV đã tồn tại"];
+        D4 -- Không --> F4{Có tải lên ảnh đại diện?};
+        F4 -- Có --> G4[utils->uploadFile()];
+        G4 --> H4{File ảnh hợp lệ?};
+        H4 -- Không --> I4[Báo lỗi file không hợp lệ];
+        H4 -- Có --> J4[Lưu ảnh vào uploads/avatars & lấy tên file mới];
+        F4 -- Không --> K4[Dữ liệu không có ảnh];
+        J4 --> K4;
+        K4 --> L4[INSERT dữ liệu sinh viên vào CSDL];
+        L4 --> M4[Chuyển hướng về trang danh sách sinh viên];
+    end
+
+%% 2.2. NGHIỆP VỤ XÓA SINH VIÊN (AJAX)
+graph TD
+    subgraph "2.2. Nghiệp vụ Xóa Sinh viên (AJAX)"
+        A5[User (có quyền) nhấn nút "Xóa"] --> B5[JS hiển thị hộp thoại xác nhận];
+        B5 --> C5{User xác nhận xóa?};
+        C5 -- Không --> D5[Không làm gì];
+        C5 -- Có --> E5[JS gửi request POST đến students/delete.php với ID];
+        E5 --> F5[studentController->deleteStudent(id)];
+        F5 --> G5[Lấy thông tin avatar của sinh viên];
+        G5 --> H5{Sinh viên có avatar?};
+        H5 -- Có --> I5[Xóa file ảnh vật lý khỏi server];
+        H5 -- Không --> J5;
+        I5 --> J5[DELETE bản ghi sinh viên khỏi CSDL];
+        J5 --> K5[Trả về JSON {success: true}];
+        K5 --> L5[JS nhận response, báo thành công & tải lại trang];
+    end
+
+%% 2.3. NGHIỆP VỤ CHỈNH SỬA SINH VIÊN
+graph TD
+    subgraph "2.3. Nghiệp vụ Chỉnh sửa Sinh viên"
+        A2_3[User (có quyền) vào students/edit.php?id=...] --> B2_3[Controller lấy dữ liệu SV từ CSDL];
+        B2_3 --> C2_3[Hiển thị form với dữ liệu cũ của SV];
+        C2_3 --> D2_3[User sửa thông tin & gửi form];
+        D2_3 --> E2_3[studentController->updateStudent()];
+        E2_3 --> F2_3{Dữ liệu hợp lệ?};
+        F2_3 -- Không --> G2_3[Báo lỗi];
+        F2_3 -- Có --> H2_3{Có tải lên avatar mới?};
+        H2_3 -- Có --> I2_3[Xóa avatar cũ (nếu có)];
+        I2_3 --> J2_3[Tải lên avatar mới];
+        H2_3 -- Không --> K2_3;
+        J2_3 --> K2_3;
+        K2_3 --> L2_3[UPDATE thông tin sinh viên trong CSDL];
+        L2_3 --> M2_3[Chuyển hướng về danh sách sinh viên];
+    end
+    
+%% 3.3. NGHIỆP VỤ XÓA ĐIỂM
+graph TD
+    subgraph "3.3. Nghiệp vụ Xóa điểm"
+        A3_3[User (có quyền) nhấn "Xóa" điểm] --> B3_3[JS hiển thị hộp thoại xác nhận];
+        B3_3 --> C3_3{User xác nhận xóa?};
+        C3_3 -- Không --> D3_3[Không làm gì];
+        C3_3 -- Có --> E3_3[JS gửi request POST đến scores/delete.php với ID điểm];
+        E3_3 --> F3_3[scoreController->deleteScore(id)];
+        F3_3 --> G3_3[DELETE bản ghi điểm khỏi CSDL];
+        G3_3 --> H3_3[Trả về JSON {success: true}];
+        H3_3 --> I3_3[JS nhận response và xóa hàng điểm khỏi giao diện];
+    end
+
+%% 4.1. XEM DASHBOARD THỐNG KÊ (HYBRID)
+graph TD
+    subgraph "4.1. Xem Dashboard Thống kê (Hybrid)"
+        A6[User truy cập public/index.php] --> B6[Server trả về layout cơ bản (với placeholder 'Loading...')];
+        B6 --> C6[Client-side JS gửi fetch request đến charts/api/statistics.php];
+        C6 --> D6[API lấy và tổng hợp dữ liệu thống kê từ CSDL];
+        D6 --> E6[API trả về response JSON chứa tất cả dữ liệu];
+        E6 --> F6[Client-side JS nhận JSON];
+        F6 --> G6[Cập nhật các thẻ số liệu];
+        F6 --> H6[Dùng Chart.js để vẽ các biểu đồ từ dữ liệu];
+        H6 --> I6[Hiển thị đầy đủ dashboard];
+    end
+
+%% 4.2. XUẤT BÁO CÁO PDF
+graph TD
+    subgraph "4.2. Xuất Báo cáo PDF"
+        A7[User nhấn link "Xuất PDF" với các bộ lọc] --> B7[Gửi GET request đến exports/export_pdf.php];
+        B7 --> C7[Script lấy dữ liệu từ Controller theo bộ lọc];
+        C7 --> D7[Khởi tạo đối tượng TCPDF];
+        D7 --> E7[Xây dựng chuỗi HTML từ dữ liệu];
+        E7 --> F7[TCPDF->writeHTML() để vẽ PDF];
+        F7 --> G7[TCPDF->Output() để gửi file PDF về trình duyệt];
+        G7 --> H7[Trình duyệt hiển thị file PDF];
+    end
+
+%% 4.3. XUẤT BÁO CÁO WORD (DOCX)
+graph TD
+    subgraph "4.3. Nghiệp vụ Xuất Báo cáo Word (DOCX)"
+        A4_3[User nhấn link "Xuất DOCX"] --> B4_3[Gửi GET request đến exports/export_docx.php];
+        B4_3 --> C4_3[Script lấy dữ liệu từ Controller theo bộ lọc];
+        C4_3 --> D4_3[Khởi tạo đối tượng PhpWord];
+        D4_3 --> E4_3[Thêm Section, Title, Table];
+        E4_3 --> F4_3[Lặp qua dữ liệu để thêm các hàng vào bảng];
+        F4_3 --> G4_3[Thiết lập HTTP headers cho file .docx];
+        G4_3 --> H4_3[Lưu file vào php://output];
+        H4_3 --> I4_3[Trình duyệt tự động tải file .docx về];
+    end
+```
