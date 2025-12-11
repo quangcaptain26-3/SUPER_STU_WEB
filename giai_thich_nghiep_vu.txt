@@ -1,4 +1,5 @@
 CHI TIẾT QUY TRÌNH NGHIỆP VỤ - HỆ THỐNG QUẢN LÝ SINH VIÊN
+TEST PULL
 
 Tài liệu này mô tả chi tiết các quy trình nghiệp vụ, luồng sự kiện và các quy tắc cốt lõi của Hệ thống Quản lý Sinh viên.
 
