@@ -195,5 +195,27 @@ class PermissionMiddleware {
             self::jsonResponse(false, $result['message']);
         }
     }
+
+    /**
+     * Lấy thông tin chi tiết về vai trò và quyền hạn của người dùng hiện tại.
+     * @return array Một mảng chứa vai trò ('role'), tên hiển thị ('display_name'), class CSS cho badge ('badge_class') và danh sách quyền hạn ('permissions').
+     */
+    public static function getCurrentUserRole() {
+        if (!isLoggedIn()) {
+            return [
+                'role' => 'guest',
+                'display_name' => 'Khách',
+                'badge_class' => 'bg-secondary',
+                'permissions' => []
+            ];
+        }
+        $userRole = $_SESSION['role'];
+        return [
+            'role' => $userRole,
+            'display_name' => getRoleDisplayName($userRole),
+            'badge_class' => getRoleBadgeClass($userRole),
+            'permissions' => getRolePermissions($userRole)
+        ];
+    }
 }
 ?>
