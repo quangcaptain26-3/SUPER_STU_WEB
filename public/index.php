@@ -82,12 +82,15 @@ $username = $_SESSION['username'];
                     </h4>
                     <div class="text-white-50 mb-3">
                         <i class="fas fa-user me-2"></i>
-                        <?php echo htmlspecialchars($username); // Hiển thị tên người dùng (đã được làm sạch) ?>
+                        <?php echo htmlspecialchars($username); ?>
                         <span class="badge <?php echo getRoleBadgeClass($userRole); ?> ms-2">
-                            <?php echo getRoleDisplayName($userRole); // Hiển thị tên vai trò và badge màu tương ứng ?>
+                            <?php echo getRoleDisplayName($userRole); ?>
                         </span>
                     </div>
-                    <div id="mini-clock"></div>
+                    <div class="text-white-50">
+                        <i class="fas fa-calendar me-2"></i>
+                        <span id="current-date"></span>
+                    </div>
                 </div>
                 
                 <nav class="nav flex-column px-3">
@@ -95,33 +98,18 @@ $username = $_SESSION['username'];
                         <i class="fas fa-home me-2"></i>Trang chủ
                     </a>
                     
-                    <?php // --- RENDER SIDEBAR ĐỘNG DỰA TRÊN QUYỀN --- ?>
-                    <?php // Kiểm tra xem người dùng có quyền xem sinh viên không. ?>
-                    <?php if (canAccess(PERMISSION_VIEW_STUDENTS)): ?>
                     <a class="nav-link" href="../students/list.php">
-                        <i class="fas fa-users me-2"></i>
-                        <?php // Thay đổi text dựa trên việc người dùng có quyền thêm mới hay chỉ xem. ?>
-                        <?php echo canAccess(PERMISSION_ADD_STUDENTS) ? 'Quản lý sinh viên' : 'Danh sách sinh viên'; ?>
+                        <i class="fas fa-users me-2"></i>Quản lý sinh viên
                     </a>
-                    <?php endif; ?>
                     
-                    <?php // Kiểm tra quyền xem điểm. ?>
-                    <?php if (canAccess(PERMISSION_VIEW_SCORES)): ?>
                     <a class="nav-link" href="../scores/list.php">
-                        <i class="fas fa-chart-line me-2"></i>
-                        <?php echo canAccess(PERMISSION_ADD_SCORES) ? 'Quản lý điểm' : 'Xem điểm'; ?>
+                        <i class="fas fa-chart-line me-2"></i>Quản lý điểm
                     </a>
-                    <?php endif; ?>
                     
-                    <?php // Kiểm tra quyền xem thống kê. ?>
-                    <?php if (canAccess(PERMISSION_VIEW_STATISTICS)): ?>
                     <a class="nav-link" href="../charts/statistics.php">
                         <i class="fas fa-chart-bar me-2"></i>Thống kê
                     </a>
-                    <?php endif; ?>
                     
-                    
-                    <?php // Chỉ Super Admin mới có quyền quản lý người dùng. ?>
                     <?php if (canAccess(PERMISSION_MANAGE_USERS)): ?>
                     <a class="nav-link" href="users.php">
                         <i class="fas fa-user-cog me-2"></i>Quản lý người dùng
@@ -195,7 +183,7 @@ $username = $_SESSION['username'];
                         <div class="col-md-6 mb-4">
                             <div class="card">
                                 <div class="card-header">
-                                    <h5><i class="fas fa-chart-pie me-2"></i>Phân bố giới tính</h5>
+                                    <h5><i class="fas fa-chart-bar me-2"></i>Phân bố giới tính</h5>
                                 </div>
                                 <div class="card-body">
                                     <canvas id="genderChart" height="300"></canvas>
@@ -205,10 +193,10 @@ $username = $_SESSION['username'];
                         <div class="col-md-6 mb-4">
                             <div class="card">
                                 <div class="card-header">
-                                    <h5><i class="fas fa-chart-line me-2"></i>Xu hướng đăng ký</h5>
+                                    <h5><i class="fas fa-book me-2"></i>Điểm TB theo môn (Top 5)</h5>
                                 </div>
                                 <div class="card-body">
-                                    <canvas id="trendChart" height="300"></canvas>
+                                    <canvas id="subjectChart" height="300"></canvas>
                                 </div>
                             </div>
                         </div>
@@ -259,10 +247,23 @@ $username = $_SESSION['username'];
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Nạp các file JS tùy chỉnh của dự án -->
     <script src="../assets/js/realtime.js"></script>
-    <script src="../assets/js/clock-widget.js"></script>
     <script>
-        // Khởi tạo tiện ích đồng hồ mini trong sidebar.
-        new MiniClockWidget('mini-clock');
+        // Hiển thị thứ ngày tháng hiện tại
+        function updateCurrentDate() {
+            const now = new Date();
+            const days = ['Chủ nhật', 'Thứ hai', 'Thứ ba', 'Thứ tư', 'Thứ năm', 'Thứ sáu', 'Thứ bảy'];
+            const dayName = days[now.getDay()];
+            const dateStr = now.toLocaleDateString('vi-VN', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
+            });
+            const dateElement = document.getElementById('current-date');
+            if (dateElement) {
+                dateElement.textContent = `${dayName}, ${dateStr}`;
+            }
+        }
+        updateCurrentDate(); // Cập nhật ngay lập tức
         
         // --- TẢI DỮ LIỆU BẤT ĐỒNG BỘ VÀ VẼ BIỂU ĐỒ ---
         // Sử dụng `fetch API` của trình duyệt để gửi một request GET đến API thống kê.
@@ -277,39 +278,51 @@ $username = $_SESSION['username'];
                 document.getElementById('femaleStudents').textContent = data.female_students || 0;
                 document.getElementById('avgScore').textContent = data.avg_score || 'N/A';
                 
-                // 2. Vẽ biểu đồ phân bố giới tính.
+                // 2. Vẽ biểu đồ phân bố giới tính (Bar Chart - Cột).
                 // Lấy context 2D của thẻ canvas.
                 const genderCtx = document.getElementById('genderChart').getContext('2d');
                 new Chart(genderCtx, {
-                    type: 'doughnut', // Chọn loại biểu đồ là doughnut (bánh vòng).
+                    type: 'bar', // Chọn loại biểu đồ là bar (cột).
                     data: {
-                        labels: ['Nam', 'Nữ', 'Khác'], // Nhãn cho mỗi phần của biểu đồ.
+                        labels: ['Nam', 'Nữ', 'Khác'], // Nhãn cho mỗi cột của biểu đồ.
                         datasets: [{
+                            label: 'Số lượng',
                             // Dữ liệu tương ứng với các nhãn.
                             data: [data.male_students || 0, data.female_students || 0, data.other_students || 0],
-                            // Màu nền cho mỗi phần.
-                            backgroundColor: ['#36A2EB', '#FF6384', '#FFCE56']
+                            // Màu nền cho mỗi cột.
+                            backgroundColor: ['#36A2EB', '#FF6384', '#FFCE56'],
+                            borderColor: ['#36A2EB', '#FF6384', '#FFCE56'],
+                            borderWidth: 1
                         }]
                     },
                     options: {
                         responsive: true, // Cho phép biểu đồ tự điều chỉnh kích thước theo container.
-                        maintainAspectRatio: false // Không giữ tỷ lệ khung hình cố định, giúp biểu đồ lấp đầy container.
+                        maintainAspectRatio: false, // Không giữ tỷ lệ khung hình cố định, giúp biểu đồ lấp đầy container.
+                        scales: {
+                            y: {
+                                beginAtZero: true // Trục Y bắt đầu từ 0
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: false // Ẩn chú giải
+                            }
+                        }
                     }
                 });
                 
-                // 3. Vẽ biểu đồ xu hướng đăng ký sinh viên mới.
-                const trendCtx = document.getElementById('trendChart').getContext('2d');
-                new Chart(trendCtx, {
-                    type: 'line', // Chọn loại biểu đồ đường.
+                // 3. Vẽ biểu đồ điểm trung bình theo môn học (Top 5).
+                const subjectCtx = document.getElementById('subjectChart').getContext('2d');
+                new Chart(subjectCtx, {
+                    type: 'bar', // Chọn loại biểu đồ cột.
                     data: {
-                        labels: data.monthly_labels || [], // Nhãn cho trục X (các tháng).
+                        labels: data.subject_labels || [], // Nhãn cho trục X (tên các môn học).
                         datasets: [{
-                            label: 'Sinh viên mới', // Chú thích cho đường line.
-                            data: data.monthly_data || [], // Dữ liệu cho trục Y (số lượng sinh viên).
-                            borderColor: '#36A2EB', // Màu của đường line.
-                            backgroundColor: 'rgba(54, 162, 235, 0.1)', // Màu nền dưới đường line.
-                            tension: 0.4, // Làm cho đường line cong mềm mại.
-                            fill: true // Tô màu khu vực dưới đường line.
+                            label: 'Điểm trung bình',
+                            data: data.subject_scores || [], // Dữ liệu cho trục Y (điểm trung bình).
+                            backgroundColor: 'rgba(102, 126, 234, 0.8)', // Màu nền cho các cột.
+                            borderColor: '#667eea', // Màu viền cho các cột.
+                            borderWidth: 1
                         }]
                     },
                     options: {
@@ -317,7 +330,13 @@ $username = $_SESSION['username'];
                         maintainAspectRatio: false,
                         scales: {
                             y: {
-                                beginAtZero: true // Bắt đầu trục Y từ 0.
+                                beginAtZero: true, // Bắt đầu trục Y từ 0.
+                                max: 10 // Giá trị tối đa của trục Y là 10
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: false // Ẩn chú giải
                             }
                         }
                     }

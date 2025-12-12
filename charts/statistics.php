@@ -109,6 +109,18 @@ $scoreStats = $scoreController->getScoreStatistics();
                     <a class="nav-link active" href="statistics.php">
                         <i class="fas fa-chart-bar me-2"></i>Thống kê
                     </a>
+                    
+                    <?php // Chỉ Super Admin mới có quyền quản lý người dùng. ?>
+                    <?php if (canAccess(PERMISSION_MANAGE_USERS)): ?>
+                    <a class="nav-link" href="../public/users.php">
+                        <i class="fas fa-user-cog me-2"></i>Quản lý người dùng
+                    </a>
+                    <?php endif; ?>
+                    
+                    <a class="nav-link" href="../public/profile.php">
+                        <i class="fas fa-user me-2"></i>Thông tin cá nhân
+                    </a>
+                    
                     <a class="nav-link" href="../public/logout.php">
                         <i class="fas fa-sign-out-alt me-2"></i>Đăng xuất
                     </a>
@@ -207,7 +219,7 @@ $scoreStats = $scoreController->getScoreStatistics();
                         <div class="col-md-6 mb-4">
                             <div class="card">
                                 <div class="card-header">
-                                    <h5><i class="fas fa-chart-pie me-2"></i>Phân bố giới tính</h5>
+                                    <h5><i class="fas fa-chart-bar me-2"></i>Phân bố giới tính</h5>
                                 </div>
                                 <div class="card-body">
                                     <div class="chart-container chart-small">
@@ -219,11 +231,11 @@ $scoreStats = $scoreController->getScoreStatistics();
                         <div class="col-md-6 mb-4">
                             <div class="card">
                                 <div class="card-header">
-                                    <h5><i class="fas fa-chart-line me-2"></i>Xu hướng đăng ký</h5>
+                                    <h5><i class="fas fa-calendar-alt me-2"></i>Điểm TB theo học kỳ</h5>
                                 </div>
                                 <div class="card-body">
                                     <div class="chart-container chart-small">
-                                        <canvas id="trendChart"></canvas>
+                                        <canvas id="semesterChart"></canvas>
                                     </div>
                                 </div>
                             </div>
@@ -339,7 +351,7 @@ $scoreStats = $scoreController->getScoreStatistics();
     <script>
         // --- Vẽ các biểu đồ bằng Chart.js ---
 
-        // Biểu đồ Phân bố giới tính (Doughnut Chart)
+        // Biểu đồ Phân bố giới tính (Bar Chart - Cột)
         const genderCtx = document.getElementById('genderChart').getContext('2d');
         const genderData = <?php echo json_encode($studentStats['by_gender']); ?>; // Lấy dữ liệu từ PHP
         const genderLabels = [];
@@ -352,49 +364,54 @@ $scoreStats = $scoreController->getScoreStatistics();
         });
         
         new Chart(genderCtx, {
-            type: 'doughnut', // Loại biểu đồ
+            type: 'bar', // Loại biểu đồ cột
             data: {
                 labels: genderLabels, // Nhãn (Nam, Nữ, Khác)
                 datasets: [{
+                    label: 'Số lượng',
                     data: genderValues, // Dữ liệu số lượng
                     backgroundColor: genderColors.slice(0, genderLabels.length),
-                    borderWidth: 2,
-                    borderColor: '#fff'
+                    borderColor: genderColors.slice(0, genderLabels.length),
+                    borderWidth: 1
                 }]
             },
             options: {
                 responsive: true, // Tự động co giãn
                 maintainAspectRatio: false, // Không giữ tỷ lệ khung hình
+                scales: {
+                    y: {
+                        beginAtZero: true // Trục Y bắt đầu từ 0
+                    }
+                },
                 plugins: {
                     legend: {
-                        position: 'bottom' // Hiển thị chú giải ở dưới
+                        display: false // Ẩn chú giải
                     }
                 }
             }
         });
         
-        // Biểu đồ Xu hướng đăng ký (Line Chart)
-        const trendCtx = document.getElementById('trendChart').getContext('2d');
-        const trendData = <?php echo json_encode($studentStats['by_month']); ?>; // Dữ liệu sinh viên theo tháng
-        const trendLabels = [];
-        const trendValues = [];
+        // Biểu đồ Điểm trung bình theo học kỳ (Bar Chart)
+        const semesterCtx = document.getElementById('semesterChart').getContext('2d');
+        const semesterData = <?php echo json_encode($scoreStats['by_semester']); ?>; // Dữ liệu điểm theo học kỳ
+        const semesterLabels = [];
+        const semesterValues = [];
         
-        trendData.forEach(item => {
-            trendLabels.push(item.month); // Nhãn là các tháng
-            trendValues.push(item.count); // Dữ liệu là số sinh viên
+        semesterData.forEach(item => {
+            semesterLabels.push(item.semester); // Nhãn là các học kỳ
+            semesterValues.push(parseFloat(item.avg_score)); // Dữ liệu là điểm trung bình
         });
         
-        new Chart(trendCtx, {
-            type: 'line', // Loại biểu đồ đường
+        new Chart(semesterCtx, {
+            type: 'bar', // Loại biểu đồ cột
             data: {
-                labels: trendLabels,
+                labels: semesterLabels,
                 datasets: [{
-                    label: 'Sinh viên mới',
-                    data: trendValues,
-                    borderColor: '#36A2EB',
-                    backgroundColor: 'rgba(54, 162, 235, 0.1)', // Màu nền dưới đường line
-                    tension: 0.4, // Làm mịn đường cong
-                    fill: true // Tô màu nền
+                    label: 'Điểm trung bình',
+                    data: semesterValues,
+                    backgroundColor: 'rgba(102, 126, 234, 0.8)', // Màu gradient purple
+                    borderColor: '#667eea',
+                    borderWidth: 1
                 }]
             },
             options: {
@@ -402,7 +419,8 @@ $scoreStats = $scoreController->getScoreStatistics();
                 maintainAspectRatio: false,
                 scales: {
                     y: {
-                        beginAtZero: true // Trục Y bắt đầu từ 0
+                        beginAtZero: true, // Trục Y bắt đầu từ 0
+                        max: 10 // Giá trị tối đa của trục Y là 10
                     }
                 },
                 plugins: {

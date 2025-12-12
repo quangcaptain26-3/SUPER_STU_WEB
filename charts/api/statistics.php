@@ -39,7 +39,9 @@ $data = [
     'other_students'  => 0, // Khởi tạo số lượng sinh viên giới tính khác.
     'avg_score'       => 0.0, // Khởi tạo điểm trung bình chung.
     'monthly_labels'  => [],  // Mảng chứa nhãn các tháng cho biểu đồ (trục X).
-    'monthly_data'    => []   // Mảng chứa số lượng sinh viên mới theo tháng (trục Y).
+    'monthly_data'    => [],  // Mảng chứa số lượng sinh viên mới theo tháng (trục Y).
+    'subject_labels'  => [],  // Mảng chứa tên các môn học (top 5).
+    'subject_scores'  => []   // Mảng chứa điểm trung bình của các môn học.
 ];
 
 // Xử lý dữ liệu thống kê theo giới tính từ `$studentStats`.
@@ -84,6 +86,15 @@ if (!empty($scoreStats['by_subject'])) {
 // Tính điểm trung bình chung và làm tròn đến 1 chữ số thập phân.
 // Tránh chia cho 0 nếu không có điểm nào trong hệ thống.
 $data['avg_score'] = $scoreCount > 0 ? round($totalScore / $scoreCount, 1) : 0.0;
+
+// Xử lý dữ liệu điểm trung bình theo môn học (top 5).
+if (!empty($scoreStats['by_subject'])) {
+    $topSubjects = array_slice($scoreStats['by_subject'], 0, 5); // Lấy 5 môn đầu tiên
+    foreach ($topSubjects as $subject) {
+        $data['subject_labels'][] = $subject['subject'];
+        $data['subject_scores'][] = round((float)$subject['avg_score'], 1);
+    }
+}
 
 
 // --- OUTPUT ---

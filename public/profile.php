@@ -198,26 +198,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     <a class="nav-link" href="index.php">
                         <i class="fas fa-home me-2"></i>Trang chủ
                     </a>
-                    
-                    <?php if (canAccess(PERMISSION_VIEW_STUDENTS)): ?>
                     <a class="nav-link" href="../students/list.php">
-                        <i class="fas fa-users me-2"></i>
-                        <?php echo canAccess(PERMISSION_ADD_STUDENTS) ? 'Quản lý sinh viên' : 'Danh sách sinh viên'; ?>
+                        <i class="fas fa-users me-2"></i>Quản lý sinh viên
                     </a>
-                    <?php endif; ?>
-                    
-                    <?php if (canAccess(PERMISSION_VIEW_SCORES)): ?>
                     <a class="nav-link" href="../scores/list.php">
-                        <i class="fas fa-chart-line me-2"></i>
-                        <?php echo canAccess(PERMISSION_ADD_SCORES) ? 'Quản lý điểm' : 'Xem điểm'; ?>
+                        <i class="fas fa-chart-line me-2"></i>Quản lý điểm
                     </a>
-                    <?php endif; ?>
-                    
-                    <?php if (canAccess(PERMISSION_VIEW_STATISTICS)): ?>
                     <a class="nav-link" href="../charts/statistics.php">
                         <i class="fas fa-chart-bar me-2"></i>Thống kê
                     </a>
-                    <?php endif; ?>
                     
                     <?php if (canAccess(PERMISSION_MANAGE_USERS)): ?>
                     <a class="nav-link" href="users.php">

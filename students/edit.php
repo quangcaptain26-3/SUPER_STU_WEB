@@ -226,7 +226,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     <a class="nav-link" href="../public/index.php">
                         <i class="fas fa-home me-2"></i>Trang chủ
                     </a>
-                    <!-- Link active -->
                     <a class="nav-link active" href="list.php">
                         <i class="fas fa-users me-2"></i>Quản lý sinh viên
                     </a>
@@ -236,6 +235,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     <a class="nav-link" href="../charts/statistics.php">
                         <i class="fas fa-chart-bar me-2"></i>Thống kê
                     </a>
+                    
+                    <?php if (canAccess(PERMISSION_MANAGE_USERS)): ?>
+                    <a class="nav-link" href="../public/users.php">
+                        <i class="fas fa-user-cog me-2"></i>Quản lý người dùng
+                    </a>
+                    <?php endif; ?>
+                    
+                    <a class="nav-link" href="../public/profile.php">
+                        <i class="fas fa-user me-2"></i>Thông tin cá nhân
+                    </a>
+                    
                     <a class="nav-link" href="../public/logout.php">
                         <i class="fas fa-sign-out-alt me-2"></i>Đăng xuất
                     </a>
@@ -267,17 +277,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                                 <div class="card-body">
                                     <!-- Hiển thị thông báo lỗi -->
                                     <?php if ($error): ?>
-                                        <div class="alert alert-danger" role="alert">
+                                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
                                             <i class="fas fa-exclamation-triangle me-2"></i>
                                             <?php echo htmlspecialchars($error); ?>
+                                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                                         </div>
                                     <?php endif; ?>
 
                                     <!-- Hiển thị thông báo thành công -->
                                     <?php if ($success): ?>
-                                        <div class="alert alert-success" role="alert">
+                                        <div class="alert alert-success alert-dismissible fade show" role="alert">
                                             <i class="fas fa-check-circle me-2"></i>
                                             <?php echo htmlspecialchars($success); ?>
+                                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                                         </div>
                                     <?php endif; ?>
 
@@ -457,12 +469,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             }
         }
 
+        // Khởi tạo notification system
+        const notifications = new NotificationSystem();
+        
         // Hàm xóa ảnh đại diện
         function removeAvatar() {
-            confirmDelete(
+            notifications.confirmDelete(
                 'Xác nhận xóa ảnh đại diện',
                 'Bạn có chắc chắn muốn xóa ảnh đại diện?',
-                function() {
+                'Xóa',
+                'Hủy'
+            ).then((result) => {
+                if (result.isConfirmed) {
                     // Tạo hidden input để đánh dấu xóa avatar
                     const hiddenInput = document.createElement('input');
                     hiddenInput.type = 'hidden';
@@ -473,9 +491,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     // Cập nhật preview
                     document.getElementById('avatarPreview').src = 'https://via.placeholder.com/150x150?text=No+Image';
                     document.getElementById('avatar').value = '';
-                    notification.success('Đã xóa ảnh đại diện');
+                    notifications.success('Đã xóa ảnh đại diện');
                 }
-            );
+            });
         }
 
         // Validation form
@@ -486,18 +504,41 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             const dob = document.getElementById('dob').value;
             const gender = document.getElementById('gender').value;
 
+            // Kiểm tra các trường bắt buộc
             if (!msv || !fullname || !email || !dob || !gender) {
                 e.preventDefault();
-                alert('Vui lòng điền đầy đủ thông tin bắt buộc');
+                notifications.error('Vui lòng điền đầy đủ thông tin bắt buộc', 'Thiếu thông tin');
                 return false;
             }
 
+            // Validate email
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!emailRegex.test(email)) {
                 e.preventDefault();
-                alert('Email không hợp lệ');
+                notifications.error('Email không hợp lệ. Vui lòng nhập đúng định dạng email', 'Email không hợp lệ');
+                document.getElementById('email').focus();
+                document.getElementById('email').classList.add('is-invalid');
                 return false;
             }
+            
+            // Disable button và hiển thị loading
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Đang cập nhật...';
+            }
+            
+            // Thêm real-time validation feedback
+            document.getElementById('email').addEventListener('blur', function() {
+                const email = this.value.trim();
+                if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                    this.classList.add('is-invalid');
+                    this.classList.remove('is-valid');
+                } else if (email) {
+                    this.classList.remove('is-invalid');
+                    this.classList.add('is-valid');
+                }
+            });
         });
     </script>
 </body>

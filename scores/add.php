@@ -156,6 +156,20 @@ $selectedStudentId = $_GET['student_id'] ?? '';
             background: #f8d7da;
             color: #721c24;
         }
+        .form-control.is-valid {
+            border-color: #28a745;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3e%3cpath fill='%2328a745' d='m2.3 6.73.98-.98-.98-.98-.98.98.98.98zm5.6-5.6.98-.98-.98-.98-.98.98.98.98z'/%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right calc(0.375em + 0.1875rem) center;
+            background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+        }
+        .form-control.is-invalid {
+            border-color: #dc3545;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath d='m5.8 3.6.4.4.4-.4m0 4.8-.4-.4-.4.4'/%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right calc(0.375em + 0.1875rem) center;
+            background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+        }
     </style>
 </head>
 
@@ -189,6 +203,17 @@ $selectedStudentId = $_GET['student_id'] ?? '';
                     <a class="nav-link" href="../charts/statistics.php">
                         <i class="fas fa-chart-bar me-2"></i>Thống kê
                     </a>
+                    
+                    <?php if (canAccess(PERMISSION_MANAGE_USERS)): ?>
+                    <a class="nav-link" href="../public/users.php">
+                        <i class="fas fa-user-cog me-2"></i>Quản lý người dùng
+                    </a>
+                    <?php endif; ?>
+                    
+                    <a class="nav-link" href="../public/profile.php">
+                        <i class="fas fa-user me-2"></i>Thông tin cá nhân
+                    </a>
+                    
                     <a class="nav-link" href="../public/logout.php">
                         <i class="fas fa-sign-out-alt me-2"></i>Đăng xuất
                     </a>
@@ -213,16 +238,18 @@ $selectedStudentId = $_GET['student_id'] ?? '';
                                 </div>
                                 <div class="card-body">
                                     <?php if ($error): ?>
-                                        <div class="alert alert-danger" role="alert">
+                                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
                                             <i class="fas fa-exclamation-triangle me-2"></i>
                                             <?php echo htmlspecialchars($error); ?>
+                                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                                         </div>
                                     <?php endif; ?>
 
                                     <?php if ($success): ?>
-                                        <div class="alert alert-success" role="alert">
+                                        <div class="alert alert-success alert-dismissible fade show" role="alert">
                                             <i class="fas fa-check-circle me-2"></i>
                                             <?php echo htmlspecialchars($success); ?>
+                                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                                         </div>
                                     <?php endif; ?>
 
@@ -357,6 +384,8 @@ $selectedStudentId = $_GET['student_id'] ?? '';
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="../assets/js/notifications.js"></script>
     <script>
         // Hàm cập nhật preview điểm và xếp loại
         function updateScorePreview() {
@@ -423,20 +452,33 @@ $selectedStudentId = $_GET['student_id'] ?? '';
 
             // Kiểm tra các trường bắt buộc có được điền đầy đủ không
             if (!studentId || !subject || !semester) {
-                // Ngăn form submit
                 e.preventDefault();
-                // Hiển thị cảnh báo
-                alert('Vui lòng điền đầy đủ thông tin');
+                if (typeof notifications !== 'undefined') {
+                    notifications.error('Vui lòng điền đầy đủ thông tin bắt buộc', 'Thiếu thông tin');
+                } else {
+                    alert('Vui lòng điền đầy đủ thông tin');
+                }
                 return false;
             }
 
             // Kiểm tra điểm có hợp lệ không (phải là số và trong khoảng 0-10)
             if (isNaN(score) || score < 0 || score > 10) {
-                // Ngăn form submit
                 e.preventDefault();
-                // Hiển thị cảnh báo
-                alert('Điểm phải từ 0 đến 10');
+                if (typeof notifications !== 'undefined') {
+                    notifications.error('Điểm phải từ 0 đến 10', 'Điểm không hợp lệ');
+                } else {
+                    alert('Điểm phải từ 0 đến 10');
+                }
+                document.getElementById('score').focus();
+                document.getElementById('score').classList.add('is-invalid');
                 return false;
+            }
+            
+            // Disable button và hiển thị loading
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Đang lưu...';
             }
         });
 

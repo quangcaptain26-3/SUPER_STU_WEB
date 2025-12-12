@@ -178,9 +178,17 @@ $users = $authController->getAllUsers();
                     <a class="nav-link" href="../charts/statistics.php">
                         <i class="fas fa-chart-bar me-2"></i>Thống kê
                     </a>
+                    
+                    <?php if (canAccess(PERMISSION_MANAGE_USERS)): ?>
                     <a class="nav-link active" href="users.php">
                         <i class="fas fa-user-cog me-2"></i>Quản lý người dùng
                     </a>
+                    <?php endif; ?>
+                    
+                    <a class="nav-link" href="profile.php">
+                        <i class="fas fa-user me-2"></i>Thông tin cá nhân
+                    </a>
+                    
                     <a class="nav-link" href="logout.php">
                         <i class="fas fa-sign-out-alt me-2"></i>Đăng xuất
                     </a>

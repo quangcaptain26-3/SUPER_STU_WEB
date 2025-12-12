@@ -140,6 +140,17 @@ $students = $studentController->getAllStudents('', 1000, 0);
                     <a class="nav-link" href="../charts/statistics.php">
                         <i class="fas fa-chart-bar me-2"></i>Thống kê
                     </a>
+                    
+                    <?php if (canAccess(PERMISSION_MANAGE_USERS)): ?>
+                    <a class="nav-link" href="../public/users.php">
+                        <i class="fas fa-user-cog me-2"></i>Quản lý người dùng
+                    </a>
+                    <?php endif; ?>
+                    
+                    <a class="nav-link" href="../public/profile.php">
+                        <i class="fas fa-user me-2"></i>Thông tin cá nhân
+                    </a>
+                    
                     <a class="nav-link" href="../public/logout.php">
                         <i class="fas fa-sign-out-alt me-2"></i>Đăng xuất
                     </a>
@@ -237,9 +248,17 @@ $students = $studentController->getAllStudents('', 1000, 0);
                                     <tbody>
                                         <?php if (empty($scores)): ?>
                                             <tr>
-                                                <td colspan="8" class="text-center py-4">
-                                                    <i class="fas fa-chart-line fa-3x text-muted mb-3"></i>
-                                                    <p class="text-muted">Không có điểm số nào</p>
+                                                <td colspan="8" class="text-center py-5">
+                                                    <div class="empty-state">
+                                                        <i class="fas fa-chart-line fa-4x text-muted mb-3 d-block"></i>
+                                                        <h5 class="text-muted mb-2">Chưa có điểm số nào</h5>
+                                                        <p class="text-muted mb-3">Hãy thêm điểm cho sinh viên để bắt đầu quản lý!</p>
+                                                        <?php if (hasPermission(PERMISSION_ADD_SCORES)): ?>
+                                                            <a href="add.php" class="btn btn-primary">
+                                                                <i class="fas fa-plus me-2"></i>Thêm điểm đầu tiên
+                                                            </a>
+                                                        <?php endif; ?>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         <?php else: ?>

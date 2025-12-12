@@ -105,6 +105,17 @@ $totalPages = ceil($totalStudents / $limit);
             padding: 5px 10px;
             margin: 2px;
             border-radius: 5px;
+            transition: all 0.2s;
+        }
+        .btn-action:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .empty-state {
+            padding: 2rem;
+        }
+        .empty-state i {
+            opacity: 0.5;
         }
 
         .search-box {
@@ -151,6 +162,17 @@ $totalPages = ceil($totalStudents / $limit);
                     <a class="nav-link" href="../charts/statistics.php">
                         <i class="fas fa-chart-bar me-2"></i>Thống kê
                     </a>
+                    
+                    <?php if (canAccess(PERMISSION_MANAGE_USERS)): ?>
+                    <a class="nav-link" href="../public/users.php">
+                        <i class="fas fa-user-cog me-2"></i>Quản lý người dùng
+                    </a>
+                    <?php endif; ?>
+                    
+                    <a class="nav-link" href="../public/profile.php">
+                        <i class="fas fa-user me-2"></i>Thông tin cá nhân
+                    </a>
+                    
                     <a class="nav-link" href="../public/logout.php">
                         <i class="fas fa-sign-out-alt me-2"></i>Đăng xuất
                     </a>
@@ -235,9 +257,23 @@ $totalPages = ceil($totalStudents / $limit);
                                         <?php // Nếu không có sinh viên nào, hiển thị thông báo ?>
                                         <?php if (empty($students)): ?>
                                             <tr>
-                                                <td colspan="9" class="text-center py-4">
-                                                    <i class="fas fa-users fa-3x text-muted mb-3"></i>
-                                                    <p class="text-muted">Không tìm thấy sinh viên nào.</p>
+                                                <td colspan="9" class="text-center py-5">
+                                                    <div class="empty-state">
+                                                        <i class="fas fa-users fa-4x text-muted mb-3 d-block"></i>
+                                                        <h5 class="text-muted mb-2">Không tìm thấy sinh viên nào</h5>
+                                                        <p class="text-muted mb-3">
+                                                            <?php if ($search): ?>
+                                                                Không có kết quả phù hợp với từ khóa "<strong><?php echo htmlspecialchars($search); ?></strong>"
+                                                            <?php else: ?>
+                                                                Hệ thống chưa có sinh viên nào. Hãy thêm sinh viên mới!
+                                                            <?php endif; ?>
+                                                        </p>
+                                                        <?php if (!$search && hasPermission(PERMISSION_ADD_STUDENTS)): ?>
+                                                            <a href="add.php" class="btn btn-primary">
+                                                                <i class="fas fa-plus me-2"></i>Thêm sinh viên đầu tiên
+                                                            </a>
+                                                        <?php endif; ?>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         <?php else: ?>
@@ -272,25 +308,36 @@ $totalPages = ceil($totalStudents / $limit);
                                                     <td><?php echo htmlspecialchars($student['email']); ?></td>
                                                     <td><?php echo htmlspecialchars($student['phone']); ?></td>
                                                     <td>
-                                                        <?php // Nút Xem luôn hiển thị cho người có quyền xem ?>
-                                                        <a href="view.php?id=<?php echo $student['id']; ?>"
-                                                            class="btn btn-sm btn-outline-info btn-action" title="Xem">
-                                                            <i class="fas fa-eye"></i>
-                                                        </a>
-                                                        <?php // Kiểm tra quyền sửa ?>
-                                                        <?php if (hasPermission(PERMISSION_EDIT_STUDENTS)): ?>
-                                                            <a href="edit.php?id=<?php echo $student['id']; ?>"
-                                                                class="btn btn-sm btn-outline-primary btn-action" title="Sửa">
-                                                                <i class="fas fa-edit"></i>
+                                                        <div class="btn-group" role="group">
+                                                            <?php // Nút Xem luôn hiển thị cho người có quyền xem ?>
+                                                            <a href="view.php?id=<?php echo $student['id']; ?>"
+                                                                class="btn btn-sm btn-outline-info btn-action" 
+                                                                title="Xem chi tiết"
+                                                                data-bs-toggle="tooltip"
+                                                                data-bs-placement="top">
+                                                                <i class="fas fa-eye"></i>
                                                             </a>
-                                                        <?php endif; ?>
-                                                        <?php // Kiểm tra quyền xóa ?>
-                                                        <?php if (hasPermission(PERMISSION_DELETE_STUDENTS)): ?>
-                                                            <button onclick="deleteStudent(<?php echo $student['id']; ?>)"
-                                                                class="btn btn-sm btn-outline-danger btn-action" title="Xóa">
-                                                                <i class="fas fa-trash"></i>
-                                                            </button>
-                                                        <?php endif; ?>
+                                                            <?php // Kiểm tra quyền sửa ?>
+                                                            <?php if (hasPermission(PERMISSION_EDIT_STUDENTS)): ?>
+                                                                <a href="edit.php?id=<?php echo $student['id']; ?>"
+                                                                    class="btn btn-sm btn-outline-primary btn-action" 
+                                                                    title="Sửa thông tin"
+                                                                    data-bs-toggle="tooltip"
+                                                                    data-bs-placement="top">
+                                                                    <i class="fas fa-edit"></i>
+                                                                </a>
+                                                            <?php endif; ?>
+                                                            <?php // Kiểm tra quyền xóa ?>
+                                                            <?php if (hasPermission(PERMISSION_DELETE_STUDENTS)): ?>
+                                                                <button onclick="deleteStudent(<?php echo $student['id']; ?>)"
+                                                                    class="btn btn-sm btn-outline-danger btn-action" 
+                                                                    title="Xóa sinh viên"
+                                                                    data-bs-toggle="tooltip"
+                                                                    data-bs-placement="top">
+                                                                    <i class="fas fa-trash"></i>
+                                                                </button>
+                                                            <?php endif; ?>
+                                                        </div>
                                                     </td>
                                                 </tr>
                                             <?php endforeach; ?>
