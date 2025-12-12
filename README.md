@@ -32,6 +32,7 @@
 - **Upload Avatar**: Tải và hiển thị ảnh đại diện cho sinh viên.
 - **Tìm kiếm & Phân trang**: Tìm kiếm thông minh và phân trang hiệu quả cho danh sách.
 - **Xếp loại tự động**: Tự động tính và hiển thị xếp loại (A, B, C...) dựa trên điểm số.
+- **Điều khoản sử dụng "bất ngờ"**: Trải nghiệm đăng ký độc đáo với điều khoản sử dụng kết hợp nghiêm túc, hài hước và một yếu tố "gây sốc" khó quên.
 
 ### 🔐 **Hệ thống phân quyền (RBAC - Role-Based Access Control)**
 - **4 cấp độ vai trò**: Super Admin > Admin > Teacher > Student.

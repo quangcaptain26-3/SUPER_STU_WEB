@@ -127,6 +127,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         .strength-fair { background: #ffc107; width: 50%; }
         .strength-good { background: #17a2b8; width: 75%; }
         .strength-strong { background: #28a745; width: 100%; }
+        .modal-body .ratio {
+            --bs-aspect-ratio: 56.25%; /* 16:9 */
+        }
     </style>
 </head>
 <body>
@@ -206,7 +209,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                             <div class="mb-3 form-check">
                                 <input type="checkbox" class="form-check-input" id="agree" required>
                                 <label class="form-check-label" for="agree">
-                                    Tôi đồng ý với <a href="#" class="text-decoration-none">điều khoản sử dụng</a>
+                                    Tôi đồng ý với <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#termsModal">điều khoản sử dụng</a>
                                 </label>
                             </div>
                             
@@ -224,6 +227,56 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                             </p>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Điều khoản sử dụng -->
+    <div class="modal fade" id="termsModal" tabindex="-1" aria-labelledby="termsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="termsModalLabel">📜 Điều Khoản Và Điều Kiện Sử Dụng Dịch Vụ 📜</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="terms-text">
+                        <p><strong>Chào mừng đến với Hệ Thống Quản Lý Sinh Viên "Super STU"!</strong></p>
+                        <p>Vui lòng đọc kỹ các điều khoản dưới đây trước khi tạo tài khoản. Việc bạn nhấn "Đồng ý" đồng nghĩa với việc bạn chấp nhận toàn bộ các quy định được liệt kê.</p>
+                        
+                        <h6>Điều 1: Định nghĩa "Người Dùng"</h6>
+                        <p>"Người Dùng" là bạn, người đang đọc những dòng này, và sắp tới sẽ là một thành viên của cộng đồng chúng tôi. "Chúng tôi" là những người đã tạo ra hệ thống này và có quyền năng vô hạn (trong phạm vi hệ thống).</p>
+
+                        <h6>Điều 2: Bảo mật tài khoản</h6>
+                        <p>2.1. Bạn có trách nhiệm giữ bí mật tuyệt đối mật khẩu của mình. Không chia sẻ cho bất kỳ ai, kể cả "bạn thân" hay "người yêu". Chúng tôi không chịu trách nhiệm nếu "gấu" của bạn vào xem điểm và gây ra chiến tranh.</p>
+                        <p>2.2. Nếu phát hiện tài khoản bị xâm nhập, hãy giữ bình tĩnh, pha một tách trà, và sau đó thông báo cho chúng tôi. Chúng tôi sẽ xử lý... vào một ngày đẹp trời.</p>
+
+                        <h6>Điều 3: Quy định về nội dung</h6>
+                        <p>3.1. Nghiêm cấm sử dụng hệ thống để đăng tải các nội dung vi phạm pháp luật, thuần phong mỹ tục, hoặc các meme quá "cháy".</p>
+                        <p>3.2. Chúng tôi có quyền (nhưng không có nghĩa vụ) xóa bất kỳ nội dung nào mà chúng tôi cho là không phù hợp, chẳng hạn như hình ảnh dìm hàng giảng viên.</p>
+
+                        <h6>Điều 4: Quyền sở hữu trí tuệ</h6>
+                        <p>Toàn bộ mã nguồn, thiết kế, và cả những "tính năng" (bug) của hệ thống này là tài sản trí tuệ của chúng tôi. Mọi hành vi sao chép mà không ghi nguồn đều sẽ bị... nhắc nhở nhẹ nhàng.</p>
+                        
+                        <hr>
+                        <p class="text-center fw-bold">Để hoàn tất, vui lòng xác nhận bạn đã đọc, hiểu, và sẵn sàng cho một cam kết quan trọng.</p>
+                        <div class="d-grid gap-2">
+                           <button class="btn btn-primary" type="button" id="reveal-button">Tôi xác nhận đã đọc và sẵn sàng cam kết</button>
+                        </div>
+                    </div>
+
+                    <div id="rick-roll-container" class="text-center" style="display: none;">
+                        <h6>Điều 5: Cam kết cuối cùng</h6>
+                        <p>Cam kết của bạn là... không bao giờ từ bỏ điều này!</p>
+                        <div class="ratio ratio-16x9">
+                            <iframe src="" data-src="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1" title="Rick Astley - Never Gonna Give You Up" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                        </div>
+                        <p class="mt-3">Chúc mừng! Bạn đã chính thức gia nhập cuộc chơi. Giờ thì quay lại đăng ký đi nhé!</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
                 </div>
             </div>
         </div>
@@ -304,6 +357,33 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         
         // Tự động focus vào trường đầu tiên khi trang load
         document.getElementById('username').focus();
+
+        // Xử lý modal điều khoản
+        const termsModal = document.getElementById('termsModal');
+        const termsText = document.getElementById('terms-text');
+        const rickRollContainer = document.getElementById('rick-roll-container');
+        const videoFrame = rickRollContainer.querySelector('iframe');
+        const revealButton = document.getElementById('reveal-button');
+        const videoSrc = videoFrame.dataset.src;
+
+        // Khi modal được mở, reset về trạng thái ban đầu
+        termsModal.addEventListener('show.bs.modal', function () {
+            termsText.style.display = 'block';
+            rickRollContainer.style.display = 'none';
+            videoFrame.setAttribute('src', '');
+        });
+
+        // Khi người dùng nhấn nút cam kết
+        revealButton.addEventListener('click', function() {
+            termsText.style.display = 'none';
+            rickRollContainer.style.display = 'block';
+            videoFrame.setAttribute('src', videoSrc);
+        });
+
+        // Khi modal đóng, dừng video
+        termsModal.addEventListener('hidden.bs.modal', function () {
+            videoFrame.setAttribute('src', '');
+        });
     </script>
 </body>
 </html>
