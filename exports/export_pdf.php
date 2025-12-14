@@ -69,10 +69,9 @@ $pdf->AddPage();
 // --- XÂY DỰNG NỘI DUNG HTML ---
 // Bắt đầu xây dựng một chuỗi HTML sẽ được render thành PDF.
 $html = '<style>
-            table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-            th, td { border: 1px solid #333; padding: 6px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 10px; table-layout: fixed; }
+            th, td { border: 1px solid #333; padding: 4px; font-size: 9pt; word-wrap: break-word; }
             th { background-color: #e0e0e0; font-weight: bold; }
-            td { font-size: 9pt; }
             h1 { text-align: center; margin-bottom: 10px; font-size: 16pt; }
             p { margin: 5px 0; font-size: 10pt; }
         </style>';
@@ -85,15 +84,15 @@ if ($type == 'students') {
     
     $html .= '<h1>DANH SÁCH SINH VIÊN</h1>';
     $html .= '<p style="margin-bottom: 10px;"><strong>Ngày xuất:</strong> ' . date('d/m/Y') . ' lúc ' . date('H:i:s') . '</p>';
-    $html .= '<table cellpadding="5" cellspacing="0">
+    $html .= '<table border="1" cellpadding="4" cellspacing="0" style="width: 180mm;">
                 <thead>
                     <tr>
-                        <th width="8%" style="text-align: center;">STT</th>
-                        <th width="12%" style="text-align: center;">Mã SV</th>
-                        <th width="28%" style="text-align: left;">Họ tên</th>
-                        <th width="15%" style="text-align: center;">Ngày sinh</th>
-                        <th width="10%" style="text-align: center;">Giới tính</th>
-                        <th width="27%" style="text-align: left;">Email</th>
+                        <th style="width: 12mm; text-align: center; background-color: #e0e0e0;">STT</th>
+                        <th style="width: 22mm; text-align: center; background-color: #e0e0e0;">Mã SV</th>
+                        <th style="width: 50mm; text-align: left; background-color: #e0e0e0;">Họ tên</th>
+                        <th style="width: 28mm; text-align: center; background-color: #e0e0e0;">Ngày sinh</th>
+                        <th style="width: 18mm; text-align: center; background-color: #e0e0e0;">Giới tính</th>
+                        <th style="width: 50mm; text-align: left; background-color: #e0e0e0;">Email</th>
                     </tr>
                 </thead>
                 <tbody>';
@@ -101,12 +100,12 @@ if ($type == 'students') {
     foreach ($students as $index => $student) {
         $genderText = ($student['gender'] == 'male') ? 'Nam' : (($student['gender'] == 'female') ? 'Nữ' : 'Khác');
         $html .= '<tr>
-                    <td style="text-align: center;">' . ($index + 1) . '</td>
-                    <td style="text-align: center;">' . htmlspecialchars($student['msv']) . '</td>
-                    <td style="text-align: left;">' . htmlspecialchars($student['fullname']) . '</td>
-                    <td style="text-align: center;">' . formatDate($student['dob']) . '</td>
-                    <td style="text-align: center;">' . $genderText . '</td>
-                    <td style="text-align: left;">' . htmlspecialchars($student['email']) . '</td>
+                    <td style="width: 12mm; text-align: center;">' . ($index + 1) . '</td>
+                    <td style="width: 22mm; text-align: center;">' . htmlspecialchars($student['msv']) . '</td>
+                    <td style="width: 50mm; text-align: left;">' . htmlspecialchars($student['fullname']) . '</td>
+                    <td style="width: 28mm; text-align: center;">' . formatDate($student['dob']) . '</td>
+                    <td style="width: 18mm; text-align: center;">' . $genderText . '</td>
+                    <td style="width: 50mm; text-align: left;">' . htmlspecialchars($student['email']) . '</td>
                 </tr>';
     }
     
@@ -130,16 +129,16 @@ if ($type == 'students') {
         $html .= '<p style="margin-bottom: 10px;"><strong>Học kỳ:</strong> ' . htmlspecialchars($semester) . '</p>';
     }
 
-    $html .= '<table cellpadding="5" cellspacing="0">
+    $html .= '<table border="1" cellpadding="4" cellspacing="0" style="width: 180mm;">
                 <thead>
                     <tr>
-                        <th width="7%" style="text-align: center;">STT</th>
-                        <th width="12%" style="text-align: center;">Mã SV</th>
-                        <th width="25%" style="text-align: left;">Họ tên</th>
-                        <th width="20%" style="text-align: left;">Môn học</th>
-                        <th width="10%" style="text-align: center;">Điểm</th>
-                        <th width="13%" style="text-align: center;">Học kỳ</th>
-                        <th width="13%" style="text-align: center;">Xếp loại</th>
+                        <th style="width: 12mm; text-align: center; background-color: #e0e0e0;">STT</th>
+                        <th style="width: 22mm; text-align: center; background-color: #e0e0e0;">Mã SV</th>
+                        <th style="width: 42mm; text-align: left; background-color: #e0e0e0;">Họ tên</th>
+                        <th style="width: 38mm; text-align: left; background-color: #e0e0e0;">Môn học</th>
+                        <th style="width: 18mm; text-align: center; background-color: #e0e0e0;">Điểm</th>
+                        <th style="width: 24mm; text-align: center; background-color: #e0e0e0;">Học kỳ</th>
+                        <th style="width: 24mm; text-align: center; background-color: #e0e0e0;">Xếp loại</th>
                     </tr>
                 </thead>
                 <tbody>';
@@ -155,13 +154,13 @@ if ($type == 'students') {
         else $grade = 'D';
         
         $html .= '<tr>
-                    <td style="text-align: center;">' . ($index + 1) . '</td>
-                    <td style="text-align: center;">' . htmlspecialchars($score['msv']) . '</td>
-                    <td style="text-align: left;">' . htmlspecialchars($score['fullname']) . '</td>
-                    <td style="text-align: left;">' . htmlspecialchars($score['subject']) . '</td>
-                    <td style="text-align: center;">' . $score['score'] . '</td>
-                    <td style="text-align: center;">' . htmlspecialchars($score['semester']) . '</td>
-                    <td style="text-align: center;">' . $grade . '</td>
+                    <td style="width: 12mm; text-align: center;">' . ($index + 1) . '</td>
+                    <td style="width: 22mm; text-align: center;">' . htmlspecialchars($score['msv']) . '</td>
+                    <td style="width: 42mm; text-align: left;">' . htmlspecialchars($score['fullname']) . '</td>
+                    <td style="width: 38mm; text-align: left;">' . htmlspecialchars($score['subject']) . '</td>
+                    <td style="width: 18mm; text-align: center;">' . $score['score'] . '</td>
+                    <td style="width: 24mm; text-align: center;">' . htmlspecialchars($score['semester']) . '</td>
+                    <td style="width: 24mm; text-align: center;">' . $grade . '</td>
                 </tr>';
     }
 
