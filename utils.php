@@ -198,7 +198,7 @@ function requireRole($role)
     requireLogin();
     if (!hasRole($role)) {
         $_SESSION['error'] = 'Bạn không có quyền truy cập trang này';
-        header('Location: ../public/index.php?error=access_denied');
+        header('Location: index.php?error=access_denied');
         exit();
     }
 }
@@ -213,7 +213,7 @@ function requirePermission($permission)
     requireLogin();
     if (!hasPermission($permission)) {
         $_SESSION['error'] = 'Bạn không có quyền thực hiện hành động này';
-        header('Location: ../public/index.php?error=permission_denied');
+        header('Location: index.php?error=permission_denied');
         exit();
     }
 }

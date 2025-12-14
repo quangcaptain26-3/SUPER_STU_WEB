@@ -29,7 +29,7 @@ class PermissionMiddleware {
             // Nếu không có quyền, đặt một thông báo lỗi vào session để có thể hiển thị ở trang chủ.
             $_SESSION['error'] = 'Bạn không có quyền truy cập trang này.';
             // Gửi header chuyển hướng người dùng về trang chủ.
-            header('Location: ../public/index.php?error=access_denied');
+            header('Location: index.php?error=access_denied');
             // Dừng script ngay lập tức.
             exit();
         }
@@ -60,7 +60,7 @@ class PermissionMiddleware {
         // Sử dụng hàm `hasRole` từ `utils.php`.
         if (!hasRole($requiredRole)) {
             $_SESSION['error'] = 'Vai trò của bạn không đủ để truy cập trang này.';
-            header('Location: ../public/index.php?error=role_denied');
+            header('Location: index.php?error=role_denied');
             exit();
         }
     }

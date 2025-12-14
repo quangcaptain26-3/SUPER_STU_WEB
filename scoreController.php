@@ -176,7 +176,13 @@ class ScoreController
         $stats = [];
 
         // 1. Thống kê điểm trung bình và số lượng bài thi theo từng môn học.
-        $query1 = "SELECT subject, AVG(score) as avg_score, COUNT(*) as count 
+        // Tương đương với VIEW subject_statistics đã bị xóa
+        $query1 = "SELECT subject, 
+                          COUNT(*) as count, 
+                          COUNT(*) as student_count, 
+                          AVG(score) as avg_score, 
+                          MAX(score) as highest_score, 
+                          MIN(score) as lowest_score 
                    FROM scores 
                    GROUP BY subject 
                    ORDER BY avg_score DESC";
@@ -185,7 +191,12 @@ class ScoreController
         $stats['by_subject'] = $stmt1->fetchAll(PDO::FETCH_ASSOC);
 
         // 2. Thống kê điểm trung bình và số lượng bài thi theo từng học kỳ.
-        $query2 = "SELECT semester, AVG(score) as avg_score, COUNT(*) as count 
+        // Tương đương với VIEW semester_statistics đã bị xóa
+        $query2 = "SELECT semester, 
+                          COUNT(*) as count, 
+                          COUNT(*) as score_count, 
+                          AVG(score) as avg_score, 
+                          COUNT(DISTINCT student_id) as student_count 
                    FROM scores 
                    GROUP BY semester 
                    ORDER BY semester DESC";
@@ -246,5 +257,29 @@ class ScoreController
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
         // `round()`: Làm tròn kết quả đến 2 chữ số thập phân.
         return round($result['avg_score'] ?? 0, 2);
+    }
+
+    /**
+     * Lấy thống kê tổng hợp điểm số của một sinh viên.
+     * Tương đương với VIEW student_scores_summary đã bị xóa.
+     * @param int $studentId ID của sinh viên.
+     * @return array|false Mảng chứa thống kê hoặc false nếu không tìm thấy.
+     */
+    public function getStudentScoresSummary($studentId)
+    {
+        $query = "SELECT s.id, s.msv, s.fullname, 
+                         COUNT(sc.id) as total_scores, 
+                         AVG(sc.score) as average_score, 
+                         MAX(sc.score) as highest_score, 
+                         MIN(sc.score) as lowest_score 
+                  FROM students s 
+                  LEFT JOIN scores sc ON s.id = sc.student_id 
+                  WHERE s.id = :student_id 
+                  GROUP BY s.id, s.msv, s.fullname";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':student_id', $studentId);
+        $stmt->execute();
+        
+        return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 }

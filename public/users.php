@@ -166,7 +166,7 @@ $users = $authController->getAllUsers();
                 </div>
                 
                 <nav class="nav flex-column px-3">
-                    <a class="nav-link" href="index.php">
+                    <a class="nav-link" href="../index.php">
                         <i class="fas fa-home me-2"></i>Trang chủ
                     </a>
                     <a class="nav-link" href="../students/list.php">

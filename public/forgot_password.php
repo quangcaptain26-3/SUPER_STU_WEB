@@ -10,7 +10,7 @@ require_once '../utils.php';
 // Nếu đã đăng nhập thì chuyển hướng về trang chủ (không cần quên mật khẩu)
 if (isLoggedIn()) {
     // Chuyển hướng về trang chủ
-    header('Location: index.php');
+    header('Location: ../index.php');
     // Dừng thực thi script
     exit();
 }

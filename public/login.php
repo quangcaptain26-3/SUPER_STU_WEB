@@ -12,7 +12,7 @@ require_once '../utils.php';         // Nạp file chứa các hàm tiện ích 
 // Nếu người dùng đã đăng nhập rồi (hàm `isLoggedIn` trả về true), không cho phép họ xem lại trang login.
 if (isLoggedIn()) {
     // Gửi header chuyển hướng trình duyệt đến trang chủ (Dashboard).
-    header('Location: index.php');
+    header('Location: ../index.php');
     // Dừng thực thi script ngay lập tức để đảm bảo không có code nào khác được chạy sau khi chuyển hướng.
     exit();
 }
@@ -47,7 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         if ($result['success']) {
             // Nếu đăng nhập thành công (`success` là true).
             // Chuyển hướng người dùng đến trang chủ.
-            header('Location: index.php');
+            header('Location: ../index.php');
             // Dừng script.
             exit();
         } else {

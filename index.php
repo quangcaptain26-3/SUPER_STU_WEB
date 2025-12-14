@@ -2,13 +2,13 @@
 // Bắt đầu hoặc tiếp tục phiên làm việc để truy cập dữ liệu session.
 session_start();
 // Nạp file tiện ích chứa các hàm kiểm tra đăng nhập và phân quyền.
-require_once '../utils.php';
+require_once 'utils.php';
 
 // --- BẢO VỆ TRANG: YÊU CẦU ĐĂNG NHẬP ---
 // Kiểm tra xem người dùng đã đăng nhập hay chưa bằng cách kiểm tra sự tồn tại của `$_SESSION['user_id']`.
 if (!isLoggedIn()) {
     // Nếu chưa đăng nhập, chuyển hướng người dùng về trang login.
-    header('Location: login.php');
+    header('Location: public/login.php');
     // Dừng thực thi script ngay lập tức.
     exit();
 }
@@ -98,29 +98,29 @@ $username = $_SESSION['username'];
                         <i class="fas fa-home me-2"></i>Trang chủ
                     </a>
                     
-                    <a class="nav-link" href="../students/list.php">
+                    <a class="nav-link" href="students/list.php">
                         <i class="fas fa-users me-2"></i>Quản lý sinh viên
                     </a>
                     
-                    <a class="nav-link" href="../scores/list.php">
+                    <a class="nav-link" href="scores/list.php">
                         <i class="fas fa-chart-line me-2"></i>Quản lý điểm
                     </a>
                     
-                    <a class="nav-link" href="../charts/statistics.php">
+                    <a class="nav-link" href="charts/statistics.php">
                         <i class="fas fa-chart-bar me-2"></i>Thống kê
                     </a>
                     
                     <?php if (canAccess(PERMISSION_MANAGE_USERS)): ?>
-                    <a class="nav-link" href="users.php">
+                    <a class="nav-link" href="public/users.php">
                         <i class="fas fa-user-cog me-2"></i>Quản lý người dùng
                     </a>
                     <?php endif; ?>
                     
-                    <a class="nav-link" href="profile.php">
+                    <a class="nav-link" href="public/profile.php">
                         <i class="fas fa-user me-2"></i>Thông tin cá nhân
                     </a>
                     
-                    <a class="nav-link" href="logout.php">
+                    <a class="nav-link" href="public/logout.php">
                         <i class="fas fa-sign-out-alt me-2"></i>Đăng xuất
                     </a>
                 </nav>
@@ -246,7 +246,7 @@ $username = $_SESSION['username'];
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Nạp các file JS tùy chỉnh của dự án -->
-    <script src="../assets/js/realtime.js"></script>
+    <script src="assets/js/realtime.js"></script>
     <script>
         // Hiển thị thứ ngày tháng hiện tại
         function updateCurrentDate() {
@@ -268,7 +268,7 @@ $username = $_SESSION['username'];
         // --- TẢI DỮ LIỆU BẤT ĐỒNG BỘ VÀ VẼ BIỂU ĐỒ ---
         // Sử dụng `fetch API` của trình duyệt để gửi một request GET đến API thống kê.
         // Đây là cách tiếp cận hiện đại để lấy dữ liệu mà không cần tải lại trang.
-        fetch('../charts/api/statistics.php')
+        fetch('charts/api/statistics.php')
             .then(response => response.json()) // Sau khi nhận được response, chuyển đổi nó từ chuỗi JSON thành đối tượng JavaScript.
             .then(data => { // `data` lúc này là một đối tượng JS chứa toàn bộ thông tin thống kê.
                 // 1. Cập nhật các thẻ thống kê nhanh.
