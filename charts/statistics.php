@@ -6,16 +6,22 @@ require_once '../utils.php'; // Chứa các hàm tiện ích, hằng số và ki
 require_once '../studentController.php'; // Lớp xử lý logic cho sinh viên
 require_once '../scoreController.php'; // Lớp xử lý logic cho điểm
 
-// Yêu cầu quyền xem thống kê, nếu không có sẽ dừng
-requirePermission(PERMISSION_VIEW_STATISTICS);
+// Kiểm tra đăng nhập
+requireLogin();
 
-// Khởi tạo các đối tượng controller
-$studentController = new StudentController();
-$scoreController = new ScoreController();
+// Kiểm tra quyền xem thống kê - nếu không có quyền, hiển thị thông báo thân thiện
+$hasPermission = hasPermission(PERMISSION_VIEW_STATISTICS);
 
-// Lấy dữ liệu thống kê từ controller
-$studentStats = $studentController->getStatistics();
-$scoreStats = $scoreController->getScoreStatistics();
+// Chỉ lấy dữ liệu nếu có quyền
+if ($hasPermission) {
+    // Khởi tạo các đối tượng controller
+    $studentController = new StudentController();
+    $scoreController = new ScoreController();
+
+    // Lấy dữ liệu thống kê từ controller
+    $studentStats = $studentController->getStatistics();
+    $scoreStats = $scoreController->getScoreStatistics();
+}
 ?>
 <!DOCTYPE html>
 <html lang="vi">
@@ -28,21 +34,34 @@ $scoreStats = $scoreController->getScoreStatistics();
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <!-- CSS nội bộ để tùy chỉnh giao diện -->
     <style>
-        .sidebar {
+        .sidebar, .offcanvas-sidebar {
             min-height: 100vh; /* Chiều cao tối thiểu bằng chiều cao màn hình */
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); /* Nền gradient */
         }
-        .sidebar .nav-link {
+        .sidebar .nav-link, .offcanvas-sidebar .nav-link {
             color: rgba(255,255,255,0.8); /* Màu chữ cho link */
             padding: 12px 20px;
             border-radius: 8px; /* Bo góc */
             margin: 2px 0;
             transition: all 0.3s; /* Hiệu ứng chuyển động */
         }
-        .sidebar .nav-link:hover, .sidebar .nav-link.active {
+        .sidebar .nav-link:hover, .sidebar .nav-link.active,
+        .offcanvas-sidebar .nav-link:hover, .offcanvas-sidebar .nav-link.active {
             color: white; /* Màu chữ khi hover hoặc active */
             background: rgba(255,255,255,0.2); /* Nền khi hover hoặc active */
             transform: translateX(5px); /* Dịch chuyển sang phải một chút */
+        }
+        .menu-toggle {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 5px;
+            font-size: 1.2rem;
+        }
+        .menu-toggle:hover {
+            background: linear-gradient(135deg, #5568d3 0%, #653a8f 100%);
+            color: white;
         }
         .main-content {
             background-color: #f8f9fa; /* Màu nền cho nội dung chính */
@@ -80,8 +99,8 @@ $scoreStats = $scoreController->getScoreStatistics();
 <body>
     <div class="container-fluid">
         <div class="row">
-            <!-- Sidebar (Thanh điều hướng bên trái) -->
-            <div class="col-md-3 col-lg-2 sidebar p-0">
+            <!-- Sidebar Desktop (ẩn trên mobile, hiện từ md trở lên) -->
+            <div class="col-md-3 col-lg-2 sidebar p-0 d-none d-md-block">
                 <div class="p-3">
                     <h4 class="text-white mb-4">
                         <i class="fas fa-graduation-cap me-2"></i>
@@ -131,13 +150,36 @@ $scoreStats = $scoreController->getScoreStatistics();
             <div class="col-md-9 col-lg-10 main-content">
                 <div class="p-4">
                     <div class="d-flex justify-content-between align-items-center mb-4">
-                        <h2><i class="fas fa-chart-bar me-2"></i>Thống kê tổng quan</h2>
+                        <div class="d-flex align-items-center gap-3">
+                            <!-- Button hamburger chỉ hiện trên mobile -->
+                            <button class="btn menu-toggle d-md-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileSidebar" aria-controls="mobileSidebar">
+                                <i class="fas fa-bars"></i>
+                            </button>
+                            <h2 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Thống kê tổng quan</h2>
+                        </div>
                         <div class="text-muted">
                             <i class="fas fa-calendar me-1"></i>
                             <?php echo date('d/m/Y H:i'); // Hiển thị ngày giờ hiện tại ?>
                         </div>
                     </div>
                     
+                    <?php if (!$hasPermission): ?>
+                    <!-- Thông báo không có quyền truy cập -->
+                    <div class="card">
+                        <div class="card-body text-center py-5">
+                            <div class="mb-4">
+                                <i class="fas fa-lock fa-5x text-muted mb-3"></i>
+                            </div>
+                            <h3 class="text-muted mb-3">Bạn không được xem trang này</h3>
+                            <p class="text-muted mb-4">
+                                Bạn không có quyền truy cập vào trang thống kê. Vui lòng liên hệ quản trị viên nếu bạn cần quyền truy cập.
+                            </p>
+                            <a href="../index.php" class="btn btn-primary">
+                                <i class="fas fa-arrow-left me-2"></i>Quay về trang chủ
+                            </a>
+                        </div>
+                    </div>
+                    <?php else: ?>
                     <!-- Các card thống kê nhanh -->
                     <div class="row mb-4">
                         <div class="col-md-3 mb-3">
@@ -340,13 +382,65 @@ $scoreStats = $scoreController->getScoreStatistics();
                             </div>
                         </div>
                     </div>
+                    <?php endif; // Kết thúc kiểm tra quyền ?>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- Offcanvas Sidebar cho Mobile -->
+    <div class="offcanvas offcanvas-start offcanvas-sidebar" tabindex="-1" id="mobileSidebar" aria-labelledby="mobileSidebarLabel">
+        <div class="offcanvas-header">
+            <h5 class="offcanvas-title text-white" id="mobileSidebarLabel">
+                <i class="fas fa-graduation-cap me-2"></i>
+                Student Management
+            </h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </div>
+        <div class="offcanvas-body p-0">
+            <div class="p-3">
+                <div class="text-white-50 mb-3">
+                    <i class="fas fa-user me-2"></i>
+                    <?php echo htmlspecialchars($_SESSION['username']); ?>
+                    <span class="badge bg-light text-dark ms-2"><?php echo ucfirst($_SESSION['role']); ?></span>
+                </div>
+            </div>
+            
+            <nav class="nav flex-column px-3">
+                <a class="nav-link" href="../index.php" data-bs-dismiss="offcanvas">
+                    <i class="fas fa-home me-2"></i>Trang chủ
+                </a>
+                <a class="nav-link" href="../students/list.php" data-bs-dismiss="offcanvas">
+                    <i class="fas fa-users me-2"></i>Quản lý sinh viên
+                </a>
+                <a class="nav-link" href="../scores/list.php" data-bs-dismiss="offcanvas">
+                    <i class="fas fa-chart-line me-2"></i>Quản lý điểm
+                </a>
+                <a class="nav-link active" href="statistics.php" data-bs-dismiss="offcanvas">
+                    <i class="fas fa-chart-bar me-2"></i>Thống kê
+                </a>
+                
+                <?php // Chỉ Super Admin mới có quyền quản lý người dùng. ?>
+                <?php if (canAccess(PERMISSION_MANAGE_USERS)): ?>
+                <a class="nav-link" href="../public/users.php" data-bs-dismiss="offcanvas">
+                    <i class="fas fa-user-cog me-2"></i>Quản lý người dùng
+                </a>
+                <?php endif; ?>
+                
+                <a class="nav-link" href="../public/profile.php" data-bs-dismiss="offcanvas">
+                    <i class="fas fa-user me-2"></i>Thông tin cá nhân
+                </a>
+                
+                <a class="nav-link" href="../public/logout.php" data-bs-dismiss="offcanvas">
+                    <i class="fas fa-sign-out-alt me-2"></i>Đăng xuất
+                </a>
+            </nav>
+        </div>
+    </div>
+
     <!-- Nạp các thư viện JavaScript -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <?php if ($hasPermission): ?>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         // --- Vẽ các biểu đồ bằng Chart.js ---
@@ -505,5 +599,6 @@ $scoreStats = $scoreController->getScoreStatistics();
             }
         });
     </script>
+    <?php endif; // Kết thúc kiểm tra quyền cho JavaScript ?>
 </body>
 </html>
