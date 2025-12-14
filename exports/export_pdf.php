@@ -69,10 +69,12 @@ $pdf->AddPage();
 // --- XÂY DỰNG NỘI DUNG HTML ---
 // Bắt đầu xây dựng một chuỗi HTML sẽ được render thành PDF.
 $html = '<style>
-            table { width: 100%; border-collapse: collapse; }
-            th, td { border: 1px solid #ddd; padding: 8px; }
-            th { background-color: #f2f2f2; font-weight: bold; text-align: center; }
-            h1 { text-align: center; }
+            table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+            th, td { border: 1px solid #333; padding: 6px; }
+            th { background-color: #e0e0e0; font-weight: bold; }
+            td { font-size: 9pt; }
+            h1 { text-align: center; margin-bottom: 10px; font-size: 16pt; }
+            p { margin: 5px 0; font-size: 10pt; }
         </style>';
 
 // --- LẤY DỮ LIỆU VÀ TẠO BẢNG TƯƠNG ỨNG VỚI LOẠI BÁO CÁO ---
@@ -82,16 +84,16 @@ if ($type == 'students') {
     $students = $studentController->getAllStudents($search, 1000, 0);
     
     $html .= '<h1>DANH SÁCH SINH VIÊN</h1>';
-    $html .= '<p>Ngày xuất: ' . date('d/m/Y H:i') . '</p>';
-    $html .= '<table>
+    $html .= '<p style="margin-bottom: 10px;"><strong>Ngày xuất:</strong> ' . date('d/m/Y') . ' lúc ' . date('H:i:s') . '</p>';
+    $html .= '<table cellpadding="5" cellspacing="0">
                 <thead>
                     <tr>
-                        <th width="10%">STT</th>
-                        <th width="15%">Mã SV</th>
-                        <th width="25%">Họ tên</th>
-                        <th width="15%">Ngày sinh</th>
-                        <th width="10%">Giới tính</th>
-                        <th width="25%">Email</th>
+                        <th width="8%" style="text-align: center;">STT</th>
+                        <th width="12%" style="text-align: center;">Mã SV</th>
+                        <th width="28%" style="text-align: left;">Họ tên</th>
+                        <th width="15%" style="text-align: center;">Ngày sinh</th>
+                        <th width="10%" style="text-align: center;">Giới tính</th>
+                        <th width="27%" style="text-align: left;">Email</th>
                     </tr>
                 </thead>
                 <tbody>';
@@ -99,12 +101,12 @@ if ($type == 'students') {
     foreach ($students as $index => $student) {
         $genderText = ($student['gender'] == 'male') ? 'Nam' : (($student['gender'] == 'female') ? 'Nữ' : 'Khác');
         $html .= '<tr>
-                    <td align="center">' . ($index + 1) . '</td>
-                    <td>' . htmlspecialchars($student['msv']) . '</td>
-                    <td>' . htmlspecialchars($student['fullname']) . '</td>
-                    <td align="center">' . formatDate($student['dob']) . '</td>
-                    <td align="center">' . $genderText . '</td>
-                    <td>' . htmlspecialchars($student['email']) . '</td>
+                    <td style="text-align: center;">' . ($index + 1) . '</td>
+                    <td style="text-align: center;">' . htmlspecialchars($student['msv']) . '</td>
+                    <td style="text-align: left;">' . htmlspecialchars($student['fullname']) . '</td>
+                    <td style="text-align: center;">' . formatDate($student['dob']) . '</td>
+                    <td style="text-align: center;">' . $genderText . '</td>
+                    <td style="text-align: left;">' . htmlspecialchars($student['email']) . '</td>
                 </tr>';
     }
     
@@ -117,27 +119,27 @@ if ($type == 'students') {
     $scores = $scoreController->getAllScores($studentId, $semester);
     
     $html .= '<h1>BẢNG ĐIỂM</h1>';
-    $html .= '<p>Ngày xuất: ' . date('d/m/Y H:i') . '</p>';
+    $html .= '<p style="margin-bottom: 10px;"><strong>Ngày xuất:</strong> ' . date('d/m/Y') . ' lúc ' . date('H:i:s') . '</p>';
     // Hiển thị thông tin bộ lọc đã áp dụng
     if ($studentId) {
         $studentController = new StudentController();
         $student = $studentController->getStudentById($studentId);
-        $html .= '<p><strong>Sinh viên:</strong> ' . htmlspecialchars($student['fullname'] ?? 'N/A') . '</p>';
+        $html .= '<p style="margin-bottom: 5px;"><strong>Sinh viên:</strong> ' . htmlspecialchars($student['fullname'] ?? 'N/A') . '</p>';
     }
     if ($semester) {
-        $html .= '<p><strong>Học kỳ:</strong> ' . htmlspecialchars($semester) . '</p>';
+        $html .= '<p style="margin-bottom: 10px;"><strong>Học kỳ:</strong> ' . htmlspecialchars($semester) . '</p>';
     }
 
-    $html .= '<table>
+    $html .= '<table cellpadding="5" cellspacing="0">
                 <thead>
                     <tr>
-                        <th width="8%">STT</th>
-                        <th width="15%">Mã SV</th>
-                        <th width="22%">Họ tên</th>
-                        <th width="20%">Môn học</th>
-                        <th width="10%">Điểm</th>
-                        <th width="15%">Học kỳ</th>
-                        <th width="10%">Xếp loại</th>
+                        <th width="7%" style="text-align: center;">STT</th>
+                        <th width="12%" style="text-align: center;">Mã SV</th>
+                        <th width="25%" style="text-align: left;">Họ tên</th>
+                        <th width="20%" style="text-align: left;">Môn học</th>
+                        <th width="10%" style="text-align: center;">Điểm</th>
+                        <th width="13%" style="text-align: center;">Học kỳ</th>
+                        <th width="13%" style="text-align: center;">Xếp loại</th>
                     </tr>
                 </thead>
                 <tbody>';
@@ -153,13 +155,13 @@ if ($type == 'students') {
         else $grade = 'D';
         
         $html .= '<tr>
-                    <td align="center">' . ($index + 1) . '</td>
-                    <td>' . htmlspecialchars($score['msv']) . '</td>
-                    <td>' . htmlspecialchars($score['fullname']) . '</td>
-                    <td>' . htmlspecialchars($score['subject']) . '</td>
-                    <td align="center">' . $score['score'] . '</td>
-                    <td align="center">' . htmlspecialchars($score['semester']) . '</td>
-                    <td align="center">' . $grade . '</td>
+                    <td style="text-align: center;">' . ($index + 1) . '</td>
+                    <td style="text-align: center;">' . htmlspecialchars($score['msv']) . '</td>
+                    <td style="text-align: left;">' . htmlspecialchars($score['fullname']) . '</td>
+                    <td style="text-align: left;">' . htmlspecialchars($score['subject']) . '</td>
+                    <td style="text-align: center;">' . $score['score'] . '</td>
+                    <td style="text-align: center;">' . htmlspecialchars($score['semester']) . '</td>
+                    <td style="text-align: center;">' . $grade . '</td>
                 </tr>';
     }
 

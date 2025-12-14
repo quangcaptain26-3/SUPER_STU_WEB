@@ -48,9 +48,9 @@ class StudentController
         }
 
         // Nối thêm phần sắp xếp và phân trang.
-        // `ORDER BY created_at DESC`: Sắp xếp các sinh viên mới nhất lên đầu.
+        // `ORDER BY id ASC`: Sắp xếp các sinh viên theo ID tăng dần (sinh viên mới sẽ ở cuối danh sách).
         // `LIMIT :limit OFFSET :offset`: Giới hạn số lượng kết quả và chỉ định điểm bắt đầu.
-        $query .= " ORDER BY created_at DESC LIMIT :limit OFFSET :offset";
+        $query .= " ORDER BY id ASC LIMIT :limit OFFSET :offset";
 
         // Chuẩn bị câu lệnh SQL để thực thi.
         $stmt = $this->conn->prepare($query);
