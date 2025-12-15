@@ -82,6 +82,13 @@ $username = $_SESSION['username'];
             background: linear-gradient(135deg, #5568d3 0%, #653a8f 100%);
             color: white;
         }
+
+        /* Ẩn đồng hồ trên mobile */
+        @media (max-width: 767.98px) {
+            .header-clock {
+                display: none !important;
+            }
+        }
     </style>
 </head>
 <body>
@@ -151,11 +158,11 @@ $username = $_SESSION['username'];
                             </button>
                             <h2 class="mb-0"><i class="fas fa-tachometer-alt me-2"></i>Dashboard</h2>
                         </div>
-                        <div class="text-muted">
-                            <i class="fas fa-calendar me-1"></i>
-                            <span class="realtime-datetime"><?php echo date('d/m/Y H:i'); // Hiển thị thời gian lúc tải trang ?></span>
-                            <span class="live-indicator"></span>
-                        </div>
+                    <div class="text-muted header-clock">
+                        <i class="fas fa-calendar me-1"></i>
+                        <span class="realtime-datetime"><?php echo date('d/m/Y H:i'); // Hiển thị thời gian lúc tải trang ?></span>
+                        <span class="live-indicator"></span>
+                    </div>
                     </div>
                     
                     <!-- Các thẻ thống kê nhanh, dữ liệu sẽ được điền bởi JavaScript -->
