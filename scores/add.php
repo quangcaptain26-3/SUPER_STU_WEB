@@ -170,6 +170,27 @@ $selectedStudentId = $_GET['student_id'] ?? '';
             background-position: right calc(0.375em + 0.1875rem) center;
             background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
         }
+
+        /* Offcanvas mobile */
+        .offcanvas-sidebar {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .offcanvas-sidebar .nav-link {
+            color: rgba(255, 255, 255, 0.85);
+            padding: 12px 20px;
+            border-radius: 8px;
+            margin: 2px 0;
+            transition: all 0.3s;
+        }
+        .offcanvas-sidebar .nav-link:hover,
+        .offcanvas-sidebar .nav-link.active {
+            color: #fff;
+            background: rgba(255,255,255,0.2);
+        }
+        @media (max-width: 767.98px) {
+            .offcanvas-sidebar .nav-link { min-height: 44px; display: flex; align-items: center; }
+        }
     </style>
 </head>
 
@@ -177,7 +198,7 @@ $selectedStudentId = $_GET['student_id'] ?? '';
     <div class="container-fluid">
         <div class="row">
             <!-- Sidebar -->
-            <div class="col-md-3 col-lg-2 sidebar p-0">
+            <div class="col-md-3 col-lg-2 sidebar p-0 d-none d-md-block">
                 <div class="p-3">
                     <h4 class="text-white mb-4">
                         <i class="fas fa-graduation-cap me-2"></i>
@@ -223,11 +244,21 @@ $selectedStudentId = $_GET['student_id'] ?? '';
             <!-- Main Content -->
             <div class="col-md-9 col-lg-10 main-content">
                 <div class="p-4">
-                    <div class="d-flex justify-content-between align-items-center mb-4">
-                        <h2><i class="fas fa-plus me-2"></i>Thêm điểm mới</h2>
-                        <a href="list.php" class="btn btn-outline-secondary">
-                            <i class="fas fa-arrow-left me-2"></i>Quay lại
-                        </a>
+                    <div class="d-flex flex-wrap gap-3 justify-content-between align-items-center mb-4">
+                        <div class="d-flex align-items-center gap-3">
+                            <button class="btn btn-primary d-md-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileSidebar" aria-controls="mobileSidebar">
+                                <i class="fas fa-bars"></i>
+                            </button>
+                            <h2 class="mb-0"><i class="fas fa-plus me-2"></i>Thêm điểm mới</h2>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <a href="../students/add.php" class="btn btn-outline-primary">
+                                <i class="fas fa-user-plus me-2"></i>Thêm sinh viên
+                            </a>
+                            <a href="list.php" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Quay lại
+                            </a>
+                        </div>
                     </div>
 
                     <div class="row">
@@ -383,10 +414,79 @@ $selectedStudentId = $_GET['student_id'] ?? '';
         </div>
     </div>
 
+    <!-- Offcanvas Sidebar cho Mobile -->
+    <div class="offcanvas offcanvas-start offcanvas-sidebar" tabindex="-1" id="mobileSidebar" aria-labelledby="mobileSidebarLabel">
+        <div class="offcanvas-header">
+            <h5 class="offcanvas-title text-white" id="mobileSidebarLabel">
+                <i class="fas fa-graduation-cap me-2"></i>
+                Student Management
+            </h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </div>
+        <div class="offcanvas-body p-0">
+            <div class="p-3">
+                <div class="text-white-50 mb-3">
+                    <i class="fas fa-user me-2"></i>
+                    <?php echo htmlspecialchars($_SESSION['username']); ?>
+                    <span class="badge bg-light text-dark ms-2"><?php echo ucfirst($_SESSION['role']); ?></span>
+                </div>
+            </div>
+            
+            <nav class="nav flex-column px-3">
+                <a class="nav-link" href="../index.php" data-bs-dismiss="offcanvas">
+                    <i class="fas fa-home me-2"></i>Trang chủ
+                </a>
+                <a class="nav-link" href="../students/list.php" data-bs-dismiss="offcanvas">
+                    <i class="fas fa-users me-2"></i>Quản lý sinh viên
+                </a>
+                <a class="nav-link active" href="list.php" data-bs-dismiss="offcanvas">
+                    <i class="fas fa-chart-line me-2"></i>Quản lý điểm
+                </a>
+                <a class="nav-link" href="../charts/statistics.php" data-bs-dismiss="offcanvas">
+                    <i class="fas fa-chart-bar me-2"></i>Thống kê
+                </a>
+                
+                <?php if (canAccess(PERMISSION_MANAGE_USERS)): ?>
+                <a class="nav-link" href="../public/users.php" data-bs-dismiss="offcanvas">
+                    <i class="fas fa-user-cog me-2"></i>Quản lý người dùng
+                </a>
+                <?php endif; ?>
+                
+                <a class="nav-link" href="../public/profile.php" data-bs-dismiss="offcanvas">
+                    <i class="fas fa-user me-2"></i>Thông tin cá nhân
+                </a>
+                
+                <a class="nav-link" href="../public/logout.php" data-bs-dismiss="offcanvas">
+                    <i class="fas fa-sign-out-alt me-2"></i>Đăng xuất
+                </a>
+            </nav>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="../assets/js/notifications.js"></script>
     <script>
+        // Đóng offcanvas trước khi điều hướng (mobile)
+        document.addEventListener('DOMContentLoaded', () => {
+            const offcanvasEl = document.getElementById('mobileSidebar');
+            if (offcanvasEl) {
+                const links = offcanvasEl.querySelectorAll('.nav-link[href]');
+                links.forEach(link => {
+                    link.addEventListener('click', (event) => {
+                        const target = link.getAttribute('href');
+                        if (!target) return;
+                        event.preventDefault();
+
+                        const bsOffcanvas = bootstrap.Offcanvas.getOrCreateInstance(offcanvasEl);
+                        bsOffcanvas.hide();
+
+                        setTimeout(() => { window.location.href = target; }, 150);
+                    });
+                });
+            }
+        });
+
         // Hàm cập nhật preview điểm và xếp loại
         function updateScorePreview() {
             // Lấy giá trị điểm và chuyển sang số thực, mặc định là 0 nếu không có

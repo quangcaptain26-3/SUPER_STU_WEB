@@ -406,6 +406,26 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
     <!-- Nạp Bootstrap JS từ CDN -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        // Đóng offcanvas trước khi điều hướng (mobile)
+        document.addEventListener('DOMContentLoaded', () => {
+            const offcanvasEl = document.getElementById('mobileSidebar');
+            if (!offcanvasEl) return;
+
+            const links = offcanvasEl.querySelectorAll('.nav-link[href]');
+            links.forEach(link => {
+                link.addEventListener('click', (event) => {
+                    const target = link.getAttribute('href');
+                    if (!target) return;
+                    event.preventDefault();
+
+                    const bsOffcanvas = bootstrap.Offcanvas.getOrCreateInstance(offcanvasEl);
+                    bsOffcanvas.hide();
+
+                    setTimeout(() => { window.location.href = target; }, 150);
+                });
+            });
+        });
+
         // Validation form đổi mật khẩu trước khi submit
         // Kiểm tra dữ liệu ở phía client để tránh submit form không hợp lệ
         document.getElementById('changePasswordForm').addEventListener('submit', function(e) {

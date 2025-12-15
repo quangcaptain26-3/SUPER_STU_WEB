@@ -319,6 +319,26 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <script>
         // Khởi tạo notification system
         const notifications = new NotificationSystem();
+
+        // Đóng offcanvas trước khi điều hướng (mobile)
+        document.addEventListener('DOMContentLoaded', () => {
+            const offcanvasEl = document.getElementById('mobileSidebar');
+            if (!offcanvasEl) return;
+
+            const links = offcanvasEl.querySelectorAll('.nav-link[href]');
+            links.forEach(link => {
+                link.addEventListener('click', (event) => {
+                    const target = link.getAttribute('href');
+                    if (!target) return;
+                    event.preventDefault();
+
+                    const bsOffcanvas = bootstrap.Offcanvas.getOrCreateInstance(offcanvasEl);
+                    bsOffcanvas.hide();
+
+                    setTimeout(() => { window.location.href = target; }, 150);
+                });
+            });
+        });
         
         // Xử lý form submit với loading state
         document.getElementById('studentForm').addEventListener('submit', function(e) {

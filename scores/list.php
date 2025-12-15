@@ -172,7 +172,7 @@ $students = $studentController->getAllStudents('', 1000, 0);
             <!-- Main Content -->
             <div class="col-md-9 col-lg-10 main-content">
                 <div class="p-4">
-                    <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
                         <div class="d-flex align-items-center gap-3">
                             <!-- Button hamburger chỉ hiện trên mobile -->
                             <button class="btn menu-toggle d-md-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileSidebar" aria-controls="mobileSidebar">
@@ -180,11 +180,18 @@ $students = $studentController->getAllStudents('', 1000, 0);
                             </button>
                             <h2 class="mb-0"><i class="fas fa-chart-line me-2"></i>Quản lý điểm số</h2>
                         </div>
-                        <?php if (hasPermission(PERMISSION_ADD_SCORES)): ?>
-                            <a href="add.php" class="btn btn-primary">
-                                <i class="fas fa-plus me-2"></i>Thêm điểm
-                            </a>
-                        <?php endif; ?>
+                        <div class="d-flex flex-wrap gap-2">
+                            <?php if (hasPermission(PERMISSION_ADD_STUDENTS)): ?>
+                                <a href="../students/add.php" class="btn btn-outline-primary w-100">
+                                    <i class="fas fa-user-plus me-2"></i>Thêm sinh viên
+                                </a>
+                            <?php endif; ?>
+                            <?php if (hasPermission(PERMISSION_ADD_SCORES)): ?>
+                                <a href="add.php" class="btn btn-primary w-100">
+                                    <i class="fas fa-plus me-2"></i>Thêm điểm
+                                </a>
+                            <?php endif; ?>
+                        </div>
                     </div>
 
                     <!-- Filter -->
@@ -388,6 +395,27 @@ $students = $studentController->getAllStudents('', 1000, 0);
     <script src="../assets/js/notifications.js"></script>
     <!-- <script src="../assets/js/realtime.js"></script> -->
     <script>
+        // Đảm bảo link trong offcanvas trên mobile đóng menu rồi mới chuyển trang
+        document.addEventListener('DOMContentLoaded', () => {
+            const offcanvasEl = document.getElementById('mobileSidebar');
+            if (!offcanvasEl) return;
+
+            const links = offcanvasEl.querySelectorAll('.nav-link[href]');
+            links.forEach(link => {
+                link.addEventListener('click', (event) => {
+                    const target = link.getAttribute('href');
+                    if (!target) return;
+                    event.preventDefault();
+
+                    const bsOffcanvas = bootstrap.Offcanvas.getOrCreateInstance(offcanvasEl);
+                    bsOffcanvas.hide();
+
+                    // Delay nhẹ để offcanvas đóng hẳn trước khi điều hướng
+                    setTimeout(() => { window.location.href = target; }, 150);
+                });
+            });
+        });
+
         // Hàm xóa điểm
         function deleteScore(id) {
             // Hiển thị hộp thoại xác nhận xóa

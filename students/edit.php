@@ -520,6 +520,26 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <!-- Nạp file notifications.js -->
     <script src="../assets/js/notifications.js"></script>
     <script>
+        // Đóng offcanvas trước khi điều hướng (mobile)
+        document.addEventListener('DOMContentLoaded', () => {
+            const offcanvasEl = document.getElementById('mobileSidebar');
+            if (!offcanvasEl) return;
+
+            const links = offcanvasEl.querySelectorAll('.nav-link[href]');
+            links.forEach(link => {
+                link.addEventListener('click', (event) => {
+                    const target = link.getAttribute('href');
+                    if (!target) return;
+                    event.preventDefault();
+
+                    const bsOffcanvas = bootstrap.Offcanvas.getOrCreateInstance(offcanvasEl);
+                    bsOffcanvas.hide();
+
+                    setTimeout(() => { window.location.href = target; }, 150);
+                });
+            });
+        });
+
         // Hàm mở hộp thoại chọn ảnh
         function selectAvatar() {
             document.getElementById('avatar')?.click();

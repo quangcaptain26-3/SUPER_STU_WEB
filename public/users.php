@@ -427,6 +427,26 @@ $users = $authController->getAllUsers();
     <!-- Nạp file notifications.js để hiển thị thông báo -->
     <script src="../assets/js/notifications.js"></script>
     <script>
+        // Đóng offcanvas trước khi điều hướng (mobile)
+        document.addEventListener('DOMContentLoaded', () => {
+            const offcanvasEl = document.getElementById('mobileSidebar');
+            if (!offcanvasEl) return;
+
+            const links = offcanvasEl.querySelectorAll('.nav-link[href]');
+            links.forEach(link => {
+                link.addEventListener('click', (event) => {
+                    const target = link.getAttribute('href');
+                    if (!target) return;
+                    event.preventDefault();
+
+                    const bsOffcanvas = bootstrap.Offcanvas.getOrCreateInstance(offcanvasEl);
+                    bsOffcanvas.hide();
+
+                    setTimeout(() => { window.location.href = target; }, 150);
+                });
+            });
+        });
+
         // Hàm xóa người dùng
         function deleteUser(id, username) {
             // Hiển thị hộp thoại xác nhận xóa

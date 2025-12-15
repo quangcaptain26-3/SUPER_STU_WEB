@@ -141,6 +141,33 @@ $totalPages = ceil($totalStudents / $limit);
             border-color: #667eea;
             box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
         }
+
+        /* Fix cho mobile offcanvas navigation */
+        .offcanvas-sidebar {
+            z-index: 1050;
+        }
+        
+        .offcanvas-sidebar .nav-link {
+            pointer-events: auto !important;
+            cursor: pointer;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: rgba(255, 255, 255, 0.3);
+            display: block;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .offcanvas-backdrop {
+            z-index: 1040;
+        }
+        
+        @media (max-width: 767.98px) {
+            .offcanvas-sidebar .nav-link {
+                min-height: 44px;
+                display: flex;
+                align-items: center;
+            }
+        }
     </style>
 </head>
 
@@ -461,6 +488,27 @@ $totalPages = ceil($totalStudents / $limit);
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="../assets/js/notifications.js"></script>
     <script>
+        // Đảm bảo link trong offcanvas trên mobile đóng menu rồi mới chuyển trang
+        document.addEventListener('DOMContentLoaded', () => {
+            const offcanvasEl = document.getElementById('mobileSidebar');
+            if (!offcanvasEl) return;
+
+            const links = offcanvasEl.querySelectorAll('.nav-link[href]');
+            links.forEach(link => {
+                link.addEventListener('click', (event) => {
+                    const target = link.getAttribute('href');
+                    if (!target) return;
+                    event.preventDefault();
+
+                    const bsOffcanvas = bootstrap.Offcanvas.getOrCreateInstance(offcanvasEl);
+                    bsOffcanvas.hide();
+
+                    // Delay nhẹ để offcanvas đóng hẳn trước khi điều hướng
+                    setTimeout(() => { window.location.href = target; }, 150);
+                });
+            });
+        });
+
         /**
          * Hàm xử lý sự kiện xóa sinh viên, được gọi khi người dùng nhấn nút xóa.
          * @param {number} id - ID của sinh viên cần xóa.
