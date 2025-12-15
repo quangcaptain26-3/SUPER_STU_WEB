@@ -163,7 +163,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             <!-- Main Content -->
             <div class="col-md-9 col-lg-10 main-content">
                 <div class="p-4">
-                    <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
                         <div class="d-flex align-items-center gap-3">
                             <!-- Button hamburger chỉ hiện trên mobile -->
                             <button class="btn menu-toggle d-md-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileSidebar" aria-controls="mobileSidebar">
@@ -171,9 +171,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                             </button>
                             <h2 class="mb-0"><i class="fas fa-user-plus me-2"></i>Thêm sinh viên mới</h2>
                         </div>
-                        <a href="list.php" class="btn btn-outline-secondary">
-                            <i class="fas fa-arrow-left me-2"></i>Quay lại danh sách
-                        </a>
+                        <div class="d-flex flex-wrap gap-2">
+                            <?php if (hasPermission(PERMISSION_ADD_SCORES)): ?>
+                            <a href="../scores/add.php" class="btn btn-outline-primary w-100 w-md-auto">
+                                <i class="fas fa-star me-2"></i>Thêm điểm
+                            </a>
+                            <?php endif; ?>
+                            <a href="list.php" class="btn btn-outline-secondary w-100 w-md-auto">
+                                <i class="fas fa-arrow-left me-2"></i>Quay lại danh sách
+                            </a>
+                        </div>
                     </div>
                     
                     <div class="row">
@@ -313,7 +320,57 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         </div>
     </div>
 
-    <!-- Nạp SweetAlert2 và Notification System -->
+    <!-- Offcanvas Sidebar cho Mobile -->
+    <div class="offcanvas offcanvas-start offcanvas-sidebar" tabindex="-1" id="mobileSidebar" aria-labelledby="mobileSidebarLabel">
+        <div class="offcanvas-header">
+            <h5 class="offcanvas-title text-white" id="mobileSidebarLabel">
+                <i class="fas fa-graduation-cap me-2"></i>
+                Student Management
+            </h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </div>
+        <div class="offcanvas-body p-0">
+            <div class="p-3">
+                <div class="text-white-50 mb-3">
+                    <i class="fas fa-user me-2"></i>
+                    <?php echo htmlspecialchars($_SESSION['username']); ?>
+                    <span class="badge bg-light text-dark ms-2"><?php echo ucfirst($_SESSION['role']); ?></span>
+                </div>
+            </div>
+            
+            <nav class="nav flex-column px-3">
+                <a class="nav-link" href="../index.php" data-bs-dismiss="offcanvas">
+                    <i class="fas fa-home me-2"></i>Trang chủ
+                </a>
+                <a class="nav-link active" href="list.php" data-bs-dismiss="offcanvas">
+                    <i class="fas fa-users me-2"></i>Quản lý sinh viên
+                </a>
+                <a class="nav-link" href="../scores/list.php" data-bs-dismiss="offcanvas">
+                    <i class="fas fa-chart-line me-2"></i>Quản lý điểm
+                </a>
+                <a class="nav-link" href="../charts/statistics.php" data-bs-dismiss="offcanvas">
+                    <i class="fas fa-chart-bar me-2"></i>Thống kê
+                </a>
+                
+                <?php if (canAccess(PERMISSION_MANAGE_USERS)): ?>
+                <a class="nav-link" href="../public/users.php" data-bs-dismiss="offcanvas">
+                    <i class="fas fa-user-cog me-2"></i>Quản lý người dùng
+                </a>
+                <?php endif; ?>
+                
+                <a class="nav-link" href="../public/profile.php" data-bs-dismiss="offcanvas">
+                    <i class="fas fa-user me-2"></i>Thông tin cá nhân
+                </a>
+                
+                <a class="nav-link" href="../public/logout.php" data-bs-dismiss="offcanvas">
+                    <i class="fas fa-sign-out-alt me-2"></i>Đăng xuất
+                </a>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Nạp Bootstrap, SweetAlert2 và Notification System -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="../assets/js/notifications.js"></script>
     <script>
@@ -502,6 +559,23 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
         #studentForm {
             position: relative;
+        }
+        /* Fix click offcanvas mobile */
+        .offcanvas-sidebar { z-index: 1050; }
+        .offcanvas-backdrop { z-index: 1040; }
+        .offcanvas-sidebar .nav-link {
+            pointer-events: auto !important;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: rgba(255,255,255,0.3);
+            position: relative;
+            z-index: 1;
+        }
+        @media (max-width: 767.98px) {
+            .offcanvas-sidebar .nav-link {
+                min-height: 44px;
+                display: flex;
+                align-items: center;
+            }
         }
     </style>
 </body>

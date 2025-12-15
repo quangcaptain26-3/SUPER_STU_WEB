@@ -127,6 +127,24 @@ $averageScore = $scoreController->getStudentAverageScore($studentId);
             border: none;
             font-weight: 600;
         }
+
+        /* Fix click offcanvas mobile */
+        .offcanvas-sidebar { z-index: 1050; }
+        .offcanvas-backdrop { z-index: 1040; }
+        .offcanvas-sidebar .nav-link {
+            pointer-events: auto !important;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: rgba(255,255,255,0.3);
+            position: relative;
+            z-index: 1;
+        }
+        @media (max-width: 767.98px) {
+            .offcanvas-sidebar .nav-link {
+                min-height: 44px;
+                display: flex;
+                align-items: center;
+            }
+        }
     </style>
 </head>
 
