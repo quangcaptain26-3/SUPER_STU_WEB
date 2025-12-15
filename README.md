@@ -1,54 +1,42 @@
-# 🎓 Hệ thống Quản lý Sinh viên (Super-Stu)
+<div align="center">
+  <img src="https://img.shields.io/badge/SUPER--STU-🎓-blueviolet" alt="Project Logo" width="200"/>
+  <h1>🎓 Hệ thống Quản lý Sinh viên (Super-Stu)</h1>
+  <p>
+    <strong>Một hệ thống quản lý sinh viên PHP thuần đỉnh cao, an toàn và đầy đủ tính năng.</strong>
+  </p>
+  <p>
+    <em>Không chỉ là CRUD, đây là minh chứng cho một ứng dụng PHP có cấu trúc, bảo mật và dễ bảo trì mà không cần framework!</em>
+  </p>
+</div>
 
-[![PHP Version](https://img.shields.io/badge/PHP-7.4%2B-blue.svg)](https://php.net)
-[![MySQL Version](https://img.shields.io/badge/MySQL-5.7%2B-orange.svg)](https://mysql.com)
-[![Bootstrap Version](https://img.shields.io/badge/Bootstrap-5.1.3-purple.svg)](https://getbootstrap.com)
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
-[![Security](https://img.shields.io/badge/Security-Fortified-brightgreen.svg)]()
+<div align="center">
 
-> **Hệ thống quản lý sinh viên toàn diện và bảo mật**, được xây dựng từ PHP thuần với kiến trúc hướng đối tượng, PDO, và áp dụng các biện pháp bảo mật hiện đại. Dự án cung cấp đầy đủ chức năng CRUD, phân quyền chi tiết (RBAC), xuất báo cáo động (PDF/DOCX), và thống kê dữ liệu trực quan.
+[![PHP Version](https://img.shields.io/badge/PHP-7.4%2B-blue.svg?style=for-the-badge&logo=php)](https://php.net)
+[![MySQL Version](https://img.shields.io/badge/MySQL-5.7%2B-orange.svg?style=for-the-badge&logo=mysql)](https://mysql.com)
+[![Bootstrap Version](https://img.shields.io/badge/Bootstrap-5.1.3-purple.svg?style=for-the-badge&logo=bootstrap)](https://getbootstrap.com)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
+[![Security](https://img.shields.io/badge/Security-Fortified-brightgreen.svg?style=for-the-badge)]()
+[![Stars](https://img.shields.io/github/stars/quangcaptain26-3/SUPER_STU_WEB?style=for-the-badge&logo=github)](https://github.com/quangcaptain26-3/SUPER_STU_WEB/stargazers)
 
-Đây không chỉ là một ứng dụng CRUD thông thường, mà là một ví dụ điển hình về cách xây dựng một ứng-dụng PHP có cấu trúc, an toàn và dễ bảo trì mà không cần đến framework.
-
----
-
-## 📋 Mục lục
-
-- [🚀 Tính năng chính](#-tính-năng-chính)
-- [🛠️ Công nghệ sử dụng](#️-công-nghệ-sử-dụng)
-- [📁 Cấu trúc dự án](#-cấu-trúc-dự-án)
-- [🌊 Luồng hoạt động của ứng dụng](#-luồng-hoạt-động-của-ứng-dụng)
-- [⚙️ Cài đặt](#️-cài-đặt)
-- [🔧 Troubleshooting (Gỡ rối)](#-troubleshooting-gỡ-rối)
-- [🔒 Phân tích bảo mật](#-phân-tích-bảo-mật)
-- [📞 Hỗ trợ](#-hỗ-trợ)
+</div>
 
 ---
 
-## 🚀 Tính năng chính
+## 🌟 Giới thiệu
 
-### 👥 **Quản lý sinh viên & Điểm số (CRUD)**
-- **CRUD đầy đủ**: Thêm, sửa, xóa, xem thông tin sinh viên và điểm số.
-- **Upload Avatar**: Tải và hiển thị ảnh đại diện cho sinh viên.
-- **Tìm kiếm & Phân trang**: Tìm kiếm thông minh và phân trang hiệu quả cho danh sách.
-- **Xếp loại tự động**: Tự động tính và hiển thị xếp loại (A, B, C...) dựa trên điểm số.
-- **Điều khoản sử dụng "bất ngờ"**: Trải nghiệm đăng ký độc đáo với điều khoản sử dụng kết hợp nghiêm túc, hài hước và một yếu tố "gây sốc" khó quên.
+**Super-Stu** là một hệ thống quản lý sinh viên toàn diện, được xây dựng từ **PHP thuần** với kiến trúc hướng đối tượng (OOP), PDO, và áp dụng các biện pháp bảo mật hiện đại nhất. Dự án không chỉ cung cấp đầy đủ chức năng CRUD mà còn đi sâu vào phân quyền chi tiết (RBAC), xuất báo cáo động (PDF/DOCX), và thống kê dữ liệu trực quan.
 
-### 🔐 **Hệ thống phân quyền (RBAC - Role-Based Access Control)**
-- **4 cấp độ vai trò**: Super Admin > Admin > Teacher > Student.
-- **Kiểm soát truy cập chi tiết**: Quyền hạn được định nghĩa rõ ràng cho từng vai trò. Các tính năng và cả các nút bấm trên giao diện sẽ được ẩn/hiện tùy theo quyền của người dùng.
-- **Bảo vệ tài nguyên**: Middleware kiểm tra quyền sở hữu, đảm bảo sinh viên chỉ xem được dữ liệu của mình (nếu được cấu hình).
+Đây là một dự án hoàn hảo cho các bạn sinh viên, lập trình viên muốn tìm hiểu cách xây dựng một ứng dụng web PHP chuyên nghiệp từ đầu mà không phụ thuộc vào bất kỳ framework nào.
 
-### 📈 **Thống kê & Báo cáo**
-- **Dashboard trực quan**: Trang chủ hiển thị các số liệu thống kê quan trọng qua biểu đồ (Chart.js).
-- **API thống kê**: Cung cấp JSON endpoint để giao diện người dùng (frontend) có thể lấy dữ liệu một cách bất đồng bộ.
-- **Xuất báo cáo động**: Xuất danh sách sinh viên hoặc bảng điểm ra định dạng PDF (dùng TCPDF) và DOCX (dùng PHPWord).
+## ✨ Tính năng nổi bật
 
-### 🛡️ **Bảo mật cao cấp**
-- **Chống SQL Injection**: Sử dụng 100% Prepared Statements (thông qua PDO).
-- **Chống Cross-Site Scripting (XSS)**: Dữ liệu được mã hóa (escape) cẩn thận trước khi hiển thị ra HTML.
-- **Chống Cross-Site Request Forgery (CSRF)**: Mọi form nhạy cảm (xóa, sửa) đều được bảo vệ bằng CSRF token.
-- **Password Hashing**: Mật khẩu người dùng được băm an toàn bằng thuật toán SHA-256.
+| Icon | Tính năng | Mô tả chi tiết |
+| :---: | :--- | :--- |
+| 👥 | **Quản lý Sinh viên & Điểm** | CRUD đầy đủ, upload avatar, tìm kiếm, phân trang và tự động xếp loại học lực. |
+| 🔐 | **Phân quyền RBAC** | 4 cấp độ vai trò (Super Admin, Admin, Teacher, Student) với kiểm soát truy cập chi tiết. Giao diện tự động ẩn/hiện các chức năng theo quyền. |
+| 📈 | **Thống kê & Báo cáo** | Dashboard trực quan với biểu đồ động (Chart.js) và API riêng. Xuất danh sách, bảng điểm ra file **PDF** và **DOCX** chuyên nghiệp. |
+| 🛡️ | **Bảo mật Tối đa** | Chống **SQL Injection** (100% Prepared Statements), **XSS** (dữ liệu được escape), **CSRF** (bảo vệ mọi form) và băm mật khẩu an toàn. |
+| 😂 | **Trải nghiệm độc đáo** | Quy trình đăng ký "có một không hai" với điều khoản sử dụng kết hợp giữa sự nghiêm túc, hài hước và một yếu tố "gây sốc" khó quên! |
 
 ---
 
@@ -56,209 +44,156 @@
 
 | Tầng | Công nghệ | Mô tả |
 | :--- | :--- | :--- |
-| **Backend** | PHP 7.4+ (OOP) | Xử lý logic nghiệp vụ, không sử dụng framework. |
-| **Database** | MySQL 5.7+ / MariaDB | Lưu trữ dữ liệu. Giao tiếp qua PDO. |
-| **Frontend** | HTML5, CSS3, JS (ES6) | Giao diện người dùng. |
-| **Styling** | Bootstrap 5.1.3 | Responsive UI framework. |
-| **Biểu đồ** | Chart.js | Vẽ biểu đồ thống kê động trên dashboard. |
-| **Xuất file** | TCPDF, PHPWord | Thư viện để tạo file PDF và DOCX. |
-| **Alerts** | SweetAlert2 | Tạo các hộp thoại thông báo đẹp và chuyên nghiệp. |
-| **Bảo mật** | SHA-256 Hashing | Băm mật khẩu người dùng. |
+| **Backend** | ![PHP](https://img.shields.io/badge/PHP_7.4+-232F3E?style=flat-square&logo=php) | Xử lý logic nghiệp vụ, kiến trúc OOP, không framework. |
+| **Database** | ![MySQL](https://img.shields.io/badge/MySQL_5.7+-005C84?style=flat-square&logo=mysql) | Lưu trữ dữ liệu. Giao tiếp an toàn qua PDO. |
+| **Frontend** | ![HTML5](https://img.shields.io/badge/-HTML5-E34F26?style=flat-square&logo=html5) ![CSS3](https://img.shields.io/badge/-CSS3-1572B6?style=flat-square&logo=css3) ![JavaScript](https://img.shields.io/badge/-JavaScript-F7DF1E?style=flat-square&logo=javascript) | Giao diện người dùng. |
+| **Styling** | ![Bootstrap](https://img.shields.io/badge/-Bootstrap_5-7952B3?style=flat-square&logo=bootstrap) | Responsive UI framework. |
+| **Biểu đồ** | ![Chart.js](https://img.shields.io/badge/-Chart.js-FF6384?style=flat-square&logo=chartdotjs) | Vẽ biểu đồ thống kê động trên dashboard. |
+| **Xuất file** | **TCPDF, PHPWord** | Thư viện hàng đầu để tạo file PDF và DOCX từ PHP. |
+| **Alerts** | ![SweetAlert2](https://img.shields.io/badge/-SweetAlert2-A5DC86?style=flat-square) | Tạo các hộp thoại thông báo đẹp và chuyên nghiệp. |
 
 ---
 
-## 📁 Cấu trúc dự án
+## 📁 Cấu trúc thư mục
 
-Cấu trúc thư mục được tổ chức rõ ràng theo chức năng, tách biệt logic, giao diện và tài nguyên.
+Cấu trúc dự án được tổ chức một cách khoa học, tách biệt rõ ràng giữa logic, giao diện và tài nguyên, giúp dễ dàng bảo trì và mở rộng.
 
 ```
 super-stu/
 │
-├── 📄 *.php (Root-level controllers)
-│   ├── authController.php     # Logic xác thực: đăng nhập, đăng ký, quên mật khẩu.
-│   ├── studentController.php  # Logic CRUD cho sinh viên.
-│   ├── scoreController.php    # Logic CRUD cho điểm số.
-│   ├── exportController.php   # Logic xử lý các yêu cầu xuất file.
-│   ├── middleware.php         # Các lớp/hàm kiểm tra quyền truy cập (RBAC).
-│   └── utils.php              # File "thần thánh": chứa các hàm tiện ích, định nghĩa quyền, helpers.
+├── 📄 *.php (Các controller chính ở gốc)
+│   ├── authController.php     # 🔑 Logic xác thực: đăng nhập, đăng ký, quên mật khẩu.
+│   ├── studentController.php  # 🧑‍🎓 Logic CRUD cho sinh viên.
+│   ├── scoreController.php    # 📝 Logic CRUD cho điểm số.
+│   ├── exportController.php   # 📤 Logic xử lý các yêu cầu xuất file.
+│   ├── middleware.php         # 🚦 Các hàm kiểm tra quyền truy cập (RBAC).
+│   └── utils.php              # 🛠️ File "thần thánh": chứa các hàm tiện ích, định nghĩa quyền.
 │
-├── 📁 public/                  # Thư mục gốc của web server, chứa các file người dùng có thể truy cập.
-│   ├── index.php              # Trang dashboard chính sau khi đăng nhập.
-│   ├── login.php              # Trang đăng nhập.
+├── 📁 public/                  # 🌐 Thư mục gốc của web server, người dùng truy cập từ đây.
+│   ├── index.php              # 📊 Trang dashboard chính sau khi đăng nhập.
+│   ├── login.php              # 🚪 Trang đăng nhập.
 │   └── ...                    # Các file giao diện public khác.
 │
-├── 📁 students/ & scores/      # Các module chức năng chính.
-│   ├── list.php               # Giao diện danh sách (sinh viên/điểm).
-│   ├── add.php, edit.php      # Giao diện form thêm/sửa.
-│   └── delete.php             # Script xử lý yêu cầu xóa (thường được gọi qua AJAX).
+├── 📁 students/ & scores/      # 📦 Các module chức năng chính.
+│   ├── list.php               # 📋 Giao diện danh sách (sinh viên/điểm).
+│   ├── add.php, edit.php      # ✍️ Giao diện form thêm/sửa.
+│   └── delete.php             # 🗑️ Script xử lý yêu cầu xóa (thường được gọi qua AJAX).
 │
 ├── 📁 charts/
-│   ├── statistics.php         # Trang giao diện hiển thị các biểu đồ thống kê.
-│   └── api/statistics.php     # API endpoint trả về dữ liệu JSON cho các biểu đồ.
+│   ├── statistics.php         # 📈 Giao diện hiển thị các biểu đồ thống kê.
+│   └── api/statistics.php     # 🔗 API endpoint trả về dữ liệu JSON cho biểu đồ.
 │
 ├── 📁 exports/
-│   ├── export_pdf.php         # Script tạo và xuất file PDF.
-│   └── export_docx.php        # Script tạo và xuất file DOCX.
+│   ├── export_pdf.php         # 📄 Script tạo và xuất file PDF.
+│   └── export_docx.php        # 📑 Script tạo và xuất file DOCX.
 │
 ├── 📁 config/
-│   └── db.php                 # Lớp `Database` quản lý kết nối PDO đến CSDL.
+│   └── db.php                 # 🔌 Lớp `Database` quản lý kết nối PDO đến CSDL.
 │
 ├── 📁 assets/
-│   ├── css/, js/              # Chứa các file CSS và JavaScript của dự án.
-│   └── libs/                  # Chứa các thư viện bên thứ ba (TCPDF, PHPWord).
+│   ├── css/, js/              # 🎨 Chứa các file CSS và JavaScript tùy chỉnh.
+│   └── libs/                  # 📚 Chứa các thư viện bên thứ ba (TCPDF, PHPWord).
 │
 ├── 📁 uploads/
-│   └── avatars/               # Nơi lưu trữ ảnh đại diện của sinh viên.
+│   └── avatars/               # 🖼️ Nơi lưu trữ ảnh đại diện của sinh viên.
 │
-└── 📄 database.sql             # File dump của cơ sở dữ liệu để cài đặt ban đầu.
+└── 📄 database.sql             # 💾 File dump của cơ sở dữ liệu để cài đặt ban đầu.
 ```
+
+---
+
+## 🚀 Hướng dẫn Cài đặt
+
+Thực hiện các bước sau để triển khai dự án trên máy của bạn.
+
+### 1. Yêu cầu hệ thống
+-   **PHP 7.4+**
+-   **MySQL 5.7+** hoặc **MariaDB**
+-   Web server (khuyến nghị **XAMPP** hoặc **WAMP**)
+-   Trình duyệt web hiện đại (Chrome, Firefox, Edge,...)
+
+### 2. Các bước cài đặt
+
+1.  **Clone repository về máy**:
+    ```bash
+    git clone https://github.com/quangcaptain26-3/SUPER_STU_WEB.git
+    cd SUPER_STU_WEB
+    ```
+
+2.  **Tạo và Import Database**:
+    -   Mở **phpMyAdmin** (hoặc công cụ quản trị CSDL bạn dùng).
+    -   Tạo một database mới với tên `student_management` và `collation` là `utf8mb4_unicode_ci`.
+        ```sql
+        CREATE DATABASE student_management CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+        ```
+    -   Chọn database vừa tạo, vào tab `Import` và tải lên file `database.sql` có sẵn trong dự án.
+
+3.  **Cấu hình kết nối CSDL**:
+    -   Mở file `config/db.php`.
+    -   Chỉnh sửa các thông tin sau cho phù hợp với môi trường của bạn (thường chỉ cần sửa mật khẩu nếu có).
+        ```php
+        private $host = 'localhost';
+        private $db_name = 'student_management';
+        private $username = 'root';
+        private $password = ''; // <-- Điền mật khẩu MySQL của bạn ở đây
+        ```
+
+4.  **Chạy ứng dụng**:
+    -   Copy toàn bộ thư mục dự án vào `htdocs` của XAMPP.
+    -   Truy cập vào đường dẫn: `http://localhost/SUPER_STU_WEB/public/login.php`
+
+5.  **Đăng nhập và trải nghiệm**:
+    -   **Super Admin**: `admin` / `admin123`
+    -   **Teacher**: `teacher1` / `teacher123`
+    -   **Student**: `student1` / `student123`
+
+> ⚠️ **Bảo mật!** Vui lòng đổi mật khẩu của các tài khoản mặc định ngay sau lần đăng nhập đầu tiên để đảm bảo an toàn.
 
 ---
 
 ## 🌊 Luồng hoạt động của ứng dụng
 
-Ứng dụng này không dùng router trung tâm. Thay vào đó, mỗi file `.php` trong các thư mục `public/`, `students/`, `scores/`... hoạt động như một endpoint riêng lẻ.
-
-#### 1. **Luồng Request & Hiển thị Trang (Ví dụ: `students/list.php`)**
-
-1.  **Truy cập**: Người dùng điều hướng đến `students/list.php`.
-2.  **Khởi tạo & Bảo mật**:
-    -   `session_start()`: Bắt đầu phiên làm việc.
-    -   `require_once '../utils.php';`: Nạp file tiện ích và định nghĩa quyền.
-    -   `require_once '../studentController.php';`: Nạp file controller xử lý logic sinh viên.
-    -   `requirePermission(PERMISSION_VIEW_STUDENTS);`: **Cổng bảo mật đầu tiên**. Hàm này (từ `utils.php`) sẽ kiểm tra vai trò (`$_SESSION['role']`) của người dùng có quyền `PERMISSION_VIEW_STUDENTS` không. Nếu không, người dùng sẽ bị chuyển hướng về trang chủ với thông báo lỗi.
-3.  **Lấy dữ liệu**:
-    -   Script khởi tạo `$studentController = new StudentController()`.
-    -   Script lấy các tham số từ `$_GET` (ví dụ: `search`, `page`) để phục vụ tìm kiếm và phân trang.
-    -   Gọi phương thức của controller để lấy dữ liệu từ CSDL: `$students = $studentController->getAllStudents(...)`.
-4.  **Render Giao diện**:
-    -   HTML được viết trực tiếp trong file.
-    -   Dữ liệu từ biến `$students` được lặp và hiển thị trong bảng. `htmlspecialchars()` được dùng để chống XSS.
-    -   **Kiểm tra quyền lần 2**: Các nút bấm như "Sửa", "Xóa" được đặt trong khối `if (hasPermission(...))` để chỉ hiển thị cho người dùng có quyền tương ứng.
-
-#### 2. **Luồng Xác thực (Login)**
-
-1.  Người dùng nhập username/password vào form ở `public/login.php` và nhấn submit.
-2.  `login.php` nhận request `POST`, khởi tạo `AuthController`.
-3.  Gọi `$auth->login($username, $password)`.
-4.  Bên trong `AuthController`:
-    -   Truy vấn CSDL để tìm user bằng `username`.
-    -   Băm mật khẩu người dùng nhập vào bằng `hash('sha256', $password)`.
-    -   Sử dụng `hash_equals()` để so sánh mật khẩu một cách an toàn (chống timing attack).
-    -   Nếu thành công, lưu thông tin người dùng (`user_id`, `role`, `username`) vào `$_SESSION`.
-5.  `login.php` nhận kết quả, nếu thành công thì chuyển hướng (`header('Location: index.php')`) đến trang dashboard.
-
-#### 3. **Luồng AJAX (Ví dụ: Xóa sinh viên)**
-
-1.  Người dùng nhấn nút "Xóa" trên `students/list.php`.
-2.  JavaScript phía client (dùng `SweetAlert2`) hiện hộp thoại xác nhận.
-3.  Nếu người dùng đồng ý, JavaScript dùng `fetch` gửi một request `POST` đến `students/delete.php` với `id` của sinh viên cần xóa.
-4.  `students/delete.php` xử lý request:
-    -   Kiểm tra quyền `PERMISSION_DELETE_STUDENTS`.
-    -   Xác minh CSRF token (nếu có).
-    -   Khởi tạo `StudentController`.
-    -   Gọi `$studentController->deleteStudent($id)`. Phương thức này cũng sẽ xóa cả file avatar liên quan.
-    -   Trả về một response JSON (ví dụ: `{'success': true, 'message': '...'}`).
-5.  JavaScript ở `students/list.php` nhận response, hiển thị thông báo thành công và tải lại trang.
+Phần này đã được viết rất chi tiết trong file `THUYET_TRINH.md` và `giai_thich_nghiep_vu.txt`. Để tránh lặp lại thông tin, bạn có thể tham khảo trực tiếp các file đó để có cái nhìn sâu sắc nhất về kiến trúc và luồng dữ liệu của hệ thống.
 
 ---
 
-## ⚙️ Cài đặt
+## 🔧 Gỡ rối (Troubleshooting)
 
-#### 1. **Yêu cầu hệ thống**
--   PHP 7.4+
--   MySQL 5.7+ / MariaDB
--   Web server (Apache, Nginx - với `mod_rewrite` cho Apache).
--   Trình duyệt web hiện đại.
-
-#### 2. **Hướng dẫn**
-
-1.  **Clone repository**:
-    ```bash
-    git clone https://github.com/quangcaptain26-3/SUPER_STU_WEB.git
-    cd super-stu
-    ```
-
-2.  **Tạo Database**:
-    -   Dùng phpMyAdmin hoặc command line để tạo một database mới.
-        ```sql
-        CREATE DATABASE student_management CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-        ```
-    -   Import file `database.sql` vào database vừa tạo.
-
-3.  **Cấu hình kết nối**:
-    -   Mở file `config/db.php` và chỉnh sửa thông tin cho đúng với môi trường của bạn:
-        ```php
-        private $host = 'localhost';
-        private $db_name = 'student_management';
-        private $username = 'root';
-        private $password = ''; // Mật khẩu của bạn
-        ```
-
-4.  **Triển khai**:
-    -   **Với XAMPP/WAMP**: Copy toàn bộ thư mục `super-stu` vào `htdocs` (XAMPP) hoặc `www` (WAMP). Truy cập `http://localhost/super-stu/public/login.php`.
-    -   **Với hosting**: Upload tất cả các file lên hosting. Trỏ domain của bạn vào thư mục `public`.
-
-5.  **Tài khoản mặc định**:
-    -   **Super Admin**: `admin` / `admin123`
-    -   **Teacher**: `teacher1` / `teacher123`
-    -   **Student**: `student1` / `student123`
-
-> ⚠️ **QUAN TRỌNG**: Hãy đổi mật khẩu của các tài khoản mặc định ngay sau lần đăng nhập đầu tiên!
-
----
-
-## 🔧 Troubleshooting (Gỡ rối)
-
--   **Lỗi "Connection error: ...":**
-    -   **Nguyên nhân**: Sai thông tin kết nối CSDL.
-    -   **Giải pháp**: Kiểm tra lại `host`, `db_name`, `username`, `password` trong file `config/db.php`. Đảm bảo dịch vụ MySQL đang chạy.
-
--   **Lỗi "Bạn không có quyền truy cập trang này":**
-    -   **Nguyên nhân**: Đây là cơ chế bảo mật của hệ thống. Tài khoản của bạn không có quyền để xem trang hoặc thực hiện hành động này.
-    -   **Giải pháp**: Đăng nhập bằng tài khoản có quyền cao hơn (ví dụ: `admin` hoặc `teacher`). Xem lại định nghĩa quyền trong `utils.php` để biết vai trò nào có quyền gì.
-
--   **Upload ảnh đại diện thất bại:**
-    -   **Nguyên nhân**: Thư mục `uploads/avatars/` không tồn tại hoặc không có quyền ghi.
-    -   **Giải pháp**: Đảm bảo thư mục `uploads/avatars/` tồn tại. Trên môi trường Linux/macOS, cấp quyền ghi cho web server bằng lệnh `chmod -R 775 uploads` và `chown -R www-data:www-data uploads` (thay `www-data` bằng user của web server bạn).
-
--   **Trang trắng hoặc lỗi 500 Internal Server Error:**
-    -   **Nguyên nhân**: Lỗi cú pháp PHP.
-    -   **Giải pháp**: Mở file log lỗi của Apache/Nginx để xem chi tiết lỗi. Nếu đang ở môi trường phát triển, bật hiển thị lỗi PHP bằng cách thêm `ini_set('display_errors', 1); error_reporting(E_ALL);` vào đầu file `public/index.php`.
-
--   **Giao diện bị vỡ, không có style:**
-    -   **Nguyên nhân**: Trình duyệt không tải được các file CSS/JS từ CDN (Bootstrap, FontAwesome).
-    -   **Giải pháp**: Kiểm tra kết nối Internet. Mở Developer Tools (F12) và xem tab "Console" có báo lỗi tải tài nguyên không.
+| Vấn đề | Nguyên nhân | Giải pháp |
+| :--- | :--- | :--- |
+| **Lỗi "Connection error"** | Sai thông tin kết nối CSDL. | Kiểm tra lại `host`, `db_name`, `username`, `password` trong `config/db.php`. Đảm bảo MySQL đang chạy. |
+| **"Bạn không có quyền..."** | Tài khoản của bạn không có quyền. | Đây là tính năng! Hãy đăng nhập bằng tài khoản có quyền cao hơn (admin, teacher). |
+| **Upload ảnh lỗi** | Thư mục `uploads/avatars/` không có quyền ghi. | Đảm bảo thư mục tồn tại. Trên Linux/macOS, dùng `chmod -R 775 uploads`. |
+| **Trang trắng/Lỗi 500** | Lỗi cú pháp PHP. | Kiểm tra file log của web server. Bật hiển thị lỗi PHP nếu đang ở môi trường dev. |
+| **Giao diện "vỡ"** | Không tải được CSS/JS từ CDN. | Kiểm tra kết nối Internet. Mở Developer Tools (F12) xem lỗi ở tab Console. |
 
 ---
 
 ## 🔒 Phân tích bảo mật
 
-Hệ thống được xây dựng với tư duy "bảo mật là trên hết".
+Hệ thống được xây dựng với tư duy "bảo mật là trên hết" (Security-First Mindset).
 
-#### ✔️ **Các biện pháp đã áp dụng tốt**
+#### ✔️ **Điểm mạnh**
+-   **Chống SQL Injection**: Triệt để sử dụng **PDO Prepared Statements**.
+-   **Chống XSS**: Dữ liệu luôn được escape bằng `htmlspecialchars()`.
+-   **Chống CSRF**: Mọi hành động nhạy cảm đều được bảo vệ bằng CSRF token.
+-   **Phân quyền chặt chẽ (RBAC)**: Kiểm tra quyền ở cả backend và frontend.
+-   **So sánh chuỗi an toàn**: Dùng `hash_equals()` chống timing attack.
 
--   **Chống SQL Injection**: Triệt để sử dụng **PDO Prepared Statements**. Mọi dữ liệu từ người dùng đều được truyền vào câu lệnh SQL qua các tham số ràng buộc (`bindParam`, `bindValue`), không bao giờ ghép chuỗi trực tiếp.
--   **Chống XSS (Cross-Site Scripting)**: Dữ liệu luôn được escape bằng `htmlspecialchars()` trước khi hiển thị ra HTML, vô hiệu hóa mọi thẻ script độc hại.
--   **Chống CSRF (Cross-Site Request Forgery)**: Các hành động thay đổi dữ liệu (xóa, cập nhật) đều yêu cầu một CSRF token hợp lệ được tạo và xác minh qua `utils.php`.
--   **Phân quyền chi tiết (RBAC)**: Quyền truy cập được kiểm tra ở cả backend (`requirePermission`) và frontend (ẩn/hiện nút bấm), đảm bảo người dùng chỉ thấy và làm những gì họ được phép.
--   **So sánh chuỗi an toàn**: Sử dụng `hash_equals()` để so sánh mật khẩu và token, giúp chống lại tấn công timing attack.
-
-#### ⚠️ **Những điểm có thể cải thiện**
-
--   **Thuật toán băm mật khẩu**: Hiện tại đang dùng `SHA-256`. Mặc dù an toàn, nhưng tiêu chuẩn hiện đại khuyến nghị dùng các thuật toán có "cost factor" như **BCRYPT** hoặc **Argon2** (thông qua hàm `password_hash()` và `password_verify()` của PHP). Chúng được thiết kế để làm chậm quá trình băm, gây khó khăn hơn cho các cuộc tấn công brute-force.
--   **Thiếu cấu trúc tập trung**: Việc lặp lại code layout (sidebar, header) ở nhiều file làm tăng khả năng xảy ra lỗi và khó bảo trì. Áp dụng một hệ thống template đơn giản (ví dụ: một file `header.php` và `footer.php` để `require`) sẽ cải thiện điều này.
--   **Cấu hình nhạy cảm**: Thông tin đăng nhập CSDL đang được lưu trực tiếp trong `config/db.php`. Trong môi trường production, nên đưa các thông tin này ra ngoài web root và đọc từ biến môi trường (dùng thư viện như `vlucas/phpdotenv`).
+#### ⚠️ **Điểm có thể cải thiện**
+-   **Thuật toán băm mật khẩu**: Hiện dùng `SHA-256`. Nên nâng cấp lên **BCRYPT** (`password_hash()` và `password_verify()`) để tăng cường khả năng chống brute-force.
+-   **Tách biệt layout**: Layout (header, footer, sidebar) đang bị lặp lại. Có thể tạo các file `layout/header.php`, `layout/footer.php` và `require` chúng ở các trang để dễ bảo trì (nguyên tắc DRY).
+-   **Biến môi trường**: Thông tin CSDL nên được lưu ở biến môi trường (.env) thay vì trong code để an toàn hơn trong môi trường production.
 
 ---
 ## 📞 Hỗ trợ
 
-Nếu bạn có bất kỳ câu hỏi hay góp ý nào, vui lòng tạo một **Issue** trên GitHub repository của dự án.
+Nếu bạn có bất kỳ câu hỏi hay góp ý nào, đừng ngần ngại tạo một **Issue** trên GitHub repository của dự án.
 
 <div align="center">
 
-**⭐ Nếu project hữu ích, hãy cho một star nhé! ⭐**
+**Made with ❤️ by Minh Quang - TTM63ĐH**
 
-**Phát triển bởi**: Minh Quang - TTM63ĐH
+**⭐ Nếu thấy dự án này hữu ích, hãy tặng một ngôi sao nhé! ⭐**
 
 </div>
