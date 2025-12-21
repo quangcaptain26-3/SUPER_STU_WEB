@@ -31,10 +31,13 @@ class ScoreController
      */
     public function getAllScores($studentId = null, $semester = null)
     {
-        // Câu lệnh SQL cơ bản, sử dụng LEFT JOIN để lấy thêm thông tin `fullname` và `msv` từ bảng `students`.
-        $query = "SELECT s.*, st.fullname, st.msv 
+        // Câu lệnh SQL cơ bản, sử dụng LEFT JOIN để lấy thêm thông tin `fullname`, `msv` và tên môn học từ bảng `subjects`.
+        $query = "SELECT s.*, st.fullname, st.msv, 
+                         COALESCE(sub.name, s.subject) as subject_name,
+                         sub.code as subject_code
                   FROM scores s 
-                  LEFT JOIN students st ON s.student_id = st.id";
+                  LEFT JOIN students st ON s.student_id = st.id
+                  LEFT JOIN subjects sub ON s.subject_id = sub.id";
         
         // Mảng lưu các tham số và mảng lưu các điều kiện WHERE.
         $params = [];
@@ -80,15 +83,18 @@ class ScoreController
      */
     public function getScoreById($id)
     {
-        // Tương tự `getAllScores`, câu lệnh này cũng JOIN với bảng students.
-        $query = "SELECT s.*, st.fullname, st.msv 
+        // Tương tự `getAllScores`, câu lệnh này cũng JOIN với bảng students và subjects.
+        $query = "SELECT s.*, st.fullname, st.msv,
+                         COALESCE(sub.name, s.subject) as subject_name,
+                         sub.code as subject_code, sub.id as subject_id
                   FROM scores s 
-                  LEFT JOIN students st ON s.student_id = st.id 
+                  LEFT JOIN students st ON s.student_id = st.id
+                  LEFT JOIN subjects sub ON s.subject_id = sub.id
                   WHERE s.id = :id";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':id', $id);
         $stmt->execute();
-
+        
         // Trả về một bản ghi duy nhất.
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
@@ -100,15 +106,18 @@ class ScoreController
      */
     public function addScore($data)
     {
-        // Câu lệnh INSERT đơn giản.
-        $query = "INSERT INTO scores (student_id, subject, score, semester) 
-                  VALUES (:student_id, :subject, :score, :semester)";
+        // Câu lệnh INSERT với subject_id (ưu tiên) hoặc subject (backward compatible).
+        $query = "INSERT INTO scores (student_id, subject_id, subject, score, semester) 
+                  VALUES (:student_id, :subject_id, :subject, :score, :semester)";
 
         $stmt = $this->conn->prepare($query);
         
         // Gắn các giá trị vào tham số.
         $stmt->bindParam(':student_id', $data['student_id']);
-        $stmt->bindParam(':subject', $data['subject']);
+        $subjectId = isset($data['subject_id']) ? $data['subject_id'] : null;
+        $subject = isset($data['subject']) ? $data['subject'] : null;
+        $stmt->bindParam(':subject_id', $subjectId);
+        $stmt->bindParam(':subject', $subject);
         $stmt->bindParam(':score', $data['score']);
         $stmt->bindParam(':semester', $data['semester']);
 
@@ -128,15 +137,18 @@ class ScoreController
      */
     public function updateScore($id, $data)
     {
-        // Câu lệnh UPDATE, xác định bản ghi cần cập nhật qua `WHERE id = :id`.
-        $query = "UPDATE scores SET student_id = :student_id, subject = :subject, 
-                  score = :score, semester = :semester WHERE id = :id";
+        // Câu lệnh UPDATE với subject_id (ưu tiên) hoặc subject (backward compatible).
+        $query = "UPDATE scores SET student_id = :student_id, subject_id = :subject_id, 
+                  subject = :subject, score = :score, semester = :semester WHERE id = :id";
 
         $stmt = $this->conn->prepare($query);
         
         // Gắn các giá trị mới.
         $stmt->bindParam(':student_id', $data['student_id']);
-        $stmt->bindParam(':subject', $data['subject']);
+        $subjectId = isset($data['subject_id']) ? $data['subject_id'] : null;
+        $subject = isset($data['subject']) ? $data['subject'] : null;
+        $stmt->bindParam(':subject_id', $subjectId);
+        $stmt->bindParam(':subject', $subject);
         $stmt->bindParam(':score', $data['score']);
         $stmt->bindParam(':semester', $data['semester']);
         $stmt->bindParam(':id', $id); // Gắn ID của bản ghi cần cập nhật.
@@ -176,15 +188,17 @@ class ScoreController
         $stats = [];
 
         // 1. Thống kê điểm trung bình và số lượng bài thi theo từng môn học.
-        // Tương đương với VIEW subject_statistics đã bị xóa
-        $query1 = "SELECT subject, 
+        // Sử dụng COALESCE để ưu tiên tên môn từ bảng subjects, nếu không có thì dùng subject (text)
+        $query1 = "SELECT COALESCE(sub.name, s.subject) as subject_name,
+                          COALESCE(sub.code, '') as subject_code,
                           COUNT(*) as count, 
                           COUNT(*) as student_count, 
-                          AVG(score) as avg_score, 
-                          MAX(score) as highest_score, 
-                          MIN(score) as lowest_score 
-                   FROM scores 
-                   GROUP BY subject 
+                          AVG(s.score) as avg_score, 
+                          MAX(s.score) as highest_score, 
+                          MIN(s.score) as lowest_score 
+                   FROM scores s
+                   LEFT JOIN subjects sub ON s.subject_id = sub.id
+                   GROUP BY COALESCE(sub.name, s.subject), COALESCE(sub.code, '')
                    ORDER BY avg_score DESC";
         $stmt1 = $this->conn->prepare($query1);
         $stmt1->execute();

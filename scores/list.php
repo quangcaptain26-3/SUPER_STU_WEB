@@ -164,6 +164,12 @@ $students = $studentController->getAllStudents('', 1000, 0);
                     <a class="nav-link" href="../students/list.php">
                         <i class="fas fa-users me-2"></i>Quản lý sinh viên
                     </a>
+                    <a class="nav-link" href="../subjects/list.php">
+                        <i class="fas fa-book me-2"></i>Quản lý môn học
+                    </a>
+                    <a class="nav-link" href="../enrollments/list.php">
+                        <i class="fas fa-clipboard-list me-2"></i>Đăng ký môn học
+                    </a>
                     <a class="nav-link active" href="list.php">
                         <i class="fas fa-chart-line me-2"></i>Quản lý điểm
                     </a>
@@ -312,7 +318,18 @@ $students = $studentController->getAllStudents('', 1000, 0);
                                                         <strong><?php echo htmlspecialchars($score['msv']); ?></strong>
                                                     </td>
                                                     <td><?php echo htmlspecialchars($score['fullname']); ?></td>
-                                                    <td><?php echo htmlspecialchars($score['subject']); ?></td>
+                                                    <td>
+                                                        <?php 
+                                                        // Hiển thị tên môn từ bảng subjects nếu có, nếu không thì dùng subject (text cũ)
+                                                        $subjectName = $score['subject_name'] ?? $score['subject'] ?? 'N/A';
+                                                        $subjectCode = $score['subject_code'] ?? '';
+                                                        if ($subjectCode) {
+                                                            echo htmlspecialchars($subjectCode . ' - ' . $subjectName);
+                                                        } else {
+                                                            echo htmlspecialchars($subjectName);
+                                                        }
+                                                        ?>
+                                                    </td>
                                                     <td>
                                                         <span class="badge <?php
                                                                             echo $score['score'] >= 8 ? 'bg-success' : ($score['score'] >= 6 ? 'bg-warning' : 'bg-danger');
@@ -383,6 +400,12 @@ $students = $studentController->getAllStudents('', 1000, 0);
                 </a>
                 <a class="nav-link" href="../students/list.php" data-bs-dismiss="offcanvas">
                     <i class="fas fa-users me-2"></i>Quản lý sinh viên
+                </a>
+                <a class="nav-link" href="../subjects/list.php" data-bs-dismiss="offcanvas">
+                    <i class="fas fa-book me-2"></i>Quản lý môn học
+                </a>
+                <a class="nav-link" href="../enrollments/list.php" data-bs-dismiss="offcanvas">
+                    <i class="fas fa-clipboard-list me-2"></i>Đăng ký môn học
                 </a>
                 <a class="nav-link active" href="list.php" data-bs-dismiss="offcanvas">
                     <i class="fas fa-chart-line me-2"></i>Quản lý điểm

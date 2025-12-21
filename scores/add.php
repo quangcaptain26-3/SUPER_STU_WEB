@@ -15,8 +15,13 @@ requirePermission(PERMISSION_ADD_SCORES);
 $scoreController = new ScoreController();
 // Tạo đối tượng StudentController
 $studentController = new StudentController();
+// Tạo đối tượng SubjectController
+require_once '../subjectController.php';
+$subjectController = new SubjectController();
 // Lấy danh sách tất cả sinh viên (tối đa 1000 bản ghi, không phân trang)
 $students = $studentController->getAllStudents('', 1000, 0);
+// Lấy danh sách tất cả môn học đang hoạt động
+$subjects = $subjectController->getAllSubjects('active');
 
 // Khởi tạo biến lưu thông báo lỗi
 $error = '';
@@ -34,13 +39,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         // Tạo mảng chứa dữ liệu điểm đã được làm sạch và validate
         $data = [
             'student_id' => $_POST['student_id'],                    // ID sinh viên
-            'subject' => sanitize($_POST['subject']),                // Tên môn học đã được làm sạch
+            'subject_id' => $_POST['subject_id'] ?? null,            // ID môn học
             'score' => floatval($_POST['score']),                    // Điểm số (chuyển sang float)
             'semester' => sanitize($_POST['semester'])               // Học kỳ đã được làm sạch
         ];
 
         // Kiểm tra các trường bắt buộc có được điền đầy đủ không
-        if (empty($data['student_id']) || empty($data['subject']) || empty($data['semester'])) {
+        if (empty($data['student_id']) || empty($data['subject_id']) || empty($data['semester'])) {
             // Nếu thiếu thông tin, gán thông báo lỗi
             $error = 'Vui lòng điền đầy đủ thông tin';
         } elseif ($data['score'] < 0 || $data['score'] > 10) {
@@ -313,12 +318,18 @@ $selectedStudentId = $_GET['student_id'] ?? '';
 
                                         <div class="row">
                                             <div class="col-md-6 mb-3">
-                                                <label for="subject" class="form-label">
+                                                <label for="subject_id" class="form-label">
                                                     <i class="fas fa-book me-2"></i>Môn học *
                                                 </label>
-                                                <input type="text" class="form-control" id="subject" name="subject"
-                                                    value="<?php echo htmlspecialchars($data['subject'] ?? ''); ?>"
-                                                    placeholder="Ví dụ: Toán cao cấp, Lập trình web..." required>
+                                                <select class="form-control" id="subject_id" name="subject_id" required>
+                                                    <option value="">Chọn môn học</option>
+                                                    <?php foreach ($subjects as $subject): ?>
+                                                        <option value="<?php echo $subject['id']; ?>"
+                                                            <?php echo (($data['subject_id'] ?? '') == $subject['id']) ? 'selected' : ''; ?>>
+                                                            <?php echo htmlspecialchars(($subject['code'] ? $subject['code'] . ' - ' : '') . $subject['name']); ?>
+                                                        </option>
+                                                    <?php endforeach; ?>
+                                                </select>
                                             </div>
 
                                             <div class="col-md-6 mb-3">
@@ -449,6 +460,12 @@ $selectedStudentId = $_GET['student_id'] ?? '';
                 <a class="nav-link" href="../students/list.php" data-bs-dismiss="offcanvas">
                     <i class="fas fa-users me-2"></i>Quản lý sinh viên
                 </a>
+                <a class="nav-link" href="../subjects/list.php" data-bs-dismiss="offcanvas">
+                    <i class="fas fa-book me-2"></i>Quản lý môn học
+                </a>
+                <a class="nav-link" href="../enrollments/list.php" data-bs-dismiss="offcanvas">
+                    <i class="fas fa-clipboard-list me-2"></i>Đăng ký môn học
+                </a>
                 <a class="nav-link active" href="list.php" data-bs-dismiss="offcanvas">
                     <i class="fas fa-chart-line me-2"></i>Quản lý điểm
                 </a>
@@ -556,12 +573,12 @@ $selectedStudentId = $_GET['student_id'] ?? '';
         document.getElementById('scoreForm').addEventListener('submit', function(e) {
             // Lấy giá trị các trường form
             const studentId = document.getElementById('student_id').value;
-            const subject = document.getElementById('subject').value.trim();
+            const subjectId = document.getElementById('subject_id').value;
             const score = parseFloat(document.getElementById('score').value);
             const semester = document.getElementById('semester').value;
 
             // Kiểm tra các trường bắt buộc có được điền đầy đủ không
-            if (!studentId || !subject || !semester) {
+            if (!studentId || !subjectId || !semester) {
                 e.preventDefault();
                 if (typeof notifications !== 'undefined') {
                     notifications.error('Vui lòng điền đầy đủ thông tin bắt buộc', 'Thiếu thông tin');

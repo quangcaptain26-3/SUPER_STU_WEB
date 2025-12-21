@@ -139,6 +139,14 @@ $username = $_SESSION['username'];
                         <i class="fas fa-users me-2"></i>Quản lý sinh viên
                     </a>
                     
+                    <a class="nav-link" href="subjects/list.php">
+                        <i class="fas fa-book me-2"></i>Quản lý môn học
+                    </a>
+                    
+                    <a class="nav-link" href="enrollments/list.php">
+                        <i class="fas fa-clipboard-list me-2"></i>Đăng ký môn học
+                    </a>
+                    
                     <a class="nav-link" href="scores/list.php">
                         <i class="fas fa-chart-line me-2"></i>Quản lý điểm
                     </a>
@@ -318,6 +326,14 @@ $username = $_SESSION['username'];
                     <i class="fas fa-users me-2"></i>Quản lý sinh viên
                 </a>
                 
+                <a class="nav-link" href="subjects/list.php" data-bs-dismiss="offcanvas">
+                    <i class="fas fa-book me-2"></i>Quản lý môn học
+                </a>
+                
+                <a class="nav-link" href="enrollments/list.php" data-bs-dismiss="offcanvas">
+                    <i class="fas fa-clipboard-list me-2"></i>Đăng ký môn học
+                </a>
+                
                 <a class="nav-link" href="scores/list.php" data-bs-dismiss="offcanvas">
                     <i class="fas fa-chart-line me-2"></i>Quản lý điểm
                 </a>
@@ -395,18 +411,47 @@ $username = $_SESSION['username'];
         // Sử dụng `fetch API` của trình duyệt để gửi một request GET đến API thống kê.
         // Đây là cách tiếp cận hiện đại để lấy dữ liệu mà không cần tải lại trang.
         fetch('charts/api/statistics.php')
-            .then(response => response.json()) // Sau khi nhận được response, chuyển đổi nó từ chuỗi JSON thành đối tượng JavaScript.
+            .then(response => {
+                // Kiểm tra xem response có thành công không
+                if (!response.ok) {
+                    // Thử đọc thông báo lỗi từ response
+                    return response.json().then(err => {
+                        throw new Error(err.error || `HTTP error! status: ${response.status}`);
+                    }).catch(() => {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    });
+                }
+                return response.json(); // Sau khi nhận được response, chuyển đổi nó từ chuỗi JSON thành đối tượng JavaScript.
+            })
             .then(data => { // `data` lúc này là một đối tượng JS chứa toàn bộ thông tin thống kê.
+                // Kiểm tra xem có lỗi trong response không
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                
                 // 1. Cập nhật các thẻ thống kê nhanh.
                 // `|| 0` để đảm bảo nếu dữ liệu không tồn tại thì sẽ hiển thị số 0.
-                document.getElementById('totalStudents').textContent = data.total_students || 0;
-                document.getElementById('maleStudents').textContent = data.male_students || 0;
-                document.getElementById('femaleStudents').textContent = data.female_students || 0;
-                document.getElementById('avgScore').textContent = data.avg_score || 'N/A';
+                if (document.getElementById('totalStudents')) {
+                    document.getElementById('totalStudents').textContent = data.total_students || 0;
+                }
+                if (document.getElementById('maleStudents')) {
+                    document.getElementById('maleStudents').textContent = data.male_students || 0;
+                }
+                if (document.getElementById('femaleStudents')) {
+                    document.getElementById('femaleStudents').textContent = data.female_students || 0;
+                }
+                if (document.getElementById('avgScore')) {
+                    document.getElementById('avgScore').textContent = data.avg_score !== undefined ? data.avg_score : 'N/A';
+                }
                 
                 // 2. Vẽ biểu đồ phân bố giới tính (Bar Chart - Cột).
                 // Lấy context 2D của thẻ canvas.
-                const genderCtx = document.getElementById('genderChart').getContext('2d');
+                const genderChartEl = document.getElementById('genderChart');
+                if (!genderChartEl) {
+                    console.warn('Không tìm thấy element genderChart');
+                    return;
+                }
+                const genderCtx = genderChartEl.getContext('2d');
                 new Chart(genderCtx, {
                     type: 'bar', // Chọn loại biểu đồ là bar (cột).
                     data: {
@@ -438,7 +483,12 @@ $username = $_SESSION['username'];
                 });
                 
                 // 3. Vẽ biểu đồ điểm trung bình theo môn học (Top 5).
-                const subjectCtx = document.getElementById('subjectChart').getContext('2d');
+                const subjectChartEl = document.getElementById('subjectChart');
+                if (!subjectChartEl) {
+                    console.warn('Không tìm thấy element subjectChart');
+                    return;
+                }
+                const subjectCtx = subjectChartEl.getContext('2d');
                 new Chart(subjectCtx, {
                     type: 'bar', // Chọn loại biểu đồ cột.
                     data: {
@@ -471,7 +521,73 @@ $username = $_SESSION['username'];
             .catch(error => {
                 // Nếu có lỗi xảy ra trong quá trình `fetch` (ví dụ: mất mạng, API lỗi 500).
                 console.error('Lỗi khi tải dữ liệu thống kê:', error);
-                // Có thể hiển thị một thông báo lỗi trên UI cho người dùng ở đây.
+                
+                // Hiển thị giá trị mặc định khi có lỗi
+                if (document.getElementById('totalStudents')) {
+                    document.getElementById('totalStudents').textContent = '0';
+                }
+                if (document.getElementById('maleStudents')) {
+                    document.getElementById('maleStudents').textContent = '0';
+                }
+                if (document.getElementById('femaleStudents')) {
+                    document.getElementById('femaleStudents').textContent = '0';
+                }
+                if (document.getElementById('avgScore')) {
+                    document.getElementById('avgScore').textContent = 'N/A';
+                }
+                
+                // Vẽ biểu đồ với dữ liệu rỗng nếu có lỗi
+                try {
+                    const genderChartEl = document.getElementById('genderChart');
+                    if (genderChartEl) {
+                        const genderCtx = genderChartEl.getContext('2d');
+                        new Chart(genderCtx, {
+                            type: 'bar',
+                            data: {
+                                labels: ['Nam', 'Nữ', 'Khác'],
+                                datasets: [{
+                                    label: 'Số lượng',
+                                    data: [0, 0, 0],
+                                    backgroundColor: ['#36A2EB', '#FF6384', '#FFCE56'],
+                                    borderColor: ['#36A2EB', '#FF6384', '#FFCE56'],
+                                    borderWidth: 1
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                scales: { y: { beginAtZero: true } },
+                                plugins: { legend: { display: false } }
+                            }
+                        });
+                    }
+                    
+                    const subjectChartEl = document.getElementById('subjectChart');
+                    if (subjectChartEl) {
+                        const subjectCtx = subjectChartEl.getContext('2d');
+                        new Chart(subjectCtx, {
+                            type: 'bar',
+                            data: {
+                                labels: [],
+                                datasets: [{
+                                    label: 'Điểm trung bình',
+                                    data: [],
+                                    backgroundColor: 'rgba(102, 126, 234, 0.8)',
+                                    borderColor: '#667eea',
+                                    borderWidth: 1
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                scales: { y: { beginAtZero: true, max: 10 } },
+                                plugins: { legend: { display: false } }
+                            }
+                        });
+                    }
+                } catch (chartError) {
+                    console.error('Lỗi khi vẽ biểu đồ:', chartError);
+                }
             });
     </script>
 </body>

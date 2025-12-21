@@ -139,6 +139,12 @@ if ($hasPermission) {
                     <a class="nav-link" href="../students/list.php">
                         <i class="fas fa-users me-2"></i>Quản lý sinh viên
                     </a>
+                    <a class="nav-link" href="../subjects/list.php">
+                        <i class="fas fa-book me-2"></i>Quản lý môn học
+                    </a>
+                    <a class="nav-link" href="../enrollments/list.php">
+                        <i class="fas fa-clipboard-list me-2"></i>Đăng ký môn học
+                    </a>
                     <a class="nav-link" href="../scores/list.php">
                         <i class="fas fa-chart-line me-2"></i>Quản lý điểm
                     </a>
@@ -429,6 +435,12 @@ if ($hasPermission) {
                 </a>
                 <a class="nav-link" href="../students/list.php" data-bs-dismiss="offcanvas">
                     <i class="fas fa-users me-2"></i>Quản lý sinh viên
+                </a>
+                <a class="nav-link" href="../subjects/list.php" data-bs-dismiss="offcanvas">
+                    <i class="fas fa-book me-2"></i>Quản lý môn học
+                </a>
+                <a class="nav-link" href="../enrollments/list.php" data-bs-dismiss="offcanvas">
+                    <i class="fas fa-clipboard-list me-2"></i>Đăng ký môn học
                 </a>
                 <a class="nav-link" href="../scores/list.php" data-bs-dismiss="offcanvas">
                     <i class="fas fa-chart-line me-2"></i>Quản lý điểm

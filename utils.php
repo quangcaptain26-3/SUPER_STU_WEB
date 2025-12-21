@@ -89,6 +89,13 @@ define('PERMISSION_DELETE_SCORES', 'delete_scores');
 define('PERMISSION_VIEW_STATISTICS', 'view_statistics');
 define('PERMISSION_MANAGE_USERS', 'manage_users'); // Quyền đặc biệt chỉ Super Admin có.
 define('PERMISSION_EXPORT_DATA', 'export_data');
+define('PERMISSION_VIEW_SUBJECTS', 'view_subjects');
+define('PERMISSION_ADD_SUBJECTS', 'add_subjects');
+define('PERMISSION_EDIT_SUBJECTS', 'edit_subjects');
+define('PERMISSION_DELETE_SUBJECTS', 'delete_subjects');
+define('PERMISSION_VIEW_ENROLLMENTS', 'view_enrollments');
+define('PERMISSION_ADD_ENROLLMENTS', 'add_enrollments');
+define('PERMISSION_DELETE_ENROLLMENTS', 'delete_enrollments');
 
 /**
  * Trái tim của hệ thống RBAC. Ánh xạ mỗi vai trò tới một danh sách các quyền hạn cụ thể.
@@ -111,7 +118,10 @@ function getRolePermissions($role)
             PERMISSION_ADD_SCORES,
             PERMISSION_EDIT_SCORES,
             PERMISSION_VIEW_STATISTICS,
-            PERMISSION_EXPORT_DATA
+            PERMISSION_EXPORT_DATA,
+            PERMISSION_VIEW_SUBJECTS,
+            PERMISSION_VIEW_ENROLLMENTS,
+            PERMISSION_ADD_ENROLLMENTS
         ],
         'admin' => [
             PERMISSION_VIEW_STUDENTS,
@@ -123,7 +133,14 @@ function getRolePermissions($role)
             PERMISSION_EDIT_SCORES,
             PERMISSION_DELETE_SCORES,
             PERMISSION_VIEW_STATISTICS,
-            PERMISSION_EXPORT_DATA
+            PERMISSION_EXPORT_DATA,
+            PERMISSION_VIEW_SUBJECTS,
+            PERMISSION_ADD_SUBJECTS,
+            PERMISSION_EDIT_SUBJECTS,
+            PERMISSION_DELETE_SUBJECTS,
+            PERMISSION_VIEW_ENROLLMENTS,
+            PERMISSION_ADD_ENROLLMENTS,
+            PERMISSION_DELETE_ENROLLMENTS
         ],
         'superadmin' => [
             PERMISSION_VIEW_STUDENTS,
@@ -136,7 +153,14 @@ function getRolePermissions($role)
             PERMISSION_DELETE_SCORES,
             PERMISSION_VIEW_STATISTICS,
             PERMISSION_MANAGE_USERS, // Quyền quản lý người dùng.
-            PERMISSION_EXPORT_DATA
+            PERMISSION_EXPORT_DATA,
+            PERMISSION_VIEW_SUBJECTS,
+            PERMISSION_ADD_SUBJECTS,
+            PERMISSION_EDIT_SUBJECTS,
+            PERMISSION_DELETE_SUBJECTS,
+            PERMISSION_VIEW_ENROLLMENTS,
+            PERMISSION_ADD_ENROLLMENTS,
+            PERMISSION_DELETE_ENROLLMENTS
         ]
     ];
 
