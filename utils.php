@@ -262,7 +262,7 @@ function canAccess($permission)
 function getRoleDisplayName($role)
 {
     $roleNames = [
-        'student' => 'Sinh viên',
+        'student' => 'Nhân viên',
         'teacher' => 'Giảng viên',
         'admin' => 'Quản trị viên',
         'superadmin' => 'Siêu quản trị'

@@ -183,7 +183,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                                 </label>
                                 <select class="form-control" id="role" name="role" required>
                                     <option value="">Chọn loại tài khoản</option>
-                                    <option value="student" <?php echo (($role ?? '') == 'student') ? 'selected' : ''; ?>>Sinh viên</option>
+                                    <option value="student" <?php echo (($role ?? '') == 'student') ? 'selected' : ''; ?>>Nhân viên</option>
                                     <option value="teacher" <?php echo (($role ?? '') == 'teacher') ? 'selected' : ''; ?>>Giảng viên</option>
                                 </select>
                             </div>
